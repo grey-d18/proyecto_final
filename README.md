@@ -138,7 +138,8 @@ nucleo/
   capacitacion.py          contenido de la capacitación
 scripts/
   generar_sinteticos.py    crea los 60 recicladores inventados
-  generar_audios_ejemplo.py crea las voces de ejemplo (macOS)
+  clonar_voz_ejemplo.py    crea las voces de ejemplo con mi voz clonada (Qwen3-TTS, local)
+  generar_audios_ejemplo.py versión anterior: voz robótica de macOS
 datos/                     CSV de precios, SIGERSOL, puntos de acopio y audios de ejemplo
 docs/                      capturas y entrevistas
 ```
@@ -177,7 +178,7 @@ WhatsApp como canal, y conexión con los puntos de acopio reales para publicar p
 
 Usé **Claude Code** en VS Code. `[REVISAR y completar]`
 
-- **Yo:** la idea, el problema y el usuario (de mi tesis), los precios de campo y los datos de SIGERSOL (de mi proyecto
+- **Yo:** la idea, mi voz para las voces de ejemplo (clonada con Qwen3-TTS, con datos inventados), el problema y el usuario (de mi tesis), los precios de campo y los datos de SIGERSOL (de mi proyecto
   anterior), las preguntas del registro, las decisiones de producto y la revisión de cada archivo.
 - **Claude Code generó:** la estructura del proyecto, el código de `nucleo/` y `paginas/` con comentarios explicativos,
   los scripts de datos sintéticos y de audios de ejemplo, la prueba del flujo completo en el navegador y el borrador de

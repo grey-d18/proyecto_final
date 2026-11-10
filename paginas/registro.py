@@ -22,7 +22,7 @@ from nucleo.extraccion import DISTRITOS_TRUJILLO, FichaReciclador, extraer_ficha
 from nucleo.preguntas import PREGUNTAS
 from nucleo.voz import transcribir
 
-AUDIOS_EJEMPLO = DATOS / "audios_ejemplo"  # voces de ejemplo generadas con scripts/generar_audios_ejemplo.py
+AUDIOS_EJEMPLO = DATOS / "audios_ejemplo"  # voces de ejemplo: voz de la fundadora clonada con Qwen3-TTS (scripts/clonar_voz_ejemplo.py)
 TOTAL = len(PREGUNTAS)
 
 

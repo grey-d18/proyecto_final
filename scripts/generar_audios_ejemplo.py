@@ -1,5 +1,8 @@
 """Genera audios de ejemplo con la voz sintética de macOS (comando `say`).
 
+VERSIÓN ANTERIOR: las voces de ejemplo actuales se hacen con scripts/clonar_voz_ejemplo.py
+(voz real clonada con Qwen3-TTS). Este script queda como alternativa sin descargar modelos.
+
 Sirven como respaldo en el demo: si falla el micrófono o hay mucho ruido en la
 sala, se aprieta "Usar voz de ejemplo" y Whisper transcribe estas grabaciones.
 La persona es inventada (Rosa Elena Quispe Ramos), y el DNI también.
