@@ -1,0 +1,11 @@
+{
+  "name": "ReciclaVoz",
+  "short_name": "ReciclaVoz",
+  "description": "Registro de recicladores por voz",
+  "lang": "es-PE",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#F7F5EF",
+  "theme_color": "#1E6B3C",
+  "icons": [{ "src": "icono.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

@@ -11,8 +11,7 @@ from PIL import Image
 
 from nucleo.base_datos import crear_recojo, recicladores_del_distrito, recojos_del_vecino
 from nucleo.catalogos import DISTRITOS_TRUJILLO
-from nucleo.interfaz import volver
-from nucleo.ubicacion import elegir_ubicacion
+from nucleo.interfaz import elegir_ubicacion, volver
 
 volver("paginas/inicio.py")
 st.title("🏠 Pedir un recojo")

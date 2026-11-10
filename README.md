@@ -76,7 +76,19 @@ trae datos que el formulario nunca pidió.
 
 ## 6. Demo
 
-**URL:** https://proyectofinal-4h57dzu4nufopstr5nczcj.streamlit.app
+**App web:** `[COMPLETAR: https://grey-d18.github.io/proyecto_final/ al publicar]` · versión anterior en Streamlit:
+https://proyectofinal-4h57dzu4nufopstr5nczcj.streamlit.app
+
+La app tiene dos partes:
+
+- **`web/`, lo que ve la persona:** HTML, CSS y JavaScript, sin instalar nada. Se publica gratis en **GitHub Pages**
+  y en el celular se puede «agregar a la pantalla de inicio» como una app.
+- **`api/`, el motor:** una API en Python (**FastAPI**) que corre Whisper, Gemini, la base de datos y el PDF. Usa
+  las mismas funciones de `nucleo/` que la versión en Streamlit. Se publica gratis en **Hugging Face Spaces**.
+
+Empezamos con Streamlit porque permitía tener un prototipo en horas. Pero se veía como una página de datos y no como
+una app: se recargaba en cada toque, no permitía un menú fijo abajo ni un micrófono grande, y en el iPhone pedía
+permiso del micrófono en cada pregunta. Por eso separamos la interfaz (web) del motor (API).
 
 ### Capturas
 
@@ -88,13 +100,13 @@ trae datos que el formulario nunca pidió.
 
 ```mermaid
 flowchart LR
-    Q[🔊 Pregunta hablada<br>es-PE-CamilaNeural, generada una vez<br>datos/audios_preguntas/] --> A
-    A[🎙️ Celular: la persona<br>responde 8 preguntas] -->|audio WAV| B[Whisper<br>faster-whisper, CPU<br>nucleo/voz.py]
+    Q[🔊 Pregunta hablada<br>es-PE-CamilaNeural, generada una vez<br>web/audios/] --> A
+    A[🎙️ Celular: app web<br>GitHub Pages<br>responde 8 preguntas] -->|audio WebM/MP4<br>vía la API FastAPI| B[Whisper<br>faster-whisper, CPU<br>nucleo/voz.py]
     B -->|texto| C[Gemini<br>salida estructurada<br>nucleo/extraccion.py]
-    C -->|FichaReciclador JSON| D[Revisión humana<br>paginas/registro.py]
+    C -->|FichaReciclador JSON| D[Revisión humana<br>web/js/vistas/registro.js]
     D --> E[(SQLite<br>nucleo/base_datos.py)]
     D --> F[📄 Constancia PDF<br>nucleo/constancia.py]
-    E --> G[📊 Panel municipal<br>Plotly + Folium]
+    E --> G[📊 Panel municipal<br>Leaflet + OpenStreetMap]
     H[SIGERSOL · precios de campo<br>datos/fuentes/] --> G
     H --> I[📚 Capacitación]
     K[🏪 Acopiador: precios<br>y ubicación del local] --> E
@@ -108,12 +120,14 @@ flowchart LR
 
 | Pieza | Qué usamos | Por qué |
 |---|---|---|
-| Voz → texto | **faster-whisper** (modelo `small`, int8, CPU) | Gratis, corre en el servidor (la voz y el DNI no salen a otra empresa) y entra en el plan gratuito de Streamlit |
+| Voz → texto | **faster-whisper** (modelo `small`, int8, CPU) | Gratis y abierto, corre en nuestro servidor (la voz y el DNI no salen a otra empresa) y entra en el plan gratuito de Hugging Face |
 | Texto → ficha | **Gemini 3.5 Flash-Lite** (`gemini-3.5-flash-lite`, plan gratuito, ~2 s por ficha) con salidas estructuradas (esquema Pydantic) | Gratis, entiende respuestas con rodeos («cartón y a veces latitas» → Cartón, Aluminio) y devuelve siempre el JSON de la ficha |
 | Texto → voz | **`es-PE-CamilaNeural`** (voz neuronal de Microsoft con acento peruano) a través de la librería [`edge-tts`](https://github.com/rany2/edge-tts), velocidad −10 % | Natural, con la misma entonación en todas las preguntas y gratis sin cuenta. Los audios se generan una vez ([`scripts/generar_voces.py`](scripts/generar_voces.py)) y la app solo reproduce los MP3. Antes probé clonar mi voz: ver abajo |
 | Plan B | Reglas con expresiones regulares | El demo funciona aunque no haya clave o se caiga internet |
-| Mapas y gráficos | Folium + OpenStreetMap, Plotly | Herramientas del curso, sin costo |
-| Grabación y ubicación | `st.audio_input` de Streamlit (graba a 16 kHz, lo que usa Whisper), `streamlit-js-eval` (ubicación del navegador), Nominatim de OpenStreetMap (dirección → mapa) | Gratis y sin instalar nada en el celular |
+| Interfaz | HTML, CSS y JavaScript sin librerías ni compilación; letra Atkinson Hyperlegible (hecha para baja visión) | Se ve y se usa como una app, carga rápido en celulares sencillos y se publica gratis en GitHub Pages |
+| API | **FastAPI** + uvicorn ([`api/main.py`](api/main.py)) | Abierta, simple y documenta sola sus rutas (`/docs`) |
+| Mapas y gráficos | **Leaflet** + OpenStreetMap; barras hechas con HTML | Abiertos y sin costo |
+| Grabación y ubicación | `MediaRecorder` del navegador ([`web/js/grabadora.js`](web/js/grabadora.js)), `navigator.geolocation` (GPS), Nominatim de OpenStreetMap (dirección → mapa) | Estándares del navegador: nada que instalar en el celular |
 | Datos | 60 recicladores, 8 acopios, precios del día y 5 pedidos **sintéticos**; SIGERSOL (MINAM), precios del trabajo de campo, UN Comtrade | No se usan datos personales reales |
 
 #### Texto a voz: lo que probamos primero
@@ -143,65 +157,82 @@ El script de clonación quedó en el historial de git (commit `f6f9b3a`) por si 
   consultar el DNI en la RENIEC a través de la Plataforma de Interoperabilidad del Estado (PIDE). Con ese acceso
   bastaría con preguntar el DNI y el nombre oficial (y la edad) se llenaría solo, o se corregiría el nombre dictado.
   Como proyecto de curso no tenemos ese acceso.
-- **La grabadora (lo que cambiamos).** Primero usamos `audio-recorder-streamlit`, que se detenía sola tras 3,5 s de
-  silencio. Tenía dos problemas: es una pequeña página incrustada que se crea de nuevo en cada pregunta, así que
-  **Safari (y el iPhone) pedía permiso del micrófono en cada pregunta**; y se ponía roja antes de que el micrófono
-  estuviera abierto, así que si la persona hablaba de inmediato se perdía la primera sílaba («mi nombre es» →
-  «hombre es»). La cambiamos por **`st.audio_input`** de Streamlit, que es parte de la página: el permiso se pide una
-  sola vez. El costo es que ya no se detiene sola: se aprieta el micrófono otra vez para terminar.
+- **La grabadora (lo que cambiamos).** En Streamlit probamos dos grabadoras: `audio-recorder-streamlit` pedía permiso
+  del micrófono en cada pregunta en Safari y el iPhone, y se ponía roja antes de abrir el micrófono, así que se perdía
+  la primera sílaba («mi nombre es» → «hombre es»); `st.audio_input` pedía permiso una vez pero no se detenía sola.
+  En la app web la grabadora **abre el micrófono una sola vez** al apretar «Empezar» y lo deja abierto durante el
+  registro: el permiso se pide una vez, la grabación empieza al instante y **se detiene sola** tras 2,5 s de silencio.
+  Además le pedimos al navegador que **no** aplique cancelación de eco ni supresión de ruido: están hechas para
+  llamadas y, en nuestras pruebas, deformaban la voz lo suficiente para que Whisper confundiera números.
 - **Si igual se pierde el inicio.** Los ejemplos empiezan con una frase («Mi DNI es…») para que, si se corta el
   comienzo, se pierda esa frase y no un dato; Gemini ignora esas palabras de relleno, y si el DNI no queda con 8
   dígitos se marca para confirmar.
+- **La base de datos se borra al reiniciar.** En los planes gratuitos (Hugging Face, Streamlit) el archivo SQLite
+  vive en un disco temporal. Para el demo está bien; en producción se usaría una base en la nube (por ejemplo,
+  Postgres en Supabase).
 
 ### Cómo correrlo
 
-En la terminal de VS Code, desde la carpeta del proyecto:
+En la terminal de VS Code, desde la carpeta del proyecto (dos terminales):
 
 ```bash
 uv venv --python 3.12 .venv
-source .venv/bin/activate
-uv pip install -r requirements.txt
-cp .env.example .env        # y pon tu GEMINI_API_KEY gratis (opcional)
-streamlit run app.py
+uv pip install --python .venv/bin/python -r api/requirements.txt
+cp .env.example .env                                   # y pon tu GEMINI_API_KEY gratis (opcional)
+
+.venv/bin/uvicorn api.main:app --reload --port 8000    # terminal 1: la API (http://localhost:8000/docs)
+python3 -m http.server 5500 --directory web            # terminal 2: la app, en http://localhost:5500
 ```
 
-Sin clave de Gemini la app funciona igual: llena la ficha con reglas simples.
+Sin clave de Gemini la app funciona igual: llena la ficha con reglas simples. La versión anterior en Streamlit sigue
+funcionando con `uv pip install -r requirements.txt` y `streamlit run app.py`.
 
-**Desplegar en Streamlit Community Cloud:** *New app* → este repo → `app.py` → Python 3.12 → en *Advanced settings →
-Secrets* pegar `GEMINI_API_KEY = "..."` (clave gratis de [Google AI Studio](https://aistudio.google.com/apikey), sin tarjeta).
+**Publicar la API en Hugging Face Spaces** (gratis): crear un Space de tipo **Docker** → subir este repositorio (usa
+el [`Dockerfile`](Dockerfile)) → en *Settings → Variables and secrets* agregar el secreto `GEMINI_API_KEY` (clave
+gratis de [Google AI Studio](https://aistudio.google.com/apikey), sin tarjeta). Copiar la dirección del Space
+(`https://<usuario>-<space>.hf.space`) en [`web/js/config.js`](web/js/config.js).
+
+**Publicar la app en GitHub Pages:** en GitHub, *Settings → Pages → Source: GitHub Actions*. Desde ahí, cada cambio
+en `web/` que llega a `main` se publica solo ([`.github/workflows/pagina.yml`](.github/workflows/pagina.yml)).
 
 ### Estructura del código
 
 ```
-app.py                     registra las páginas; sin menú lateral (se navega con botones)
-paginas/
-  inicio.py                «¿Quién eres?»: reciclador, vecino, acopiador (y municipalidad en «más»)
-  reciclador.py            «¿Eres …?» y los 3 botones: Registro, Capacitación, Mi ruta
-  registro.py              consentimiento → 8 preguntas habladas → ficha → constancia
-  capacitacion.py          buenas prácticas, materiales, precios + mapa, quiz
-  mi_ruta.py               tabla de precios del día y mapa de acopios y recojos
-  recoger.py               pedidos de los vecinos, «Lo recogeré» y regla de los 3 días
-  vecino.py                pedir un recojo (descripción, peso, foto, ubicación)
-  acopiador.py             ubicar el local y publicar precios
-  municipalidad.py         panel: indicadores, gráficos, mapa, SIGERSOL, lista
-nucleo/
-  config.py                rutas y claves (.env o st.secrets)
+web/                       la app que ve la persona (GitHub Pages)
+  index.html               la única página: las pantallas se dibujan según lo que va después de «#»
+  css/estilo.css           colores, letra, botones grandes y diseño para celular y computadora
+  audios/                  las preguntas y avisos hablados (MP3, voz es-PE-CamilaNeural)
+  js/
+    app.js                 elige qué pantalla mostrar
+    config.js              la dirección de la API
+    api.js                 cómo pedirle datos a la API
+    comun.js               íconos, voz, menú de abajo, mapas
+    grabadora.js           micrófono: abre una vez, graba, se detiene solo con el silencio
+    ubicacion.js           «usar mi ubicación» y «escribir dirección»
+    vistas/                una pantalla por archivo: inicio, reciclador, registro, mi_ruta, recoger,
+                           aprender, vecino, acopiador, municipalidad
+api/
+  main.py                  la API: cada ruta llama a una función de nucleo/
+  requirements.txt         lo que necesita la API
+nucleo/                    la lógica, sin interfaz (la usan la API y la versión en Streamlit)
+  config.py                rutas y claves (.env o secretos)
   catalogos.py             listas comunes: distritos, materiales, transporte y equipo
   preguntas.py             las 8 preguntas (texto, lo que dice el audio y un ejemplo) y los avisos
   voz.py                   Whisper
   extraccion.py            esquema de la ficha, Gemini y plan B con reglas
   base_datos.py            SQLite: recicladores, acopios, precios y recojos
-  interfaz.py              botones grandes, voz, «Volver» y la burbuja de recojos
-  ubicacion.py             centros de distrito, «usar mi ubicación» y «escribir mi dirección»
+  ubicacion.py             centros de distrito y búsqueda de direcciones (OpenStreetMap)
   constancia.py            PDF
   capacitacion.py          contenido de la capacitación
+  interfaz.py              piezas de pantalla, solo para la versión en Streamlit
+app.py, paginas/           la versión anterior en Streamlit
 scripts/
   generar_sinteticos.py    crea los datos inventados (recicladores, acopios, precios, pedidos)
   generar_voces.py         crea los audios de las preguntas (voz es-PE-CamilaNeural, edge-tts)
 datos/
   sinteticos/              recicladores, acopios, precios y pedidos inventados para el demo
   fuentes/                 datos reales: SIGERSOL y precios del trabajo de campo
-  audios_preguntas/        las preguntas y avisos hablados (MP3)
+Dockerfile                 receta para publicar la API en Hugging Face Spaces
 docs/                      capturas y entrevistas
 ```
 
@@ -233,8 +264,8 @@ y respuestas también habladas en Mi ruta (leer la tabla de precios en voz alta)
 | **De la voz al texto con Whisper** | 13 | [`nucleo/voz.py`](nucleo/voz.py) | Reemplaza el formulario: la persona habla en vez de escribir |
 | **LLMs con salidas estructuradas** | 08 | [`nucleo/extraccion.py`](nucleo/extraccion.py) | Convierte respuestas con rodeos en la ficha exacta del registro |
 | Texto a voz (primero clonación con Qwen3-TTS, al final es-PE-CamilaNeural) | 15 | [`scripts/generar_voces.py`](scripts/generar_voces.py), [`nucleo/interfaz.py`](nucleo/interfaz.py) | La persona escucha cada pregunta: no necesita saber leer |
-| Dashboards | 05 | [`paginas/municipalidad.py`](paginas/municipalidad.py) | Lo que ve (y paga) la municipalidad |
-| GeoPandas y Folium | 06 | [`paginas/mi_ruta.py`](paginas/mi_ruta.py), [`paginas/municipalidad.py`](paginas/municipalidad.py), [`paginas/capacitacion.py`](paginas/capacitacion.py) | Dónde vender, qué recoger y dónde viven los recicladores |
+| Dashboards | 05 | [`web/js/vistas/municipalidad.js`](web/js/vistas/municipalidad.js) (antes [`paginas/municipalidad.py`](paginas/municipalidad.py), en Streamlit) | Lo que ve (y paga) la municipalidad |
+| GeoPandas y Folium | 06 | [`web/js/vistas/mi_ruta.js`](web/js/vistas/mi_ruta.js), [`web/js/vistas/municipalidad.js`](web/js/vistas/municipalidad.js) | Dónde vender, qué recoger y dónde viven los recicladores. Folium genera mapas de **Leaflet**; en la app web usamos Leaflet directamente (la versión en Streamlit usa Folium) |
 
 ## 9. Qué hizo el agente
 

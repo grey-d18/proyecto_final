@@ -8,8 +8,8 @@ Flujo:
     audio grabado (bytes) -> archivo temporal -> Whisper -> texto en español
 """
 import tempfile
+from functools import cache
 
-import streamlit as st
 from faster_whisper import WhisperModel
 
 from nucleo.config import WHISPER_MODELO
@@ -33,22 +33,26 @@ APELLIDOS = (
 )
 
 
-@st.cache_resource(show_spinner="Cargando el modelo de voz (solo la primera vez)…")
+@cache
 def cargar_modelo() -> WhisperModel:
     """Carga Whisper UNA sola vez y lo guarda en memoria.
 
-    @st.cache_resource hace que Streamlit no vuelva a cargar el modelo cada vez
-    que alguien aprieta un botón (cargarlo tarda unos segundos).
+    @cache guarda el resultado: las siguientes veces se reutiliza el mismo modelo
+    en vez de volver a cargarlo (cargarlo tarda unos segundos).
     compute_type="int8" reduce la memoria que usa: así entra en el plan gratuito
     de Streamlit Community Cloud.
     """
     return WhisperModel(WHISPER_MODELO, device="cpu", compute_type="int8")
 
 
-def transcribir(audio_bytes: bytes) -> str:
-    """Recibe el audio grabado en el navegador y devuelve el texto que se dijo."""
+def transcribir(audio_bytes: bytes, extension: str = ".wav") -> str:
+    """Recibe el audio grabado en el navegador y devuelve el texto que se dijo.
+
+    extension: el formato del audio. Chrome y Android graban en .webm, Safari y el
+    iPhone en .mp4; Whisper (con PyAV) lee los dos.
+    """
     # Whisper lee archivos, así que guardamos los bytes en un archivo temporal.
-    with tempfile.NamedTemporaryFile(suffix=".wav") as archivo:
+    with tempfile.NamedTemporaryFile(suffix=extension) as archivo:
         archivo.write(audio_bytes)
         archivo.flush()
         segmentos, _info = cargar_modelo().transcribe(

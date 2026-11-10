@@ -6,9 +6,11 @@ botones grandes con ícono, una sola acción por pantalla y mensajes que se escu
 import base64
 
 import streamlit as st
+from streamlit_js_eval import get_geolocation
 
 from nucleo.base_datos import buscar_reciclador, recojos_disponibles
 from nucleo.config import AUDIOS_PREGUNTAS
+from nucleo.ubicacion import CENTROS, buscar_direccion
 
 
 # CSS = las reglas de estilo de la página. Aquí solo agrandamos los botones.
@@ -45,7 +47,7 @@ def audio_en_base64(clave: str) -> str | None:
 
 
 def hablar(clave: str) -> None:
-    """Reproduce en voz alta el audio datos/audios_preguntas/<clave>.mp3 al aparecer en pantalla.
+    """Reproduce en voz alta el audio web/audios/<clave>.mp3 al aparecer en pantalla.
 
     El audio va DENTRO de la página (base64) en una etiqueta <audio autoplay>, en vez de
     st.audio: así suena solo apenas aparece y no depende del servidor de archivos de
@@ -90,3 +92,38 @@ def barra_reciclador(reciclador: dict) -> None:
         burbuja = f"  🔴 {pendientes}" if pendientes else ""
         if st.button(f"🚚 Recoger reciclaje{burbuja}", width="stretch"):
             st.switch_page("paginas/recoger.py")
+
+
+def elegir_ubicacion(clave: str, distrito: str, aviso_gps: str) -> tuple[str, float, float] | None:
+    """Muestra los dos botones y devuelve (dirección, lat, lon) cuando la ubicación ya está lista.
+
+    clave: nombre único para esta pantalla (Streamlit lo necesita para recordar el estado).
+    """
+    modo = st.radio("¿Cómo ubicamos el lugar?", ["📍 Usar mi ubicación", "✏️ Escribir mi dirección"],
+                    key=f"modo_{clave}", horizontal=True)
+
+    if modo.startswith("📍"):
+        st.info(aviso_gps)
+        if st.toggle("Compartir mi ubicación ahora", key=f"gps_{clave}"):
+            datos = get_geolocation(component_key=f"geo_{clave}")  # devuelve None hasta que el navegador responde
+            if datos and "coords" in datos:
+                lat, lon = datos["coords"]["latitude"], datos["coords"]["longitude"]
+                st.success(f"Ubicación lista ({lat:.4f}, {lon:.4f})")
+                return "Ubicación del GPS", lat, lon
+            if datos and "error" in datos:
+                st.error("El navegador no dio la ubicación. Revise el permiso o escriba la dirección.")
+            else:
+                st.caption("Esperando que el navegador comparta la ubicación…")
+        return None
+
+    direccion = st.text_input("Dirección o referencia", key=f"dir_{clave}",
+                              placeholder="Av. Pumacahua 1450")
+    if not direccion:
+        return None
+    with st.spinner("Buscando la dirección…"):
+        punto = buscar_direccion(direccion, distrito)
+    if punto:
+        st.success("Encontramos la dirección en el mapa.")
+        return direccion, *punto
+    st.warning("No encontramos esa dirección en el mapa. Usaremos el centro del distrito.")
+    return direccion, *CENTROS.get(distrito, CENTROS["Trujillo"])

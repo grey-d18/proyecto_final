@@ -1,0 +1,13 @@
+# Lo que necesita la API (carpeta api/). La app web (carpeta web/) no necesita instalar nada.
+fastapi>=0.115
+uvicorn>=0.30
+python-multipart>=0.0.9   # para recibir archivos (audio y fotos)
+faster-whisper>=1.1
+av<19                     # av 19 rompe faster-whisper 1.2 (error metadata_errors)
+google-genai>=1.0
+pydantic>=2.8
+pandas>=2.2
+fpdf2>=2.8
+pillow>=10.0              # para achicar las fotos de los vecinos
+python-dotenv>=1.0
+requests>=2.31

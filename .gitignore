@@ -11,6 +11,6 @@ __pycache__/
 datos/registro.db
 
 # Voz de referencia para clonar (privada) y archivos del sistema/editor
-audios/
+/audios/
 .DS_Store
 .claude/

@@ -17,7 +17,7 @@ Cada pregunta es un diccionario con:
     voz      -> lo que dice el audio, escrito como se pronuncia (si es distinto del texto)
     ejemplo  -> una respuesta de ejemplo, en letra pequeña debajo de la pregunta
 
-Los audios están en datos/audios_preguntas/<clave>.mp3 y se generan con
+Los audios están en web/audios/<clave>.mp3 y se generan con
 scripts/generar_voces.py (voz neuronal es-PE-CamilaNeural, acento peruano).
 """
 
@@ -67,6 +67,7 @@ PREGUNTAS = [
 
 # Otros mensajes que la app dice en voz alta (mismo formato: clave y lo que se dice).
 AVISOS = {
+    "inicio": "¿Quién es usted? Toque «Soy reciclador», «Soy vecino» o «Soy acopiador».",
     "aviso_recojo": "Recuerde que tiene un máximo de tres días para hacer su recojo. "
                     "Si no, se asignará a otro reciclador de la zona.",
     "bienvenida_registro": "Le voy a hacer ocho preguntas para inscribirle en el registro "
