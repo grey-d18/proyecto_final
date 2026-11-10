@@ -2,7 +2,7 @@
 
 ¿Por qué existe este archivo?
     Para que todos los demás módulos lean la configuración de UN solo lugar.
-    Si mañana cambias el modelo de Claude o de Whisper, solo tocas el .env
+    Si mañana cambias el modelo de Gemini o de Whisper, solo tocas el .env
     (en tu laptop) o los "Secrets" de Streamlit Cloud (en internet).
 
 ¿De dónde salen los valores?
@@ -42,11 +42,11 @@ def leer_ajuste(nombre: str, por_defecto: str | None = None) -> str | None:
 
 
 # --- Ajustes que usa la app ----------------------------------------------------
-CLAUDE_MODELO = leer_ajuste("CLAUDE_MODELO", "claude-opus-5-5")
+GEMINI_MODELO = leer_ajuste("GEMINI_MODELO", "gemini-3.5-flash-lite")
 WHISPER_MODELO = leer_ajuste("WHISPER_MODELO", "base")
 
 
-def hay_clave_claude() -> bool:
-    """True si hay una clave de la API de Claude configurada (sin mostrarla nunca)."""
-    clave = leer_ajuste("ANTHROPIC_API_KEY")
-    return bool(clave) and not clave.startswith("sk-ant-...")
+def hay_clave_gemini() -> bool:
+    """True si hay una clave de la API de Gemini configurada (sin mostrarla nunca)."""
+    clave = leer_ajuste("GEMINI_API_KEY")
+    return bool(clave) and clave != "pon-aqui-tu-clave"

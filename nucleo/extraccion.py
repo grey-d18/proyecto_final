@@ -5,10 +5,11 @@ El problema: la gente no responde como un formulario. Dice «trabajo como diez
 años ya, desde que cerró la fábrica, salgo de lunes a sábado». La ficha necesita
 anios_reciclando = 10 y dias_por_semana = 6.
 
-La solución: le damos a Claude las preguntas y las respuestas transcritas, y le
-exigimos que devuelva JSON con un esquema fijo (la clase FichaReciclador). La API
-de "salidas estructuradas" garantiza que la respuesta respete ese esquema, así que
-el código nunca recibe texto suelto que tenga que adivinar.
+La solución: le damos a Gemini (Google, plan gratuito) las preguntas y las
+respuestas transcritas, y le exigimos que devuelva JSON con un esquema fijo (la
+clase FichaReciclador). Con las "salidas estructuradas" la API obliga al modelo a
+respetar ese esquema, y además lo validamos con Pydantic: el código nunca recibe
+texto suelto que tenga que adivinar.
 
 Plan B: si no hay clave de la API (o falla internet), extraer_con_reglas() llena la
 ficha con reglas simples (buscar números y palabras clave). Es menos inteligente,
@@ -18,14 +19,14 @@ import re
 import unicodedata
 from typing import Literal
 
-import anthropic
+from google import genai
 from pydantic import BaseModel, Field
 
-from nucleo.config import CLAUDE_MODELO, hay_clave_claude, leer_ajuste
+from nucleo.config import GEMINI_MODELO, hay_clave_gemini, leer_ajuste
 from nucleo.preguntas import PREGUNTAS
 
 # --- 1. El esquema de la ficha ------------------------------------------------
-# Literal[...] limita los valores posibles: Claude solo puede elegir de esta lista.
+# Literal[...] limita los valores posibles: el modelo solo puede elegir de esta lista.
 Material = Literal[
     "Cartón", "Papel", "Botella PET", "Plástico duro", "Fierro / chatarra",
     "Cobre", "Aluminio", "Vidrio", "Otro",
@@ -79,28 +80,31 @@ def armar_mensaje(respuestas: dict[str, str]) -> str:
     return "\n\n".join(lineas)
 
 
-# --- 2. Extracción con Claude ------------------------------------------------
-def extraer_con_claude(respuestas: dict[str, str]) -> tuple[FichaReciclador, dict]:
-    """Pide a Claude la ficha. Devuelve la ficha y el uso de tokens (para calcular el costo)."""
-    cliente = anthropic.Anthropic(api_key=leer_ajuste("ANTHROPIC_API_KEY"))
-    respuesta = cliente.beta.messages.parse(
-        model=CLAUDE_MODELO,
-        max_tokens=16000,
-        system=INSTRUCCIONES,
-        messages=[{"role": "user", "content": armar_mensaje(respuestas)}],
-        output_format=FichaReciclador,         # el esquema que exigimos
-        output_config={"effort": "low"},       # tarea simple: piensa poco y gasta menos
-        # Si el modelo se negara a responder, la API reintenta sola con otro modelo.
-        betas=["server-side-fallback-2026-07-01"],
-        fallbacks="default",
+# --- 2. Extracción con Gemini ------------------------------------------------
+def extraer_con_gemini(respuestas: dict[str, str]) -> tuple[FichaReciclador, dict]:
+    """Pide a Gemini la ficha. Devuelve la ficha y el uso de tokens."""
+    cliente = genai.Client(
+        api_key=leer_ajuste("GEMINI_API_KEY"),
+        # Si Gemini no responde en 30 segundos, nos rendimos y usamos las reglas (el demo no se cuelga).
+        http_options={"timeout": 30_000, "retry_options": {"attempts": 2}},
     )
-    if respuesta.stop_reason == "refusal" or respuesta.parsed_output is None:
-        raise RuntimeError("Claude no devolvió una ficha válida")
+    respuesta = cliente.models.generate_content(
+        model=GEMINI_MODELO,
+        contents=armar_mensaje(respuestas),
+        config={
+            "system_instruction": INSTRUCCIONES,
+            "response_mime_type": "application/json",                 # que responda solo JSON…
+            "response_json_schema": FichaReciclador.model_json_schema(),  # …con este molde exacto
+            "temperature": 0,                                          # sin creatividad: mismos datos, misma ficha
+        },
+    )
+    # Validamos con Pydantic: si falta un campo o un tipo no calza, lanza ValidationError.
+    ficha = FichaReciclador.model_validate_json(respuesta.text)
     uso = {
-        "tokens_entrada": respuesta.usage.input_tokens,
-        "tokens_salida": respuesta.usage.output_tokens,
+        "tokens_entrada": respuesta.usage_metadata.prompt_token_count,
+        "tokens_salida": respuesta.usage_metadata.candidates_token_count,
     }
-    return respuesta.parsed_output, uso
+    return ficha, uso
 
 
 # --- 3. Plan B: extracción con reglas -----------------------------------------
@@ -210,14 +214,16 @@ def extraer_con_reglas(respuestas: dict[str, str]) -> FichaReciclador:
 
 # --- 4. Función que usa la app ---------------------------------------------------
 def extraer_ficha(respuestas: dict[str, str]) -> tuple[FichaReciclador, str, dict]:
-    """Intenta con Claude y, si no se puede, usa las reglas.
+    """Intenta con Gemini y, si no se puede, usa las reglas.
 
     Devuelve (ficha, método usado, uso de tokens).
     """
-    if hay_clave_claude():
+    if hay_clave_gemini():
         try:
-            ficha, uso = extraer_con_claude(respuestas)
-            return ficha, f"Claude ({CLAUDE_MODELO})", uso
-        except (anthropic.APIError, RuntimeError) as error:
-            print(f"Falló Claude, uso reglas: {error}")
+            ficha, uso = extraer_con_gemini(respuestas)
+            return ficha, f"Gemini ({GEMINI_MODELO})", uso
+        except Exception as error:
+            # Cualquier problema (sin internet, clave mala, límite gratuito superado, respuesta lenta
+            # o un JSON que no calza con el molde) no debe romper el demo: pasamos a las reglas.
+            print(f"Falló Gemini, uso reglas: {error}")
     return extraer_con_reglas(respuestas), "Reglas simples (sin LLM)", {}

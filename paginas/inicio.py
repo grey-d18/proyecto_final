@@ -24,7 +24,7 @@ with col1:
              "Whisper convierte la voz en texto.")
 with col2:
     st.markdown("### 🤖 2. La IA llena la ficha")
-    st.write("Claude ordena las respuestas en la ficha del Registro Municipal y marca lo que hay que "
+    st.write("Gemini ordena las respuestas en la ficha del Registro Municipal y marca lo que hay que "
              "confirmar. Se entrega una constancia en PDF.")
 with col3:
     st.markdown("### 📊 3. La municipalidad ve el mapa")

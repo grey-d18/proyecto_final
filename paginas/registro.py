@@ -16,7 +16,7 @@ import hashlib
 import streamlit as st
 
 from nucleo.base_datos import guardar_ficha
-from nucleo.config import DATOS, hay_clave_claude
+from nucleo.config import DATOS, hay_clave_gemini
 from nucleo.constancia import crear_constancia
 from nucleo.extraccion import DISTRITOS_TRUJILLO, FichaReciclador, extraer_ficha
 from nucleo.preguntas import PREGUNTAS
@@ -25,8 +25,6 @@ from nucleo.voz import transcribir
 AUDIOS_EJEMPLO = DATOS / "audios_ejemplo"  # voces de ejemplo generadas con scripts/generar_audios_ejemplo.py
 TOTAL = len(PREGUNTAS)
 
-# Precio de Claude Opus 5.5 en dólares por millón de tokens (entrada, salida). Sirve para mostrar el costo.
-PRECIO_ENTRADA, PRECIO_SALIDA = 4.00, 20.00
 
 # --- Memoria de la página --------------------------------------------------------
 st.session_state.setdefault("paso", 0)
@@ -88,8 +86,8 @@ if paso == 0:
     st.button("Empezar ▶", type="primary", disabled=not acepta, on_click=ir_a, args=(1,))
     st.info(
         "Para el demo: use datos inventados o su propia voz. "
-        + ("La ficha la llenará Claude." if hay_clave_claude()
-           else "No hay clave de Claude: la ficha se llenará con reglas simples.")
+        + ("La ficha la llenará Gemini." if hay_clave_gemini()
+           else "No hay clave de Gemini: la ficha se llenará con reglas simples.")
     )
 
 # --- Pasos 1 a 8: una pregunta por pantalla ------------------------------------------
@@ -141,9 +139,8 @@ else:
     st.success(f"Ficha llenada con: **{st.session_state.metodo}**")
     if st.session_state.uso:
         uso = st.session_state.uso
-        costo = (uso["tokens_entrada"] * PRECIO_ENTRADA + uso["tokens_salida"] * PRECIO_SALIDA) / 1_000_000
-        st.caption(f"Tokens: {uso['tokens_entrada']} de entrada y {uso['tokens_salida']} de salida "
-                   f"≈ US$ {costo:.4f} por registro.")
+        st.caption(f"Tokens: {uso['tokens_entrada']} de entrada y {uso['tokens_salida']} de salida. "
+                   "Costo: US$ 0 (plan gratuito de Gemini).")
     if ficha.campos_dudosos:
         st.warning("Confirme con la persona estos datos: " + ", ".join(ficha.campos_dudosos))
     if ficha.observaciones:

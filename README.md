@@ -4,7 +4,7 @@
 
 Proyecto final de la Diplomatura en Ciencia de Datos para las Ciencias Sociales y la Gestión Pública (Q-Lab PUCP).
 
-- **Demo:** `[COMPLETAR: URL de Streamlit Community Cloud]` · o en local, ver [Cómo correrlo](#cómo-correrlo)
+- **Demo:** https://proyectofinal-4h57dzu4nufopstr5nczcj.streamlit.app · o en local, ver [Cómo correrlo](#cómo-correrlo)
 - **Video de respaldo:** `[COMPLETAR]`
 
 ---
@@ -12,7 +12,7 @@ Proyecto final de la Diplomatura en Ciencia de Datos para las Ciencias Sociales 
 ## 1. One-liner
 
 Hacemos **el registro y la formalización de recicladores** para **las municipalidades y las personas que reciclan**
-mediante **una conversación por voz que Whisper transcribe y Claude convierte en la ficha oficial**.
+mediante **una conversación por voz que Whisper transcribe y Gemini convierte en la ficha oficial**.
 
 ## 2. Founder
 
@@ -44,7 +44,7 @@ que cruza SIGERSOL, la OEFA, el Banco Mundial y UN Comtrade con mi trabajo de ca
 **Solución.** Una app web que funciona en el celular del promotor municipal o de la propia persona:
 
 1. **Registro por voz:** 8 preguntas en lenguaje cotidiano; la persona responde hablando.
-2. **Ficha automática:** Whisper transcribe; Claude llena la ficha del registro con un esquema fijo y marca los datos
+2. **Ficha automática:** Whisper transcribe; Gemini llena la ficha del registro con un esquema fijo y marca los datos
    que hay que confirmar. El promotor revisa y se genera una **constancia en PDF**.
 3. **Capacitación y precios:** buenas prácticas, cómo reconocer cada material, precios de referencia y puntos de
    acopio en un mapa. Si aprueba el quiz, queda marcado como **capacitado**.
@@ -60,7 +60,7 @@ trae datos que el formulario nunca pidió.
 
 - **Reconocimiento de voz abierto y barato:** Whisper (2022) y faster-whisper (2023) transcriben español en un CPU
   común, sin pagar por minuto y sin que el audio salga del servidor.
-- **LLMs con salidas estructuradas:** desde 2025, la API de Claude garantiza que la respuesta cumple un esquema JSON.
+- **LLMs con salidas estructuradas y gratis:** hoy las APIs de modelos como Gemini obligan a que la respuesta cumpla un esquema JSON, y tienen un plan gratuito.
   Antes había que "rogarle" al modelo y limpiar el texto; hoy la ficha sale siempre en el formato del registro.
 - **Micrófono en el navegador y celulares en todas partes:** no hay que instalar nada.
 - **Presión por metas:** las municipalidades reportan valorización a SIGERSOL y tienen programas de segregación que
@@ -68,7 +68,7 @@ trae datos que el formulario nunca pidió.
 
 ## 6. Demo
 
-**URL:** `[COMPLETAR]`
+**URL:** https://proyectofinal-4h57dzu4nufopstr5nczcj.streamlit.app
 
 ### Capturas
 
@@ -81,7 +81,7 @@ trae datos que el formulario nunca pidió.
 ```mermaid
 flowchart LR
     A[🎙️ Celular: la persona<br>responde 8 preguntas] -->|audio WAV| B[Whisper<br>faster-whisper, CPU<br>nucleo/voz.py]
-    B -->|texto| C[Claude<br>salida estructurada<br>nucleo/extraccion.py]
+    B -->|texto| C[Gemini<br>salida estructurada<br>nucleo/extraccion.py]
     C -->|FichaReciclador JSON| D[Revisión humana<br>paginas/registro.py]
     D --> E[(SQLite<br>nucleo/base_datos.py)]
     D --> F[📄 Constancia PDF<br>nucleo/constancia.py]
@@ -97,7 +97,7 @@ flowchart LR
 | Pieza | Qué usamos | Por qué |
 |---|---|---|
 | Voz → texto | **faster-whisper** (modelo `base`, int8, CPU) | Gratis, corre en el servidor (la voz y el DNI no salen a otra empresa) y entra en el plan gratuito de Streamlit |
-| Texto → ficha | **Claude Opus 5.5** (`claude-opus-5-5`) con salidas estructuradas (Pydantic), esfuerzo `low` | Entiende respuestas con rodeos («de lunes a sábado» → 6 días) y nunca devuelve un JSON roto |
+| Texto → ficha | **Gemini 3.5 Flash-Lite** (`gemini-3.5-flash-lite`, plan gratuito, ~2 s por ficha) con salidas estructuradas (esquema Pydantic) | Gratis, entiende respuestas con rodeos («de lunes a sábado» → 6 días) y devuelve siempre el JSON de la ficha |
 | Plan B | Reglas con expresiones regulares | El demo funciona aunque no haya clave o se caiga internet |
 | Mapas y gráficos | Folium + OpenStreetMap, Plotly | Herramientas del curso, sin costo |
 | Datos | 60 recicladores **sintéticos**, SIGERSOL (MINAM), precios del trabajo de campo, UN Comtrade | No se usan datos personales reales |
@@ -110,14 +110,14 @@ En la terminal de VS Code, desde la carpeta del proyecto:
 uv venv --python 3.12 .venv
 source .venv/bin/activate
 uv pip install -r requirements.txt
-cp .env.example .env        # y pon tu ANTHROPIC_API_KEY (opcional)
+cp .env.example .env        # y pon tu GEMINI_API_KEY gratis (opcional)
 streamlit run app.py
 ```
 
-Sin clave de Claude la app funciona igual: llena la ficha con reglas simples.
+Sin clave de Gemini la app funciona igual: llena la ficha con reglas simples.
 
 **Desplegar en Streamlit Community Cloud:** *New app* → este repo → `app.py` → Python 3.12 → en *Advanced settings →
-Secrets* pegar `ANTHROPIC_API_KEY = "..."`. Poner un tope de gasto en la consola de Anthropic.
+Secrets* pegar `GEMINI_API_KEY = "..."` (clave gratis de [Google AI Studio](https://aistudio.google.com/apikey), sin tarjeta).
 
 ### Estructura del código
 
@@ -132,7 +132,7 @@ nucleo/
   config.py                rutas y claves (.env o st.secrets)
   preguntas.py             las 8 preguntas del registro
   voz.py                   Whisper
-  extraccion.py            esquema de la ficha, Claude y plan B con reglas
+  extraccion.py            esquema de la ficha, Gemini y plan B con reglas
   base_datos.py            SQLite
   constancia.py            PDF
   capacitacion.py          contenido de la capacitación
@@ -156,10 +156,10 @@ en papel.
 | Concepto | Costo |
 |---|---|
 | Whisper | US$ 0 (corre en el servidor) |
-| Claude Opus 5.5 por registro (~1 300 tokens de entrada y ~500 de salida, a US$ 4 y US$ 20 por millón) | ≈ **US$ 0.015** (la app muestra el costo real de cada registro) |
+| Gemini 3.5 Flash-Lite por registro (~500 tokens de entrada y ~300 de salida) | **US$ 0** en el plan gratuito (la app muestra los tokens de cada registro). En producción, con datos reales, se usaría el plan de pago, que no usa los datos para entrenar: menos de un centavo de dólar por registro |
 | Servidor | Gratis en Streamlit Community Cloud para el piloto; ~US$ 10 al mes en un VPS para producción |
 
-Un distrito con 300 recicladores cuesta unos US$ 5 en tokens el primer año, y el margen es casi todo el precio.
+El piloto cuesta US$ 0. En producción, un distrito con 300 recicladores costaría menos de US$ 3 en tokens al año: el margen es casi todo el precio.
 
 **Qué sigue:** piloto con una municipalidad de Trujillo, lectura de las preguntas en voz alta (texto a voz, sesión 15),
 WhatsApp como canal, y conexión con los puntos de acopio reales para publicar precios del día.

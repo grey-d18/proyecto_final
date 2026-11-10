@@ -1,5 +1,5 @@
 streamlit>=1.50
-anthropic>=2.7
+google-genai>=1.0
 faster-whisper>=1.1
 av<19            # av 19 rompe faster-whisper 1.2 (error metadata_errors)
 fpdf2>=2.8

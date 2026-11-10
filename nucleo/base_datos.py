@@ -31,7 +31,7 @@ def conectar() -> sqlite3.Connection:
             codigo TEXT PRIMARY KEY,
             fecha_registro TEXT,
             origen TEXT,               -- 'sintético' o 'registro por voz'
-            metodo TEXT,               -- 'Claude …' o 'Reglas simples'
+            metodo TEXT,               -- 'Gemini …' o 'Reglas simples'
             nombre_completo TEXT, dni TEXT, edad INTEGER,
             distrito_vivienda TEXT, sector_vivienda TEXT, zonas_trabajo TEXT,
             dias_por_semana INTEGER, anios_reciclando INTEGER,
