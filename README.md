@@ -46,8 +46,8 @@ que cruza SIGERSOL, la OEFA, el Banco Mundial y UN Comtrade con mi trabajo de ca
 
 1. **Soy reciclador**
    - **Registro por voz:** 8 preguntas, una por pantalla. Cada pregunta **se escucha** (voz natural con acento
-     peruano, porque la persona puede no saber leer) y se responde hablando; la grabación se detiene sola cuando la persona deja de
-     hablar. Whisper transcribe, Gemini llena la ficha del registro con un esquema fijo, la persona revisa y se
+     peruano, porque la persona puede no saber leer) y se responde hablando: se aprieta el micrófono para empezar y otra vez para
+     terminar. Whisper transcribe, Gemini llena la ficha del registro con un esquema fijo, la persona revisa y se
      descarga una **constancia en PDF**.
    - **Capacitación:** buenas prácticas, cómo reconocer cada material, precios de referencia y un quiz.
    - **Mi ruta:** tabla de precios del día en su distrito (último precio, menor precio y en qué local) y un mapa con
@@ -113,7 +113,7 @@ flowchart LR
 | Texto → voz | **`es-PE-CamilaNeural`** (voz neuronal de Microsoft con acento peruano) a través de la librería [`edge-tts`](https://github.com/rany2/edge-tts), velocidad −10 % | Natural, con la misma entonación en todas las preguntas y gratis sin cuenta. Los audios se generan una vez ([`scripts/generar_voces.py`](scripts/generar_voces.py)) y la app solo reproduce los MP3. Antes probé clonar mi voz: ver abajo |
 | Plan B | Reglas con expresiones regulares | El demo funciona aunque no haya clave o se caiga internet |
 | Mapas y gráficos | Folium + OpenStreetMap, Plotly | Herramientas del curso, sin costo |
-| Grabación y ubicación | `audio-recorder-streamlit` (se detiene tras 3,5 s de silencio), `streamlit-js-eval` (ubicación del navegador), Nominatim de OpenStreetMap (dirección → mapa) | Gratis y sin instalar nada en el celular |
+| Grabación y ubicación | `st.audio_input` de Streamlit (graba a 16 kHz, lo que usa Whisper), `streamlit-js-eval` (ubicación del navegador), Nominatim de OpenStreetMap (dirección → mapa) | Gratis y sin instalar nada en el celular |
 | Datos | 60 recicladores, 8 acopios, precios del día y 5 pedidos **sintéticos**; SIGERSOL (MINAM), precios del trabajo de campo, UN Comtrade | No se usan datos personales reales |
 
 #### Texto a voz: lo que probamos primero
@@ -143,12 +143,15 @@ El script de clonación quedó en el historial de git (commit `f6f9b3a`) por si 
   consultar el DNI en la RENIEC a través de la Plataforma de Interoperabilidad del Estado (PIDE). Con ese acceso
   bastaría con preguntar el DNI y el nombre oficial (y la edad) se llenaría solo, o se corregiría el nombre dictado.
   Como proyecto de curso no tenemos ese acceso.
-- **El inicio de la grabación.** El micrófono se pone rojo apenas se aprieta, pero el navegador tarda un momento en
-  abrirlo: si la persona habla de inmediato, se pierde la primera sílaba («mi nombre es» → «hombre es»). Gemini ignora
-  esas palabras de relleno, y si el DNI no queda con 8 dígitos se marca para confirmar.
-- **Permiso del micrófono.** En Safari (y en iPhone) el navegador puede pedir permiso en cada pregunta, porque la
-  grabadora es una pequeña página incrustada que se crea de nuevo cada vez. Una mejora pendiente es cambiarla por
-  `st.audio_input` de Streamlit.
+- **La grabadora (lo que cambiamos).** Primero usamos `audio-recorder-streamlit`, que se detenía sola tras 3,5 s de
+  silencio. Tenía dos problemas: es una pequeña página incrustada que se crea de nuevo en cada pregunta, así que
+  **Safari (y el iPhone) pedía permiso del micrófono en cada pregunta**; y se ponía roja antes de que el micrófono
+  estuviera abierto, así que si la persona hablaba de inmediato se perdía la primera sílaba («mi nombre es» →
+  «hombre es»). La cambiamos por **`st.audio_input`** de Streamlit, que es parte de la página: el permiso se pide una
+  sola vez. El costo es que ya no se detiene sola: se aprieta el micrófono otra vez para terminar.
+- **Si igual se pierde el inicio.** Los ejemplos empiezan con una frase («Mi DNI es…») para que, si se corta el
+  comienzo, se pierda esa frase y no un dato; Gemini ignora esas palabras de relleno, y si el DNI no queda con 8
+  dígitos se marca para confirmar.
 
 ### Cómo correrlo
 

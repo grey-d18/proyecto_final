@@ -25,6 +25,9 @@ div.stButton > button p, div.stDownloadButton > button p, div.stFormSubmitButton
 [class*="st-key-grandes"] div.stButton > button p { font-size: 1.5rem !important; font-weight: 600; }
 /* El botón «más» (tertiary) se queda pequeño y subrayado, como un enlace. */
 button[kind="tertiary"] { min-height: 1.5rem !important; }
+/* Grabadora del registro: más alta y con el botón del micrófono grande, para dedos y ojos cansados. */
+[data-testid="stAudioInput"] > div { min-height: 5rem; }
+[data-testid="stAudioInputActionButton"] { transform: scale(1.8); margin: 0 1rem; color: #2E7D32 !important; }
 button[kind="tertiary"] p { font-size: 0.9rem !important; text-decoration: underline; }
 </style>
 """

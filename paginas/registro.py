@@ -3,9 +3,8 @@
 Paso 0      bienvenida (se escucha) y consentimiento.
 Pasos 1-8   una pregunta por pantalla. La pregunta SE ESCUCHA sola (voz grabada,
             porque la persona puede no saber leer). Debajo, un ejemplo de respuesta.
-            La persona aprieta el micrófono y habla; la grabación se detiene sola
-            después de unos segundos de silencio, o al volver a apretar el micrófono.
-            Whisper convierte la voz en texto.
+            La persona aprieta el micrófono, habla y lo vuelve a apretar para terminar
+            (st.audio_input, la grabadora de Streamlit). Whisper convierte la voz en texto.
 Paso final  la IA llena la ficha, se revisa, se guarda y se descarga la constancia PDF.
 
 ¿Qué es st.session_state?
@@ -16,7 +15,6 @@ Paso final  la IA llena la ficha, se revisa, se guarda y se descarga la constanc
 import hashlib
 
 import streamlit as st
-from audio_recorder_streamlit import audio_recorder
 
 from nucleo.base_datos import buscar_reciclador, guardar_ficha
 from nucleo.config import hay_clave_gemini
@@ -28,7 +26,6 @@ from nucleo.preguntas import PREGUNTAS
 from nucleo.voz import transcribir
 
 TOTAL = len(PREGUNTAS)
-SEGUNDOS_DE_SILENCIO = 3.5  # tras este silencio, la grabación se detiene sola
 
 # --- Memoria de la página --------------------------------------------------------
 st.session_state.setdefault("paso", 0)
@@ -105,18 +102,16 @@ elif paso <= TOTAL:
     hablar(clave)  # la pregunta se escucha sola
     st.caption(f"Ejemplo: «{pregunta['ejemplo']}»")
 
-    # El micrófono: verde quieto, rojo mientras graba. pause_threshold = segundos de silencio
-    # para detenerse solo; también se detiene si se vuelve a apretar.
-    _, centro, _ = st.columns([2, 1, 2])
-    with centro:
-        audio = audio_recorder(
-            text="", pause_threshold=SEGUNDOS_DE_SILENCIO, neutral_color="#2E7D32",
-            recording_color="#E24B4A", icon_size="6x", key=f"grabacion_{clave}",
-        )
+    # El micrófono: st.audio_input es parte de la página (no una página incrustada como la
+    # grabadora anterior), así que el navegador pide permiso UNA vez y no en cada pregunta.
+    # Muestra el tiempo y la onda mientras graba; se aprieta otra vez para terminar.
+    # sample_rate=16000: la frecuencia con la que escucha Whisper (archivo más liviano).
+    audio = st.audio_input("Su respuesta", sample_rate=16000, key=f"grabacion_{clave}",
+                           label_visibility="collapsed")
     st.markdown("<p style='text-align:center'><b>Apriete el micrófono y responda.</b><br>"
-                "Se detiene solo cuando deja de hablar.</p>", unsafe_allow_html=True)
+                "Cuando termine, apriételo otra vez.</p>", unsafe_allow_html=True)
     if audio:
-        procesar_audio(clave, audio)
+        procesar_audio(clave, audio.getvalue())
 
     escrito = st.text_area("Lo que entendimos (puede corregirlo):", key=f"texto_{clave}", height=80)
     st.session_state.respuestas[clave] = escrito  # guardamos lo que quedó (corregido o escrito a mano)
