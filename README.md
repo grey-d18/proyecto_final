@@ -41,15 +41,23 @@ que cruza SIGERSOL, la OEFA, el Banco Mundial y UN Comtrade con mi trabajo de ca
 
 ## 4. Solución e insight
 
-**Solución.** Una app web que funciona en el celular del promotor municipal o de la propia persona:
+**Solución.** Una app web con botones grandes, pensada para personas que leen con dificultad. Al entrar se elige
+**¿Quién eres?**:
 
-1. **Registro por voz:** 8 preguntas en lenguaje cotidiano; la persona responde hablando.
-2. **Ficha automática:** Whisper transcribe; Gemini llena la ficha del registro con un esquema fijo y marca los datos
-   que hay que confirmar. El promotor revisa y se genera una **constancia en PDF**.
-3. **Capacitación y precios:** buenas prácticas, cómo reconocer cada material, precios de referencia y puntos de
-   acopio en un mapa. Si aprueba el quiz, queda marcado como **capacitado**.
-4. **Panel municipal:** inscritos por distrito, materiales, kilos recuperados, quién no tiene guantes, y la comparación
-   con lo que el distrito reporta a SIGERSOL.
+1. **Soy reciclador**
+   - **Registro por voz:** 12 preguntas, una por pantalla. Cada pregunta **se escucha** (voz humana, porque la
+     persona puede no saber leer) y se responde hablando; la grabación se detiene sola cuando la persona deja de
+     hablar. Whisper transcribe, Gemini llena la ficha del registro con un esquema fijo, la persona revisa y se
+     descarga una **constancia en PDF**.
+   - **Capacitación:** buenas prácticas, cómo reconocer cada material, precios de referencia y un quiz.
+   - **Mi ruta:** tabla de precios del día en su distrito (último precio, menor precio y en qué local) y un mapa con
+     los locales de acopio y el reciclaje que hay para recoger.
+   - **Recoger reciclaje** (con burbuja de aviso): los pedidos de los vecinos. Al marcar «Lo recogeré» se escucha que
+     tiene 3 días; si no recoge, el pedido vuelve a estar disponible para otro reciclador de la zona.
+2. **Soy vecino:** pide un recojo con descripción, peso y foto; elige un reciclador o «cualquiera de la zona».
+3. **Soy acopiador:** ubica su local (con la ubicación del celular o escribiendo la dirección) y publica sus precios.
+4. **Soy municipalidad** (en «más»): panel con inscritos por distrito, materiales, con qué se movilizan, quién no
+   tiene guantes y la comparación con lo que el distrito reporta a SIGERSOL.
 
 **Insight.** El cuello de botella de la formalización no es la ley sino **el formulario**. En el trabajo de campo, la
 gente que recicla habla con fluidez de su trabajo (rutas, kilos, precios), pero muchas personas leen con dificultad y
@@ -72,22 +80,26 @@ trae datos que el formulario nunca pidió.
 
 ### Capturas
 
-| Inicio | Registro por voz | Panel municipal |
+| ¿Quién eres? | Registro por voz | Mi ruta |
 |---|---|---|
-| ![Inicio](docs/capturas/1_inicio.jpg) | ![Registro](docs/capturas/2_registro.jpg) | ![Panel](docs/capturas/3_panel_municipal.jpg) |
+| ![Inicio](docs/capturas/1_inicio.jpg) | ![Registro](docs/capturas/2_registro.jpg) | ![Mi ruta](docs/capturas/3_mi_ruta.jpg) |
 
 ### Arquitectura
 
 ```mermaid
 flowchart LR
-    A[🎙️ Celular: la persona<br>responde 8 preguntas] -->|audio WAV| B[Whisper<br>faster-whisper, CPU<br>nucleo/voz.py]
+    Q[🔊 Pregunta con voz clonada<br>Qwen3-TTS, generada una vez<br>datos/audios_preguntas/] --> A
+    A[🎙️ Celular: la persona<br>responde 12 preguntas] -->|audio WAV| B[Whisper<br>faster-whisper, CPU<br>nucleo/voz.py]
     B -->|texto| C[Gemini<br>salida estructurada<br>nucleo/extraccion.py]
     C -->|FichaReciclador JSON| D[Revisión humana<br>paginas/registro.py]
     D --> E[(SQLite<br>nucleo/base_datos.py)]
     D --> F[📄 Constancia PDF<br>nucleo/constancia.py]
     E --> G[📊 Panel municipal<br>Plotly + Folium]
     H[SIGERSOL · precios de campo<br>datos/] --> G
-    H --> I[📚 Capacitación y precios]
+    H --> I[📚 Capacitación]
+    K[🏪 Acopiador: precios<br>y ubicación del local] --> E
+    L[🏠 Vecino: pedido de recojo<br>con foto] --> E
+    E --> M[🗺️ Mi ruta y 🚚 Recoger reciclaje]
     C -.sin clave o sin internet.-> J[Reglas simples<br>extraer_con_reglas]
     J --> D
 ```
@@ -98,9 +110,11 @@ flowchart LR
 |---|---|---|
 | Voz → texto | **faster-whisper** (modelo `small`, int8, CPU) | Gratis, corre en el servidor (la voz y el DNI no salen a otra empresa) y entra en el plan gratuito de Streamlit |
 | Texto → ficha | **Gemini 3.5 Flash-Lite** (`gemini-3.5-flash-lite`, plan gratuito, ~2 s por ficha) con salidas estructuradas (esquema Pydantic) | Gratis, entiende respuestas con rodeos («de lunes a sábado» → 6 días) y devuelve siempre el JSON de la ficha |
+| Texto → voz | **Qwen3-TTS** (`Qwen3-TTS-12Hz-0.6B-Base`, abierto) clonando mi voz, solo en mi laptop | Las preguntas se escuchan con una voz humana y cercana; los audios se generan una vez ([`scripts/clonar_voz.py`](scripts/clonar_voz.py)) y la app solo los reproduce |
 | Plan B | Reglas con expresiones regulares | El demo funciona aunque no haya clave o se caiga internet |
 | Mapas y gráficos | Folium + OpenStreetMap, Plotly | Herramientas del curso, sin costo |
-| Datos | 60 recicladores **sintéticos**, SIGERSOL (MINAM), precios del trabajo de campo, UN Comtrade | No se usan datos personales reales |
+| Grabación y ubicación | `audio-recorder-streamlit` (se detiene tras 3,5 s de silencio), `streamlit-js-eval` (ubicación del navegador), Nominatim de OpenStreetMap (dirección → mapa) | Gratis y sin instalar nada en el celular |
+| Datos | 60 recicladores, 8 acopios, precios del día y 5 pedidos **sintéticos**; SIGERSOL (MINAM), precios del trabajo de campo, UN Comtrade | No se usan datos personales reales |
 
 ### Cómo correrlo
 
@@ -122,25 +136,31 @@ Secrets* pegar `GEMINI_API_KEY = "..."` (clave gratis de [Google AI Studio](http
 ### Estructura del código
 
 ```
-app.py                     menú de la app (st.navigation)
+app.py                     registra las páginas; sin menú lateral (se navega con botones)
 paginas/
-  inicio.py                portada
-  registro.py              flujo principal: consentimiento → 8 preguntas → ficha → constancia
+  inicio.py                «¿Quién eres?»: reciclador, vecino, acopiador (y municipalidad en «más»)
+  reciclador.py            «¿Eres …?» y los 3 botones: Registro, Capacitación, Mi ruta
+  registro.py              consentimiento → 12 preguntas habladas → ficha → constancia
   capacitacion.py          buenas prácticas, materiales, precios + mapa, quiz
+  mi_ruta.py               tabla de precios del día y mapa de acopios y recojos
+  recoger.py               pedidos de los vecinos, «Lo recogeré» y regla de los 3 días
+  vecino.py                pedir un recojo (descripción, peso, foto, ubicación)
+  acopiador.py             ubicar el local y publicar precios
   municipalidad.py         panel: indicadores, gráficos, mapa, SIGERSOL, lista
 nucleo/
   config.py                rutas y claves (.env o st.secrets)
-  preguntas.py             las 8 preguntas del registro
+  preguntas.py             las 12 preguntas (texto, lo que dice el audio y un ejemplo) y los avisos
   voz.py                   Whisper
   extraccion.py            esquema de la ficha, Gemini y plan B con reglas
-  base_datos.py            SQLite
+  base_datos.py            SQLite: recicladores, acopios, precios y recojos
+  interfaz.py              botones grandes, voz, «Volver» y la burbuja de recojos
+  ubicacion.py             centros de distrito, «usar mi ubicación» y «escribir mi dirección»
   constancia.py            PDF
   capacitacion.py          contenido de la capacitación
 scripts/
-  generar_sinteticos.py    crea los 60 recicladores inventados
-  clonar_voz_ejemplo.py    crea las voces de ejemplo con mi voz clonada (Qwen3-TTS, local)
-  generar_audios_ejemplo.py versión anterior: voz robótica de macOS
-datos/                     CSV de precios, SIGERSOL, puntos de acopio y audios de ejemplo
+  generar_sinteticos.py    crea los datos inventados (recicladores, acopios, precios, pedidos)
+  clonar_voz.py            crea los audios de las preguntas con mi voz clonada (Qwen3-TTS, local)
+datos/                     CSV (sintéticos, SIGERSOL, precios de campo) y audios de las preguntas
 docs/                      capturas y entrevistas
 ```
 
@@ -162,8 +182,8 @@ en papel.
 
 El piloto cuesta US$ 0. En producción, un distrito con 300 recicladores costaría menos de US$ 3 en tokens al año: el margen es casi todo el precio.
 
-**Qué sigue:** piloto con una municipalidad de Trujillo, lectura de las preguntas en voz alta (texto a voz, sesión 15),
-WhatsApp como canal, y conexión con los puntos de acopio reales para publicar precios del día.
+**Qué sigue:** piloto con una municipalidad de Trujillo, acopiadores reales publicando sus precios, WhatsApp como canal
+y respuestas también habladas en Mi ruta (leer la tabla de precios en voz alta).
 
 ## 8. Herramientas del curso
 
@@ -171,17 +191,19 @@ WhatsApp como canal, y conexión con los puntos de acopio reales para publicar p
 |---|---|---|---|
 | **De la voz al texto con Whisper** | 13 | [`nucleo/voz.py`](nucleo/voz.py) | Reemplaza el formulario: la persona habla en vez de escribir |
 | **LLMs con salidas estructuradas** | 08 | [`nucleo/extraccion.py`](nucleo/extraccion.py) | Convierte respuestas con rodeos en la ficha exacta del registro |
+| Texto a voz (clonación de voz con Qwen3-TTS) | 15 | [`scripts/clonar_voz.py`](scripts/clonar_voz.py), [`nucleo/interfaz.py`](nucleo/interfaz.py) | La persona escucha cada pregunta: no necesita saber leer |
 | Dashboards | 05 | [`paginas/municipalidad.py`](paginas/municipalidad.py) | Lo que ve (y paga) la municipalidad |
-| GeoPandas y Folium | 06 | [`paginas/municipalidad.py`](paginas/municipalidad.py), [`paginas/capacitacion.py`](paginas/capacitacion.py) | Dónde viven los recicladores y dónde vender |
+| GeoPandas y Folium | 06 | [`paginas/mi_ruta.py`](paginas/mi_ruta.py), [`paginas/municipalidad.py`](paginas/municipalidad.py), [`paginas/capacitacion.py`](paginas/capacitacion.py) | Dónde vender, qué recoger y dónde viven los recicladores |
 
 ## 9. Qué hizo el agente
 
 Usé **Claude Code** en VS Code. `[REVISAR y completar]`
 
-- **Yo:** la idea, mi voz para las voces de ejemplo (clonada con Qwen3-TTS, con datos inventados), el problema y el usuario (de mi tesis), los precios de campo y los datos de SIGERSOL (de mi proyecto
+- **Yo:** la idea, el diseño de la app por roles (reciclador, vecino, acopiador, municipalidad), mi voz para las preguntas
+  habladas (clonada con Qwen3-TTS), el problema y el usuario (de mi tesis), los precios de campo y los datos de SIGERSOL (de mi proyecto
   anterior), las preguntas del registro, las decisiones de producto y la revisión de cada archivo.
 - **Claude Code generó:** la estructura del proyecto, el código de `nucleo/` y `paginas/` con comentarios explicativos,
-  los scripts de datos sintéticos y de audios de ejemplo, la prueba del flujo completo en el navegador y el borrador de
+  los scripts de datos sintéticos y de clonación de voz, la prueba del flujo completo en el navegador y el borrador de
   este README.
 
 ---

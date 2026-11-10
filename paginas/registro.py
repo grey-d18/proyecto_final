@@ -1,10 +1,12 @@
 """Registro por voz: el flujo principal del producto.
 
-Paso 0: consentimiento.
-Pasos 1 a 8: una pregunta por pantalla; la persona responde grabándose
-            (Whisper transcribe) o escribiendo.
-Paso 9: la IA llena la ficha, el registrador la revisa, se guarda y se descarga
-        la constancia en PDF.
+Paso 0      bienvenida (se escucha) y consentimiento.
+Pasos 1-12  una pregunta por pantalla. La pregunta SE ESCUCHA sola (voz grabada,
+            porque la persona puede no saber leer). Debajo, un ejemplo de respuesta.
+            La persona aprieta el micrófono y habla; la grabación se detiene sola
+            después de unos segundos de silencio, o al volver a apretar el micrófono.
+            Whisper convierte la voz en texto.
+Paso final  la IA llena la ficha, se revisa, se guarda y se descarga la constancia PDF.
 
 ¿Qué es st.session_state?
     Streamlit vuelve a ejecutar este archivo de arriba abajo cada vez que alguien
@@ -14,17 +16,18 @@ Paso 9: la IA llena la ficha, el registrador la revisa, se guarda y se descarga
 import hashlib
 
 import streamlit as st
+from audio_recorder_streamlit import audio_recorder
 
-from nucleo.base_datos import guardar_ficha
-from nucleo.config import DATOS, hay_clave_gemini
+from nucleo.base_datos import buscar_reciclador, guardar_ficha
+from nucleo.config import hay_clave_gemini
 from nucleo.constancia import crear_constancia
 from nucleo.extraccion import DISTRITOS_TRUJILLO, FichaReciclador, extraer_ficha
+from nucleo.interfaz import hablar, volver
 from nucleo.preguntas import PREGUNTAS
 from nucleo.voz import transcribir
 
-AUDIOS_EJEMPLO = DATOS / "audios_ejemplo"  # voces de ejemplo: voz de la fundadora clonada con Qwen3-TTS (scripts/clonar_voz_ejemplo.py)
 TOTAL = len(PREGUNTAS)
-
+SEGUNDOS_DE_SILENCIO = 3.5  # tras este silencio, la grabación se detiene sola
 
 # --- Memoria de la página --------------------------------------------------------
 st.session_state.setdefault("paso", 0)
@@ -36,6 +39,11 @@ st.session_state.setdefault("respuestas", {})
 
 
 def ir_a(paso: int) -> None:
+    # Antes de cambiar de pregunta guardamos lo que hay en el cuadro de texto: si la persona
+    # escribe y aprieta «Siguiente» de inmediato, este es el único momento en que el texto existe.
+    for clave in list(st.session_state):
+        if clave.startswith("texto_"):
+            st.session_state.respuestas[clave.removeprefix("texto_")] = st.session_state[clave]
     st.session_state.paso = paso
     if paso == TOTAL + 1:
         st.session_state.ficha = None  # al terminar, la ficha se vuelve a llenar con las respuestas actuales
@@ -44,13 +52,10 @@ def ir_a(paso: int) -> None:
 def reiniciar() -> None:
     """Borra todo para registrar a otra persona."""
     for clave in list(st.session_state):
-        if clave.startswith(("texto_", "audio_", "hash_")) or clave in ("ficha", "codigo", "metodo", "uso", "respuestas"):
+        if clave.startswith(("texto_", "grabacion_", "hash_")) or clave in (
+                "ficha", "codigo", "metodo", "uso", "respuestas", "reciclador"):
             del st.session_state[clave]
     st.session_state.paso = 0
-
-
-def respuestas_actuales() -> dict[str, str]:
-    return {p["clave"]: st.session_state.respuestas.get(p["clave"], "") for p in PREGUNTAS}
 
 
 def procesar_audio(clave: str, audio_bytes: bytes) -> None:
@@ -58,152 +63,144 @@ def procesar_audio(clave: str, audio_bytes: bytes) -> None:
     huella = hashlib.md5(audio_bytes).hexdigest()
     if st.session_state.get(f"hash_{clave}") == huella:
         return  # ya lo transcribimos antes: no gastamos tiempo otra vez
-    with st.spinner("Escuchando y transcribiendo con Whisper…"):
+    with st.spinner("Escuchando…"):
         texto = transcribir(audio_bytes)
     st.session_state.respuestas[clave] = texto
     st.session_state[f"texto_{clave}"] = texto  # para que aparezca en el cuadro de texto
     st.session_state[f"hash_{clave}"] = huella
 
 
-# --- Encabezado --------------------------------------------------------------------
-st.title("🎙️ Registro por voz")
-st.caption("Registro Municipal de Recicladores · Ley 29419")
 paso = st.session_state.paso
-st.progress(min(paso, TOTAL) / TOTAL, text=f"Pregunta {min(paso, TOTAL)} de {TOTAL}" if paso else "Antes de empezar")
+yo = buscar_reciclador(st.session_state["reciclador"]) if st.session_state.get("reciclador") else None
+volver("paginas/reciclador.py" if yo else "paginas/inicio.py")
 
-# --- Paso 0: consentimiento --------------------------------------------------------
+# --- Si la persona ya está inscrita: su constancia --------------------------------------
+if yo and paso == 0 and not st.session_state.codigo:
+    st.title("🎙️ Registro")
+    st.success(f"Usted ya está inscrito con el código **{yo['codigo']}**.")
+    st.button("Registrar a otra persona", on_click=reiniciar)
+    st.stop()
+
+# --- Paso 0: bienvenida y consentimiento ---------------------------------------------
 if paso == 0:
-    st.markdown(
-        """
-**Lea esto en voz alta a la persona:**
+    st.title("🎙️ Registro de recicladores")
+    hablar("bienvenida_registro")
+    st.markdown("Le haremos **12 preguntas**. Escuche cada una y responda hablando. "
+                "Sus datos solo se usan para el Registro Municipal de Recicladores.")
+    acepta = st.checkbox("Acepto registrarme y que se usen mis datos para el registro.")
+    st.button("▶ Empezar", type="primary", disabled=not acepta, on_click=ir_a, args=(1,), width="stretch")
+    if not hay_clave_gemini():
+        st.caption("Sin clave de Gemini: la ficha se llenará con reglas simples.")
 
-> «Le voy a hacer 8 preguntas para inscribirle en el Registro Municipal de Recicladores.
-> Puede responder hablando. Su voz se convierte en texto en este equipo y sus datos solo
-> se usan para el registro. Puede parar cuando quiera.»
-"""
-    )
-    acepta = st.checkbox("La persona aceptó registrarse y que se usen sus datos para el registro.")
-    st.button("Empezar ▶", type="primary", disabled=not acepta, on_click=ir_a, args=(1,))
-    st.info(
-        "Para el demo: use datos inventados o su propia voz. "
-        + ("La ficha la llenará Gemini." if hay_clave_gemini()
-           else "No hay clave de Gemini: la ficha se llenará con reglas simples.")
-    )
-
-# --- Pasos 1 a 8: una pregunta por pantalla ------------------------------------------
+# --- Pasos 1 a 12: una pregunta por pantalla ------------------------------------------
 elif paso <= TOTAL:
     pregunta = PREGUNTAS[paso - 1]
     clave = pregunta["clave"]
     # Si volvemos a una pregunta ya respondida, ponemos su respuesta en el cuadro de texto.
     st.session_state.setdefault(f"texto_{clave}", st.session_state.respuestas.get(clave, ""))
-    st.header(pregunta["texto"])
-    st.caption(pregunta["ayuda"])
 
-    col_voz, col_ejemplo = st.columns([3, 1])
-    with col_voz:
-        # st.audio_input muestra un micrófono en el navegador (funciona en el celular).
-        audio = st.audio_input("Grabe la respuesta", key=f"audio_{clave}")
-        if audio is not None:
-            procesar_audio(clave, audio.getvalue())
-    with col_ejemplo:
-        ejemplo = AUDIOS_EJEMPLO / f"{clave}.wav"
-        if ejemplo.exists():
-            st.write("")
-            if st.button("🔊 Usar voz de ejemplo", help="Transcribe una grabación de ejemplo (para el demo)"):
-                procesar_audio(clave, ejemplo.read_bytes())
-            st.audio(str(ejemplo))
+    st.progress(paso / TOTAL, text=f"Pregunta {paso} de {TOTAL}")
+    st.markdown(f"## 🔊 {pregunta['texto']}")
+    hablar(clave)  # la pregunta se escucha sola
+    st.caption(f"Ejemplo: «{pregunta['ejemplo']}»")
 
-    escrito = st.text_area("Lo que entendió Whisper (puede corregirlo o escribir aquí):", key=f"texto_{clave}", height=90)
+    # El micrófono: verde quieto, rojo mientras graba. pause_threshold = segundos de silencio
+    # para detenerse solo; también se detiene si se vuelve a apretar.
+    _, centro, _ = st.columns([2, 1, 2])
+    with centro:
+        audio = audio_recorder(
+            text="", pause_threshold=SEGUNDOS_DE_SILENCIO, neutral_color="#2E7D32",
+            recording_color="#E24B4A", icon_size="6x", key=f"grabacion_{clave}",
+        )
+    st.markdown("<p style='text-align:center'><b>Apriete el micrófono y responda.</b><br>"
+                "Se detiene solo cuando deja de hablar.</p>", unsafe_allow_html=True)
+    if audio:
+        procesar_audio(clave, audio)
+
+    escrito = st.text_area("Lo que entendimos (puede corregirlo):", key=f"texto_{clave}", height=80)
     st.session_state.respuestas[clave] = escrito  # guardamos lo que quedó (corregido o escrito a mano)
 
     atras, adelante = st.columns(2)
     atras.button("◀ Anterior", on_click=ir_a, args=(paso - 1,), width="stretch")
-    adelante.button(
-        "Siguiente ▶" if paso < TOTAL else "Terminar y llenar la ficha ✅",
-        type="primary", on_click=ir_a, args=(paso + 1,), width="stretch",
-    )
+    adelante.button("Siguiente ▶" if paso < TOTAL else "Terminar ✅", type="primary",
+                    on_click=ir_a, args=(paso + 1,), width="stretch")
 
-# --- Paso 9: la IA llena la ficha y la persona la confirma ---------------------------
+# --- Paso final: la IA llena la ficha y la persona la confirma ------------------------
 else:
-    respuestas = respuestas_actuales()
-    with st.expander("Ver las respuestas transcritas"):
-        for p in PREGUNTAS:
-            st.markdown(f"**{p['texto']}**  \n{respuestas[p['clave']] or '_(sin respuesta)_'}")
-
+    respuestas = {p["clave"]: st.session_state.respuestas.get(p["clave"], "") for p in PREGUNTAS}
     if st.session_state.ficha is None:
-        with st.spinner("La IA está ordenando las respuestas en la ficha…"):
+        with st.spinner("Ordenando sus respuestas en la ficha…"):
             ficha, metodo, uso = extraer_ficha(respuestas)
         st.session_state.ficha, st.session_state.metodo, st.session_state.uso = ficha, metodo, uso
 
     ficha: FichaReciclador = st.session_state.ficha
-    st.success(f"Ficha llenada con: **{st.session_state.metodo}**")
-    if st.session_state.uso:
-        uso = st.session_state.uso
-        st.caption(f"Tokens: {uso['tokens_entrada']} de entrada y {uso['tokens_salida']} de salida. "
-                   "Costo: US$ 0 (plan gratuito de Gemini).")
-    if ficha.campos_dudosos:
-        st.warning("Confirme con la persona estos datos: " + ", ".join(ficha.campos_dudosos))
-    if ficha.observaciones:
-        st.info(f"📝 {ficha.observaciones}")
 
-    # Si ya se guardó, mostramos la constancia. Si no, el formulario para revisar.
+    # Si ya se guardó, mostramos la constancia.
     if st.session_state.codigo:
         codigo = st.session_state.codigo
         st.balloons()
         st.header(f"✅ Inscrito con el código {codigo}")
-        st.download_button(
-            "📄 Descargar constancia (PDF)", data=crear_constancia(ficha, codigo),
-            file_name=f"constancia_{codigo}.pdf", mime="application/pdf", type="primary",
-        )
-        st.button("Registrar a otra persona", on_click=reiniciar)
-    else:
-        st.subheader("Revise la ficha antes de guardarla")
-        # st.form agrupa los campos: nada se guarda hasta apretar el botón del final.
-        with st.form("revisar_ficha"):
-            c1, c2, c3 = st.columns(3)
-            nombre = c1.text_input("Nombre completo", ficha.nombre_completo or "")
-            dni = c2.text_input("DNI", ficha.dni or "", max_chars=8)
-            edad = c3.number_input("Edad", 14, 100, ficha.edad or 30)
-            opciones_distrito = DISTRITOS_TRUJILLO + ["Otro"]
-            distrito = c1.selectbox(
-                "Distrito de vivienda", opciones_distrito,
-                index=opciones_distrito.index(ficha.distrito_vivienda) if ficha.distrito_vivienda in opciones_distrito else len(opciones_distrito) - 1,
-            )
-            sector = c2.text_input("Sector", ficha.sector_vivienda or "")
-            zonas = c3.text_input("Zonas de trabajo", ficha.zonas_trabajo or "")
-            dias = c1.number_input("Días por semana", 0, 7, ficha.dias_por_semana or 0)
-            anios = c2.number_input("Años reciclando", 0, 70, ficha.anios_reciclando or 0)
-            kg = c3.number_input("Kilos por semana", 0.0, 5000.0, float(ficha.kg_semana or 0))
-            materiales = st.multiselect(
-                "Materiales", ["Cartón", "Papel", "Botella PET", "Plástico duro", "Fierro / chatarra",
-                               "Cobre", "Aluminio", "Vidrio", "Otro"], ficha.materiales,
-            )
-            vende_a = st.text_input("Vende a", ficha.vende_a or "")
-            c4, c5 = st.columns(2)
-            asociacion = c4.checkbox("Pertenece a una asociación", bool(ficha.pertenece_asociacion))
-            nombre_asoc = c5.text_input("Nombre de la asociación", ficha.nombre_asociacion or "")
-            equipo = st.multiselect(
-                "Equipo de protección", ["Guantes", "Mascarilla", "Chaleco", "Botas", "Uniforme"],
-                ficha.equipo_proteccion,
-            )
-            confirmado = st.form_submit_button("Guardar en el registro y crear constancia", type="primary")
+        st.download_button("📄 Descargar constancia (PDF)", data=crear_constancia(ficha, codigo),
+                           file_name=f"constancia_{codigo}.pdf", mime="application/pdf",
+                           type="primary", width="stretch")
+        if st.button("Ir a mi menú ▶", width="stretch"):
+            st.session_state.paso, st.session_state.codigo = 0, None
+            st.switch_page("paginas/reciclador.py")
+        st.stop()
 
-        if confirmado:
-            if len(dni) != 8 or not dni.isdigit():
-                st.error("El DNI debe tener 8 números.")
-            else:
-                # Creamos la ficha final con lo que revisó el registrador.
-                ficha_final = ficha.model_copy(update={
-                    "nombre_completo": nombre, "dni": dni, "edad": int(edad),
-                    "distrito_vivienda": distrito, "sector_vivienda": sector or None,
-                    "zonas_trabajo": zonas or None, "dias_por_semana": int(dias) or None,
-                    "anios_reciclando": int(anios) or None, "kg_semana": kg or None,
-                    "materiales": materiales, "vende_a": vende_a or None,
-                    "pertenece_asociacion": asociacion, "nombre_asociacion": nombre_asoc or None,
-                    "equipo_proteccion": equipo,
-                })
-                st.session_state.ficha = ficha_final
-                st.session_state.codigo = guardar_ficha(ficha_final, st.session_state.metodo)
-                st.rerun()
+    st.header("Revise su ficha")
+    st.caption(f"Llenada con: {st.session_state.metodo}"
+               + (" · costo US$ 0 (plan gratuito de Gemini)" if st.session_state.uso else ""))
+    if ficha.campos_dudosos:
+        st.warning("Confirme estos datos: " + ", ".join(ficha.campos_dudosos))
+    with st.expander("Ver las respuestas tal como se escucharon"):
+        for p in PREGUNTAS:
+            st.markdown(f"**{p['texto']}**  \n{respuestas[p['clave']] or '_(sin respuesta)_'}")
 
-        st.button("◀ Volver a las preguntas", on_click=ir_a, args=(TOTAL,))
+    # st.form agrupa los campos: nada se guarda hasta apretar el botón del final.
+    with st.form("revisar_ficha"):
+        nombre = st.text_input("Nombre completo", ficha.nombre_completo or "")
+        c1, c2 = st.columns(2)
+        dni = c1.text_input("DNI", ficha.dni or "", max_chars=8)
+        edad = c2.number_input("Edad", 14, 100, ficha.edad or 30)
+        opciones_distrito = DISTRITOS_TRUJILLO + ["Otro"]
+        distrito = c1.selectbox(
+            "Distrito donde vive", opciones_distrito,
+            index=opciones_distrito.index(ficha.distrito_vivienda)
+            if ficha.distrito_vivienda in opciones_distrito else len(opciones_distrito) - 1)
+        sector = c2.text_input("Sector o barrio", ficha.sector_vivienda or "")
+        zonas = st.text_input("Zonas donde recicla", ficha.zonas_trabajo or "")
+        c3, c4 = st.columns(2)
+        dias = c3.number_input("Días por semana", 0, 7, ficha.dias_por_semana or 0)
+        anios = c4.number_input("Años reciclando", 0, 70, ficha.anios_reciclando or 0)
+        materiales = st.multiselect(
+            "Materiales", ["Cartón", "Papel", "Botella PET", "Plástico duro", "Fierro / chatarra",
+                           "Cobre", "Aluminio", "Vidrio", "Otro"], ficha.materiales)
+        transporte = st.multiselect(
+            "Recoge y mueve los materiales con", ["Saco", "Carrito", "Carretilla", "Triciclo",
+                                                  "Mototaxi", "A pie", "Otro"], ficha.medio_transporte)
+        c5, c6 = st.columns(2)
+        asociacion = c5.checkbox("Pertenece a una asociación", bool(ficha.pertenece_asociacion))
+        nombre_asoc = c6.text_input("¿Cuál?", ficha.nombre_asociacion or "")
+        equipo = st.multiselect("Equipo de protección", ["Guantes", "Mascarilla", "Chaleco", "Botas", "Uniforme"],
+                                ficha.equipo_proteccion)
+        confirmado = st.form_submit_button("Guardar y crear constancia", type="primary", width="stretch")
+
+    if confirmado:
+        if len(dni) != 8 or not dni.isdigit():
+            st.error("El DNI debe tener 8 números.")
+        else:
+            ficha_final = ficha.model_copy(update={
+                "nombre_completo": nombre, "dni": dni, "edad": int(edad),
+                "distrito_vivienda": distrito, "sector_vivienda": sector or None,
+                "zonas_trabajo": zonas or None, "dias_por_semana": int(dias) or None,
+                "anios_reciclando": int(anios) or None, "materiales": materiales,
+                "medio_transporte": transporte, "pertenece_asociacion": asociacion,
+                "nombre_asociacion": nombre_asoc or None, "equipo_proteccion": equipo,
+            })
+            st.session_state.ficha = ficha_final
+            st.session_state.codigo = guardar_ficha(ficha_final, st.session_state.metodo)
+            st.session_state.reciclador = st.session_state.codigo  # desde ahora la app sabe quién es
+            st.rerun()
+
+    st.button("◀ Volver a las preguntas", on_click=ir_a, args=(TOTAL,))

@@ -17,7 +17,9 @@ from streamlit_folium import st_folium
 from nucleo.base_datos import marcar_capacitado
 from nucleo.capacitacion import MATERIALES, MODULOS, QUIZ
 from nucleo.config import DATOS
+from nucleo.interfaz import volver
 
+volver("paginas/reciclador.py" if st.session_state.get("reciclador") else "paginas/inicio.py")
 st.title("📚 Capacitación y precios")
 
 pestana_practicas, pestana_materiales, pestana_precios, pestana_quiz = st.tabs(
@@ -95,7 +97,8 @@ with pestana_quiz:
     st.write("Responda las 3 preguntas. Si acierta todas, queda marcado como **capacitado** en el registro.")
     with st.form("quiz"):
         elegidas = [st.radio(item["pregunta"], item["opciones"], index=None) for item in QUIZ]
-        codigo = st.text_input("Su código de registro (aparece en la constancia, ej. RMR-2026-0061)")
+        codigo = st.text_input("Su código de registro (aparece en la constancia, ej. RMR-2026-0061)",
+                               value=st.session_state.get("reciclador", ""))
         enviado = st.form_submit_button("Revisar respuestas", type="primary")
 
     if enviado:

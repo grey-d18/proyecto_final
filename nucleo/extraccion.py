@@ -32,6 +32,9 @@ Material = Literal[
     "Cobre", "Aluminio", "Vidrio", "Otro",
 ]
 Equipo = Literal["Guantes", "Mascarilla", "Chaleco", "Botas", "Uniforme"]
+# Con qué recoge y mueve los materiales (reemplaza a «kilos por semana»: casi nadie lleva
+# la cuenta de sus kilos, pero todos saben si usan saco, carrito o triciclo).
+Transporte = Literal["Saco", "Carrito", "Carretilla", "Triciclo", "Mototaxi", "A pie", "Otro"]
 
 DISTRITOS_TRUJILLO = [
     "Trujillo", "El Porvenir", "Florencia de Mora", "La Esperanza", "Alto Trujillo",
@@ -51,8 +54,7 @@ class FichaReciclador(BaseModel):
     dias_por_semana: int | None = Field(description="Días que recicla por semana (1 a 7)")
     anios_reciclando: int | None = Field(description="Años que lleva reciclando")
     materiales: list[Material] = Field(description="Materiales que recoge")
-    kg_semana: float | None = Field(description="Kilos que junta por semana, aproximado")
-    vende_a: str | None = Field(description="A quién vende: acopiador, chatarrero, asociación, empresa…")
+    medio_transporte: list[Transporte] = Field(description="Con qué recoge y mueve los materiales")
     pertenece_asociacion: bool | None = Field(description="True si dice pertenecer a una asociación")
     nombre_asociacion: str | None = Field(description="Nombre de la asociación, si lo dice")
     equipo_proteccion: list[Equipo] = Field(description="Equipo de protección que dice usar")
@@ -119,6 +121,11 @@ PALABRAS_MATERIAL = {
     "plastico": "Plástico duro", "fierro": "Fierro / chatarra", "chatarra": "Fierro / chatarra",
     "cobre": "Cobre", "aluminio": "Aluminio", "lata": "Aluminio", "vidrio": "Vidrio",
 }
+PALABRAS_TRANSPORTE = {
+    "saco": "Saco", "costal": "Saco", "carrito": "Carrito", "carreta": "Carretilla",
+    "carretilla": "Carretilla", "triciclo": "Triciclo", "mototaxi": "Mototaxi", "moto": "Mototaxi",
+    "a pie": "A pie", "caminando": "A pie", "en la mano": "A pie",
+}
 PALABRAS_EQUIPO = {
     "guante": "Guantes", "mascarilla": "Mascarilla", "chaleco": "Chaleco",
     "bota": "Botas", "uniforme": "Uniforme",
@@ -162,25 +169,37 @@ def extraer_con_reglas(respuestas: dict[str, str]) -> FichaReciclador:
     # Nombre: quitamos frases como «me llamo» o «mi nombre es».
     nombre = re.sub(r"(?i)^(me llamo|mi nombre es|soy)\s+", "", r["nombre"].strip()).strip(" .")
 
-    # DNI: juntamos todos los dígitos (Whisper a veces los separa con espacios).
+    # DNI: juntamos todos los dígitos (Whisper a veces los separa con espacios o guiones).
     digitos = "".join(re.findall(r"\d", r["dni"]))
     if not digitos:  # el DNI se dijo en palabras: «cuatro cinco uno…»
         digitos = "".join(str(NUMEROS[p]) for p in simplificar(r["dni"]).split() if NUMEROS.get(p, 99) < 10)
 
     edad = primer_numero(r["edad"])
-    distrito = next(
-        (d for d in DISTRITOS_TRUJILLO if simplificar(d) in simplificar(r["vivienda"])), None
-    )
-    sector = re.search(r"(?i)sector\s+([\wáéíóúñ ]+)", r["vivienda"])
+    distrito = next((d for d in DISTRITOS_TRUJILLO if simplificar(d) in simplificar(r["distrito"])), None)
+    sector = re.sub(r"(?i)^(en|vivo en)\s+(el\s+)?(sector\s+)?", "", r["sector"].strip()).strip(" .")
+
+    # Días: un número, o «de lunes a sábado» (= 6), o «todos los días» (= 7).
+    texto_dias = simplificar(r["dias"])
+    dias = primer_numero(r["dias"])
+    if "todos los dias" in texto_dias or "domingo" in texto_dias:
+        dias = 7
+    elif "sabado" in texto_dias and "lunes" in texto_dias:
+        dias = 6
+    elif "viernes" in texto_dias and "lunes" in texto_dias:
+        dias = 5
+    anios = primer_numero(r["anios"])
 
     texto_materiales = simplificar(r["materiales"])
     materiales = sorted({m for palabra, m in PALABRAS_MATERIAL.items() if palabra in texto_materiales})
-    kg = numero_cerca_de(r["materiales"], ["kilos", "kg", "kilo"]) or primer_numero(r["materiales"])
 
-    texto_venta = simplificar(r["venta"])
+    texto_transporte = simplificar(r["transporte"])
+    transporte = [t for p, t in PALABRAS_TRANSPORTE.items() if p in texto_transporte]
+
+    # Asociación: «no» o «ninguna» = no pertenece; si nombra una, sí pertenece.
+    texto_asoc = simplificar(r["asociacion"])
     en_asociacion = None
-    if "asociacion" in texto_venta:
-        en_asociacion = not re.search(r"\bno\b|ninguna", texto_venta)
+    if texto_asoc:
+        en_asociacion = not re.search(r"^no\b|ninguna|\bno pertenezco", texto_asoc)
 
     texto_epp = simplificar(r["proteccion"])
     # Si dice «mascarilla no», no la contamos.
@@ -197,13 +216,12 @@ def extraer_con_reglas(respuestas: dict[str, str]) -> FichaReciclador:
         dni=digitos[:8] or None,
         edad=int(edad) if edad else None,
         distrito_vivienda=distrito,
-        sector_vivienda=sector.group(1).strip().title() if sector else None,
-        zonas_trabajo=r["trabajo"] or None,
-        dias_por_semana=int(d) if (d := numero_cerca_de(r["trabajo"], ["dias", "dia"])) else None,
-        anios_reciclando=int(a) if (a := numero_cerca_de(r["trabajo"], ["anos", "ano"])) else None,
+        sector_vivienda=sector.title() or None,
+        zonas_trabajo=r["zonas"].strip(" .") or None,
+        dias_por_semana=int(dias) if dias else None,
+        anios_reciclando=int(anios) if anios else None,
         materiales=materiales,
-        kg_semana=kg,
-        vende_a=r["venta"] or None,
+        medio_transporte=sorted(set(transporte)),
         pertenece_asociacion=en_asociacion,
         nombre_asociacion=None,
         equipo_proteccion=equipo,

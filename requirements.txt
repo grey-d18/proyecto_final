@@ -9,3 +9,8 @@ folium>=0.18
 streamlit-folium>=0.24
 pydantic>=2.8
 python-dotenv>=1.0
+# Grabadora que se detiene sola tras unos segundos de silencio
+audio-recorder-streamlit>=0.0.10
+# «Usar mi ubicación»: pide la ubicación al navegador
+streamlit-js-eval>=0.1.7
+requests>=2.31

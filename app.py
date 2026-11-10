@@ -4,20 +4,38 @@ Para correrla en tu laptop (desde la carpeta del proyecto, en la terminal de VS 
     source .venv/bin/activate
     streamlit run app.py
 
-Este archivo solo arma el menú. Cada sección vive en su propio archivo dentro de
-la carpeta paginas/, y la lógica (voz, IA, base de datos, PDF) está en nucleo/.
+Este archivo solo registra las páginas. No hay menú lateral (position="hidden"):
+la persona avanza apretando botones grandes, y cada botón la lleva a otra página
+con st.switch_page(). Cada página vive en paginas/, y la lógica (voz, IA, base de
+datos, PDF, mapas) está en nucleo/.
+
+    Inicio ─┬─ Soy reciclador ─┬─ Registro
+            │                  ├─ Capacitación
+            │                  ├─ Mi ruta
+            │                  └─ Recoger reciclaje (pedidos de los vecinos)
+            ├─ Soy vecino ────── Pedir un recojo
+            ├─ Soy acopiador ─── Mis precios y mi local
+            └─ (más) Soy municipalidad ── Panel municipal
 """
 import streamlit as st
 
-st.set_page_config(page_title="ReciclaVoz", page_icon="♻️", layout="wide")
+from nucleo.interfaz import poner_estilo
 
-# st.navigation crea el menú lateral. Cada st.Page apunta a un archivo de paginas/.
-menu = st.navigation(
+st.set_page_config(page_title="ReciclaVoz", page_icon="♻️", layout="centered")
+poner_estilo()
+
+paginas = st.navigation(
     [
         st.Page("paginas/inicio.py", title="Inicio", icon="🏠", default=True),
-        st.Page("paginas/registro.py", title="Registro por voz", icon="🎙️"),
-        st.Page("paginas/capacitacion.py", title="Capacitación y precios", icon="📚"),
-        st.Page("paginas/municipalidad.py", title="Panel municipal", icon="📊"),
-    ]
+        st.Page("paginas/reciclador.py", title="Reciclador", icon="🛒"),
+        st.Page("paginas/registro.py", title="Registro", icon="🎙️"),
+        st.Page("paginas/capacitacion.py", title="Capacitación", icon="📚"),
+        st.Page("paginas/mi_ruta.py", title="Mi ruta", icon="🗺️"),
+        st.Page("paginas/recoger.py", title="Recoger reciclaje", icon="🚚"),
+        st.Page("paginas/vecino.py", title="Vecino", icon="🏠"),
+        st.Page("paginas/acopiador.py", title="Acopiador", icon="🏪"),
+        st.Page("paginas/municipalidad.py", title="Municipalidad", icon="📊"),
+    ],
+    position="hidden",  # sin menú lateral: se navega con botones
 )
-menu.run()
+paginas.run()
