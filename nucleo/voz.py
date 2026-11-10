@@ -29,7 +29,7 @@ VOCABULARIO = (
 APELLIDOS = (
     "Quispe Ramos Huamán Mamani Flores Rodríguez Sánchez García Rojas Chávez Vásquez "
     "Díaz Cruz Castillo Mendoza Paredes Gutiérrez Torres Ruiz Condori Ccori Huanca "
-    "Cárdenas Villanueva Alvarado Rengifo Zavaleta Cotrina Polo Lescano"
+    "Cárdenas Villanueva Alvarado Rengifo Zavaleta Cotrina Polo Lescano Castañeda Estrada"
 )
 
 

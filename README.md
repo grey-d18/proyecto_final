@@ -45,8 +45,8 @@ que cruza SIGERSOL, la OEFA, el Banco Mundial y UN Comtrade con mi trabajo de ca
 **¿Quién eres?**:
 
 1. **Soy reciclador**
-   - **Registro por voz:** 12 preguntas, una por pantalla. Cada pregunta **se escucha** (voz humana, porque la
-     persona puede no saber leer) y se responde hablando; la grabación se detiene sola cuando la persona deja de
+   - **Registro por voz:** 8 preguntas, una por pantalla. Cada pregunta **se escucha** (voz natural con acento
+     peruano, porque la persona puede no saber leer) y se responde hablando; la grabación se detiene sola cuando la persona deja de
      hablar. Whisper transcribe, Gemini llena la ficha del registro con un esquema fijo, la persona revisa y se
      descarga una **constancia en PDF**.
    - **Capacitación:** buenas prácticas, cómo reconocer cada material, precios de referencia y un quiz.
@@ -88,8 +88,8 @@ trae datos que el formulario nunca pidió.
 
 ```mermaid
 flowchart LR
-    Q[🔊 Pregunta con voz clonada<br>Qwen3-TTS, generada una vez<br>datos/audios_preguntas/] --> A
-    A[🎙️ Celular: la persona<br>responde 12 preguntas] -->|audio WAV| B[Whisper<br>faster-whisper, CPU<br>nucleo/voz.py]
+    Q[🔊 Pregunta hablada<br>es-PE-CamilaNeural, generada una vez<br>datos/audios_preguntas/] --> A
+    A[🎙️ Celular: la persona<br>responde 8 preguntas] -->|audio WAV| B[Whisper<br>faster-whisper, CPU<br>nucleo/voz.py]
     B -->|texto| C[Gemini<br>salida estructurada<br>nucleo/extraccion.py]
     C -->|FichaReciclador JSON| D[Revisión humana<br>paginas/registro.py]
     D --> E[(SQLite<br>nucleo/base_datos.py)]
@@ -109,12 +109,46 @@ flowchart LR
 | Pieza | Qué usamos | Por qué |
 |---|---|---|
 | Voz → texto | **faster-whisper** (modelo `small`, int8, CPU) | Gratis, corre en el servidor (la voz y el DNI no salen a otra empresa) y entra en el plan gratuito de Streamlit |
-| Texto → ficha | **Gemini 3.5 Flash-Lite** (`gemini-3.5-flash-lite`, plan gratuito, ~2 s por ficha) con salidas estructuradas (esquema Pydantic) | Gratis, entiende respuestas con rodeos («de lunes a sábado» → 6 días) y devuelve siempre el JSON de la ficha |
-| Texto → voz | **Qwen3-TTS** (`Qwen3-TTS-12Hz-0.6B-Base`, abierto) clonando mi voz, solo en mi laptop | Las preguntas se escuchan con una voz humana y cercana; los audios se generan una vez ([`scripts/clonar_voz.py`](scripts/clonar_voz.py)) y la app solo los reproduce |
+| Texto → ficha | **Gemini 3.5 Flash-Lite** (`gemini-3.5-flash-lite`, plan gratuito, ~2 s por ficha) con salidas estructuradas (esquema Pydantic) | Gratis, entiende respuestas con rodeos («cartón y a veces latitas» → Cartón, Aluminio) y devuelve siempre el JSON de la ficha |
+| Texto → voz | **`es-PE-CamilaNeural`** (voz neuronal de Microsoft con acento peruano) a través de la librería [`edge-tts`](https://github.com/rany2/edge-tts), velocidad −10 % | Natural, con la misma entonación en todas las preguntas y gratis sin cuenta. Los audios se generan una vez ([`scripts/generar_voces.py`](scripts/generar_voces.py)) y la app solo reproduce los MP3. Antes probé clonar mi voz: ver abajo |
 | Plan B | Reglas con expresiones regulares | El demo funciona aunque no haya clave o se caiga internet |
 | Mapas y gráficos | Folium + OpenStreetMap, Plotly | Herramientas del curso, sin costo |
 | Grabación y ubicación | `audio-recorder-streamlit` (se detiene tras 3,5 s de silencio), `streamlit-js-eval` (ubicación del navegador), Nominatim de OpenStreetMap (dirección → mapa) | Gratis y sin instalar nada en el celular |
 | Datos | 60 recicladores, 8 acopios, precios del día y 5 pedidos **sintéticos**; SIGERSOL (MINAM), precios del trabajo de campo, UN Comtrade | No se usan datos personales reales |
+
+#### Texto a voz: lo que probamos primero
+
+1. **Voz sintética del sistema** (macOS): se entendía, pero sonaba robótica y poco cercana.
+2. **Mi voz clonada con Qwen3-TTS** (modelo abierto `Qwen/Qwen3-TTS-12Hz-0.6B-Base`, de Alibaba, 600 millones de
+   parámetros, corriendo en mi laptop a partir de unos 20 s de mi voz grabada). Sonaba **más humana** que cualquier
+   voz sintética, pero la **entonación de las preguntas no era natural ni constante**: cada audio salía con un ritmo y
+   un tono distintos, a veces aceleraba al final y se comía la última palabra («¿A cuál?»), y había que escribir
+   algunas palabras como se pronuncian («de ene i» para que no leyera «DNI» en inglés). Para controlarlo agregamos un
+   chequeo con Whisper que volvía a generar cada audio hasta 4 veces, pero el resultado seguía siendo irregular. Además
+   necesitaba un entorno aparte de unos 600 MB (PyTorch).
+3. **`es-PE-CamilaNeural`** (la que usamos): voz neuronal de Microsoft Azure con **acento peruano**, gratuita mediante
+   `edge-tts`. Suena natural, mantiene la misma entonación en todas las frases, lee bien «DNI» y genera los 10 audios
+   en segundos. Lo comprobamos haciendo que Whisper escuche cada audio: todos se entienden completos. El servicio se usa
+   sin un contrato con Microsoft, lo que está bien para un demo; en producción se usaría Azure Speech con una cuenta
+   (tiene un plan gratuito) y la misma voz.
+
+El script de clonación quedó en el historial de git (commit `f6f9b3a`) por si se quiere retomar.
+
+### Limitaciones conocidas
+
+- **Nombres propios.** Whisper no siempre escribe bien los nombres: «Anastasia Avelina» salió como «Anastasia
+  velina», porque al hablar la *a* final de un nombre y la *A* inicial del otro se juntan en un solo sonido. No se
+  arregla leyéndole el nombre de vuelta, porque suena igual. Le damos a Whisper una lista de apellidos frecuentes
+  (`nucleo/voz.py`) y el registrador revisa la ficha, pero **la solución real es la RENIEC**: la municipalidad puede
+  consultar el DNI en la RENIEC a través de la Plataforma de Interoperabilidad del Estado (PIDE). Con ese acceso
+  bastaría con preguntar el DNI y el nombre oficial (y la edad) se llenaría solo, o se corregiría el nombre dictado.
+  Como proyecto de curso no tenemos ese acceso.
+- **El inicio de la grabación.** El micrófono se pone rojo apenas se aprieta, pero el navegador tarda un momento en
+  abrirlo: si la persona habla de inmediato, se pierde la primera sílaba («mi nombre es» → «hombre es»). Gemini ignora
+  esas palabras de relleno, y si el DNI no queda con 8 dígitos se marca para confirmar.
+- **Permiso del micrófono.** En Safari (y en iPhone) el navegador puede pedir permiso en cada pregunta, porque la
+  grabadora es una pequeña página incrustada que se crea de nuevo cada vez. Una mejora pendiente es cambiarla por
+  `st.audio_input` de Streamlit.
 
 ### Cómo correrlo
 
@@ -140,7 +174,7 @@ app.py                     registra las páginas; sin menú lateral (se navega c
 paginas/
   inicio.py                «¿Quién eres?»: reciclador, vecino, acopiador (y municipalidad en «más»)
   reciclador.py            «¿Eres …?» y los 3 botones: Registro, Capacitación, Mi ruta
-  registro.py              consentimiento → 12 preguntas habladas → ficha → constancia
+  registro.py              consentimiento → 8 preguntas habladas → ficha → constancia
   capacitacion.py          buenas prácticas, materiales, precios + mapa, quiz
   mi_ruta.py               tabla de precios del día y mapa de acopios y recojos
   recoger.py               pedidos de los vecinos, «Lo recogeré» y regla de los 3 días
@@ -150,7 +184,7 @@ paginas/
 nucleo/
   config.py                rutas y claves (.env o st.secrets)
   catalogos.py             listas comunes: distritos, materiales, transporte y equipo
-  preguntas.py             las 12 preguntas (texto, lo que dice el audio y un ejemplo) y los avisos
+  preguntas.py             las 8 preguntas (texto, lo que dice el audio y un ejemplo) y los avisos
   voz.py                   Whisper
   extraccion.py            esquema de la ficha, Gemini y plan B con reglas
   base_datos.py            SQLite: recicladores, acopios, precios y recojos
@@ -160,11 +194,11 @@ nucleo/
   capacitacion.py          contenido de la capacitación
 scripts/
   generar_sinteticos.py    crea los datos inventados (recicladores, acopios, precios, pedidos)
-  clonar_voz.py            crea los audios de las preguntas con mi voz clonada (Qwen3-TTS, local)
+  generar_voces.py         crea los audios de las preguntas (voz es-PE-CamilaNeural, edge-tts)
 datos/
   sinteticos/              recicladores, acopios, precios y pedidos inventados para el demo
   fuentes/                 datos reales: SIGERSOL y precios del trabajo de campo
-  audios_preguntas/        las preguntas con mi voz clonada
+  audios_preguntas/        las preguntas y avisos hablados (MP3)
 docs/                      capturas y entrevistas
 ```
 
@@ -195,7 +229,7 @@ y respuestas también habladas en Mi ruta (leer la tabla de precios en voz alta)
 |---|---|---|---|
 | **De la voz al texto con Whisper** | 13 | [`nucleo/voz.py`](nucleo/voz.py) | Reemplaza el formulario: la persona habla en vez de escribir |
 | **LLMs con salidas estructuradas** | 08 | [`nucleo/extraccion.py`](nucleo/extraccion.py) | Convierte respuestas con rodeos en la ficha exacta del registro |
-| Texto a voz (clonación de voz con Qwen3-TTS) | 15 | [`scripts/clonar_voz.py`](scripts/clonar_voz.py), [`nucleo/interfaz.py`](nucleo/interfaz.py) | La persona escucha cada pregunta: no necesita saber leer |
+| Texto a voz (primero clonación con Qwen3-TTS, al final es-PE-CamilaNeural) | 15 | [`scripts/generar_voces.py`](scripts/generar_voces.py), [`nucleo/interfaz.py`](nucleo/interfaz.py) | La persona escucha cada pregunta: no necesita saber leer |
 | Dashboards | 05 | [`paginas/municipalidad.py`](paginas/municipalidad.py) | Lo que ve (y paga) la municipalidad |
 | GeoPandas y Folium | 06 | [`paginas/mi_ruta.py`](paginas/mi_ruta.py), [`paginas/municipalidad.py`](paginas/municipalidad.py), [`paginas/capacitacion.py`](paginas/capacitacion.py) | Dónde vender, qué recoger y dónde viven los recicladores |
 
@@ -203,11 +237,11 @@ y respuestas también habladas en Mi ruta (leer la tabla de precios en voz alta)
 
 Usé **Claude Code** en VS Code. `[REVISAR y completar]`
 
-- **Yo:** la idea, el diseño de la app por roles (reciclador, vecino, acopiador, municipalidad), mi voz para las preguntas
-  habladas (clonada con Qwen3-TTS), el problema y el usuario (de mi tesis), los precios de campo y los datos de SIGERSOL (de mi proyecto
+- **Yo:** la idea, el diseño de la app por roles (reciclador, vecino, acopiador, municipalidad), la prueba de voces para las
+  preguntas habladas (mi voz clonada con Qwen3-TTS y luego la voz con acento peruano), el problema y el usuario (de mi tesis), los precios de campo y los datos de SIGERSOL (de mi proyecto
   anterior), las preguntas del registro, las decisiones de producto y la revisión de cada archivo.
 - **Claude Code generó:** la estructura del proyecto, el código de `nucleo/` y `paginas/` con comentarios explicativos,
-  los scripts de datos sintéticos y de clonación de voz, la prueba del flujo completo en el navegador y el borrador de
+  los scripts de datos sintéticos y de generación de voz, la prueba del flujo completo en el navegador y el borrador de
   este README.
 
 ---

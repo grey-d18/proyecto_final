@@ -1,9 +1,9 @@
 """De las respuestas habladas a una ficha ordenada (herramienta del curso: sesión 08,
 LLMs con salidas estructuradas).
 
-El problema: la gente no responde como un formulario. Dice «trabajo como diez
-años ya, desde que cerró la fábrica, salgo de lunes a sábado». La ficha necesita
-anios_reciclando = 10 y dias_por_semana = 6.
+El problema: la gente no responde como un formulario. Dice «vivo por Río Seco, ahí
+en El Porvenir, cerca del mercado» o «cartón, botellas y a veces latitas». La ficha
+necesita distrito_vivienda = "El Porvenir" y materiales = ["Cartón", "Botella PET", "Aluminio"].
 
 La solución: le damos a Gemini (Google, plan gratuito) las preguntas y las
 respuestas transcritas, y le exigimos que devuelva JSON con un esquema fijo (la
@@ -42,9 +42,6 @@ class FichaReciclador(BaseModel):
     edad: int | None = Field(description="Edad en años")
     distrito_vivienda: str | None = Field(description="Distrito donde vive")
     sector_vivienda: str | None = Field(description="Sector, barrio o asentamiento donde vive")
-    zonas_trabajo: str | None = Field(description="Zonas o calles por donde recicla")
-    dias_por_semana: int | None = Field(description="Días que recicla por semana (1 a 7)")
-    anios_reciclando: int | None = Field(description="Años que lleva reciclando")
     materiales: list[Material] = Field(description="Materiales que recoge")
     medio_transporte: list[Transporte] = Field(description="Con qué recoge y mueve los materiales")
     pertenece_asociacion: bool | None = Field(description="True si dice pertenecer a una asociación")
@@ -150,8 +147,9 @@ def extraer_con_reglas(respuestas: dict[str, str]) -> FichaReciclador:
     """Llena la ficha sin LLM. Cada respuesta se lee buscando números y palabras clave."""
     r = {clave: respuestas.get(clave, "") for clave in (p["clave"] for p in PREGUNTAS)}
 
-    # Nombre: quitamos frases como «me llamo» o «mi nombre es».
-    nombre = re.sub(r"(?i)^(me llamo|mi nombre es|soy)\s+", "", r["nombre"].strip()).strip(" .")
+    # Nombre: quitamos frases como «me llamo» o «mi nombre es». «Hombre es» aparece cuando
+    # la grabación empieza tarde y se pierde el «mi» (ver README, limitaciones).
+    nombre = re.sub(r"(?i)^(me llamo|(mi )?nombre es|hombre es|soy)\s+", "", r["nombre"].strip()).strip(" .")
 
     # DNI: juntamos todos los dígitos (Whisper a veces los separa con espacios o guiones).
     digitos = "".join(re.findall(r"\d", r["dni"]))
@@ -159,19 +157,14 @@ def extraer_con_reglas(respuestas: dict[str, str]) -> FichaReciclador:
         digitos = "".join(str(NUMEROS[p]) for p in simplificar(r["dni"]).split() if NUMEROS.get(p, 99) < 10)
 
     edad = primer_numero(r["edad"])
-    distrito = next((d for d in DISTRITOS_TRUJILLO if simplificar(d) in simplificar(r["distrito"])), None)
-    sector = re.sub(r"(?i)^(en|vivo en)\s+(el\s+)?(sector\s+)?", "", r["sector"].strip()).strip(" .")
 
-    # Días: un número, o «de lunes a sábado» (= 6), o «todos los días» (= 7).
-    texto_dias = simplificar(r["dias"])
-    dias = primer_numero(r["dias"])
-    if "todos los dias" in texto_dias or "domingo" in texto_dias:
-        dias = 7
-    elif "sabado" in texto_dias and "lunes" in texto_dias:
-        dias = 6
-    elif "viernes" in texto_dias and "lunes" in texto_dias:
-        dias = 5
-    anios = primer_numero(r["anios"])
+    # Vivienda: «En El Porvenir, en Río Seco». El distrito se busca en la lista; el barrio
+    # es lo que queda al cortar por comas y por la palabra «en».
+    distrito = next((d for d in DISTRITOS_TRUJILLO if simplificar(d) in simplificar(r["vivienda"])), None)
+    pedazos = [p.strip() for p in re.split(r"[,;.]|\ben\b", r["vivienda"])]
+    pedazos = [re.sub(r"(?i)^(yo\s+)?(vivo\s*)?(por\s+)?(el\s+)?(sector|barrio)?\s*", "", p)
+               for p in pedazos if not (distrito and simplificar(distrito) in simplificar(p))]
+    sector = ", ".join(p for p in pedazos if p)
 
     texto_materiales = simplificar(r["materiales"])
     materiales = sorted({m for palabra, m in PALABRAS_MATERIAL.items() if palabra in texto_materiales})
@@ -201,9 +194,6 @@ def extraer_con_reglas(respuestas: dict[str, str]) -> FichaReciclador:
         edad=int(edad) if edad else None,
         distrito_vivienda=distrito,
         sector_vivienda=sector.title() or None,
-        zonas_trabajo=r["zonas"].strip(" .") or None,
-        dias_por_semana=int(dias) if dias else None,
-        anios_reciclando=int(anios) if anios else None,
         materiales=materiales,
         medio_transporte=sorted(set(transporte)),
         pertenece_asociacion=en_asociacion,

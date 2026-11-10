@@ -1,97 +1,111 @@
 acopio_id,material,precio_soles_kg,hora
-1,Cartón,0.45,11:15
-1,Papel,0.31,07:30
-1,Botella PET,0.46,10:45
-1,Botella PET,0.46,08:45
-1,Botella PET,0.47,09:15
-1,Plástico duro,0.69,13:15
-1,Plástico duro,0.86,11:00
-1,Plástico duro,0.9,15:45
-1,Fierro / chatarra,0.46,07:30
-1,Fierro / chatarra,0.42,08:45
-1,Vidrio,0.11,10:15
-2,Cartón,0.36,16:30
-2,Cartón,0.4,11:00
-2,Cartón,0.35,13:15
-2,Papel,0.35,08:00
-2,Papel,0.37,14:30
-2,Botella PET,0.48,08:15
-2,Botella PET,0.51,16:00
-2,Botella PET,0.49,16:15
-2,Plástico duro,0.79,16:45
-2,Plástico duro,0.82,11:15
-2,Fierro / chatarra,0.4,11:30
-2,Cobre,30.57,07:30
-2,Cobre,27.41,08:45
-2,Aluminio,3.93,14:00
-2,Vidrio,0.1,08:00
-2,Vidrio,0.11,12:15
-2,Vidrio,0.09,11:15
-3,Cartón,0.41,15:00
-3,Cartón,0.4,16:00
-3,Papel,0.34,13:45
-3,Papel,0.36,16:30
-3,Botella PET,0.54,09:00
-3,Botella PET,0.43,15:30
-3,Plástico duro,0.81,14:30
-3,Plástico duro,0.69,11:30
-3,Plástico duro,0.88,09:30
-3,Fierro / chatarra,0.35,15:30
-3,Fierro / chatarra,0.4,07:45
-3,Fierro / chatarra,0.41,16:00
-3,Cobre,32.9,14:30
-3,Cobre,33.23,13:30
-3,Vidrio,0.1,10:15
-3,Vidrio,0.09,10:15
-3,Vidrio,0.11,12:30
-4,Papel,0.36,15:00
-4,Papel,0.32,10:30
-4,Botella PET,0.48,08:30
-4,Botella PET,0.53,13:00
-4,Botella PET,0.46,09:15
-4,Fierro / chatarra,0.37,10:45
-4,Fierro / chatarra,0.36,16:15
-4,Aluminio,3.67,14:30
-4,Aluminio,4.3,11:15
-4,Vidrio,0.09,13:30
-4,Vidrio,0.1,08:45
-5,Cartón,0.43,13:15
-5,Cartón,0.39,10:00
-5,Cartón,0.37,07:30
-5,Plástico duro,0.79,09:00
-5,Plástico duro,0.85,14:30
-5,Plástico duro,0.89,15:45
-5,Fierro / chatarra,0.45,15:30
-5,Fierro / chatarra,0.44,15:15
-5,Cobre,34.06,15:45
-5,Cobre,26.64,07:15
-5,Aluminio,4.57,07:30
-5,Vidrio,0.1,08:15
-6,Cartón,0.38,12:00
-6,Cartón,0.35,11:15
-6,Botella PET,0.49,12:00
-6,Botella PET,0.45,15:30
-6,Botella PET,0.48,10:15
-6,Plástico duro,0.8,10:45
-6,Fierro / chatarra,0.34,09:15
-6,Cobre,29.62,07:00
-6,Cobre,34.5,15:00
-6,Cobre,33.09,09:00
-6,Aluminio,3.48,14:15
-7,Papel,0.37,14:15
-7,Papel,0.37,08:15
-7,Botella PET,0.57,15:45
-7,Botella PET,0.45,12:30
-7,Botella PET,0.54,08:00
-7,Plástico duro,0.89,11:00
-7,Plástico duro,0.83,15:45
-7,Cobre,27.75,13:00
-8,Cartón,0.37,12:15
-8,Cartón,0.45,13:30
-8,Botella PET,0.56,15:00
-8,Botella PET,0.43,09:15
-8,Botella PET,0.56,12:45
-8,Plástico duro,0.91,09:45
-8,Plástico duro,0.78,09:15
-8,Plástico duro,0.91,15:15
-8,Fierro / chatarra,0.38,07:00
+1,Cartón,0.35,14:30
+1,Cartón,0.45,12:00
+1,Papel,0.3,07:30
+1,Papel,0.37,12:30
+1,Botella PET,0.56,12:00
+1,Botella PET,0.56,15:15
+1,Botella PET,0.49,13:45
+1,Plástico duro,0.85,07:45
+1,Plástico duro,0.77,13:30
+1,Fierro / chatarra,0.45,12:45
+1,Fierro / chatarra,0.44,15:30
+1,Fierro / chatarra,0.36,13:45
+1,Cobre,34.15,16:30
+1,Cobre,28.66,11:00
+1,Cobre,34.31,08:15
+1,Aluminio,3.97,09:30
+1,Vidrio,0.09,16:45
+1,Vidrio,0.11,12:15
+1,Vidrio,0.09,12:30
+2,Cartón,0.4,09:30
+2,Papel,0.33,16:15
+2,Papel,0.39,14:15
+2,Botella PET,0.55,14:45
+2,Botella PET,0.53,12:30
+2,Plástico duro,0.91,11:30
+2,Fierro / chatarra,0.41,14:30
+2,Cobre,32.49,08:15
+2,Cobre,33.0,10:30
+2,Aluminio,3.42,11:15
+2,Aluminio,3.58,15:00
+2,Vidrio,0.09,08:30
+2,Vidrio,0.1,09:00
+2,Vidrio,0.1,10:15
+3,Papel,0.32,10:45
+3,Papel,0.32,08:45
+3,Papel,0.33,09:15
+3,Fierro / chatarra,0.35,13:15
+3,Fierro / chatarra,0.43,11:00
+3,Fierro / chatarra,0.45,15:45
+3,Aluminio,4.59,07:30
+3,Aluminio,4.16,08:45
+3,Vidrio,0.11,10:15
+4,Cartón,0.36,16:30
+4,Cartón,0.4,11:00
+4,Cartón,0.35,13:15
+4,Papel,0.35,08:00
+4,Papel,0.37,14:30
+4,Botella PET,0.48,08:15
+4,Botella PET,0.51,16:00
+4,Botella PET,0.49,16:15
+4,Plástico duro,0.79,16:45
+4,Plástico duro,0.82,11:15
+4,Fierro / chatarra,0.4,11:30
+4,Cobre,30.57,07:30
+4,Cobre,27.41,08:45
+4,Aluminio,3.93,14:00
+4,Vidrio,0.1,08:00
+4,Vidrio,0.11,12:15
+4,Vidrio,0.09,11:15
+5,Cartón,0.41,15:00
+5,Cartón,0.4,16:00
+5,Papel,0.34,13:45
+5,Papel,0.36,16:30
+5,Botella PET,0.54,09:00
+5,Botella PET,0.43,15:30
+5,Plástico duro,0.81,14:30
+5,Plástico duro,0.69,11:30
+5,Plástico duro,0.88,09:30
+5,Fierro / chatarra,0.35,15:30
+5,Fierro / chatarra,0.4,07:45
+5,Fierro / chatarra,0.41,16:00
+5,Cobre,32.9,14:30
+5,Cobre,33.23,13:30
+5,Vidrio,0.1,10:15
+5,Vidrio,0.09,10:15
+5,Vidrio,0.11,12:30
+6,Papel,0.36,15:00
+6,Papel,0.32,10:30
+6,Botella PET,0.48,08:30
+6,Botella PET,0.53,13:00
+6,Botella PET,0.46,09:15
+6,Fierro / chatarra,0.37,10:45
+6,Fierro / chatarra,0.36,16:15
+6,Aluminio,3.67,14:30
+6,Aluminio,4.3,11:15
+6,Vidrio,0.09,13:30
+6,Vidrio,0.1,08:45
+7,Cartón,0.43,13:15
+7,Cartón,0.39,10:00
+7,Cartón,0.37,07:30
+7,Plástico duro,0.79,09:00
+7,Plástico duro,0.85,14:30
+7,Plástico duro,0.89,15:45
+7,Fierro / chatarra,0.45,15:30
+7,Fierro / chatarra,0.44,15:15
+7,Cobre,34.06,15:45
+7,Cobre,26.64,07:15
+7,Aluminio,4.57,07:30
+7,Vidrio,0.1,08:15
+8,Cartón,0.38,12:00
+8,Cartón,0.35,11:15
+8,Botella PET,0.49,12:00
+8,Botella PET,0.45,15:30
+8,Botella PET,0.48,10:15
+8,Plástico duro,0.8,10:45
+8,Fierro / chatarra,0.34,09:15
+8,Cobre,29.62,07:00
+8,Cobre,34.5,15:00
+8,Cobre,33.09,09:00
+8,Aluminio,3.48,14:15

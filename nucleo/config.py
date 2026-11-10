@@ -21,7 +21,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 DATOS = RAIZ / "datos"
 SINTETICOS = DATOS / "sinteticos"            # datos inventados para el demo (scripts/generar_sinteticos.py)
 FUENTES = DATOS / "fuentes"                  # datos reales: SIGERSOL y precios del trabajo de campo
-AUDIOS_PREGUNTAS = DATOS / "audios_preguntas"  # voz clonada con Qwen3-TTS (scripts/clonar_voz.py)
+AUDIOS_PREGUNTAS = DATOS / "audios_preguntas"  # preguntas habladas (scripts/generar_voces.py)
 BASE_DATOS = DATOS / "registro.db"           # SQLite: se crea sola la primera vez
 
 # Lee el archivo .env (si existe) y carga sus valores como variables de entorno.

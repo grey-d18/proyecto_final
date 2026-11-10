@@ -1,7 +1,7 @@
 """Registro por voz: el flujo principal del producto.
 
 Paso 0      bienvenida (se escucha) y consentimiento.
-Pasos 1-12  una pregunta por pantalla. La pregunta SE ESCUCHA sola (voz grabada,
+Pasos 1-8   una pregunta por pantalla. La pregunta SE ESCUCHA sola (voz grabada,
             porque la persona puede no saber leer). Debajo, un ejemplo de respuesta.
             La persona aprieta el micrófono y habla; la grabación se detiene sola
             después de unos segundos de silencio, o al volver a apretar el micrófono.
@@ -21,7 +21,7 @@ from audio_recorder_streamlit import audio_recorder
 from nucleo.base_datos import buscar_reciclador, guardar_ficha
 from nucleo.config import hay_clave_gemini
 from nucleo.constancia import crear_constancia
-from nucleo.catalogos import DISTRITOS_TRUJILLO
+from nucleo.catalogos import DISTRITOS_TRUJILLO, EQUIPOS, MATERIALES, TRANSPORTES
 from nucleo.extraccion import FichaReciclador, extraer_ficha
 from nucleo.interfaz import hablar, volver
 from nucleo.preguntas import PREGUNTAS
@@ -86,14 +86,14 @@ if yo and paso == 0 and not st.session_state.codigo:
 if paso == 0:
     st.title("🎙️ Registro de recicladores")
     hablar("bienvenida_registro")
-    st.markdown("Le haremos **12 preguntas**. Escuche cada una y responda hablando. "
+    st.markdown(f"Le haremos **{TOTAL} preguntas**. Escuche cada una y responda hablando. "
                 "Sus datos solo se usan para el Registro Municipal de Recicladores.")
     acepta = st.checkbox("Acepto registrarme y que se usen mis datos para el registro.")
     st.button("▶ Empezar", type="primary", disabled=not acepta, on_click=ir_a, args=(1,), width="stretch")
     if not hay_clave_gemini():
         st.caption("Sin clave de Gemini: la ficha se llenará con reglas simples.")
 
-# --- Pasos 1 a 12: una pregunta por pantalla ------------------------------------------
+# --- Pasos 1 a 8: una pregunta por pantalla ------------------------------------------
 elif paso <= TOTAL:
     pregunta = PREGUNTAS[paso - 1]
     clave = pregunta["clave"]
@@ -170,21 +170,13 @@ else:
             index=opciones_distrito.index(ficha.distrito_vivienda)
             if ficha.distrito_vivienda in opciones_distrito else len(opciones_distrito) - 1)
         sector = c2.text_input("Sector o barrio", ficha.sector_vivienda or "")
-        zonas = st.text_input("Zonas donde recicla", ficha.zonas_trabajo or "")
-        c3, c4 = st.columns(2)
-        dias = c3.number_input("Días por semana", 0, 7, ficha.dias_por_semana or 0)
-        anios = c4.number_input("Años reciclando", 0, 70, ficha.anios_reciclando or 0)
-        materiales = st.multiselect(
-            "Materiales", ["Cartón", "Papel", "Botella PET", "Plástico duro", "Fierro / chatarra",
-                           "Cobre", "Aluminio", "Vidrio", "Otro"], ficha.materiales)
-        transporte = st.multiselect(
-            "Recoge y mueve los materiales con", ["Saco", "Carrito", "Carretilla", "Triciclo",
-                                                  "Mototaxi", "A pie", "Otro"], ficha.medio_transporte)
+        materiales = st.multiselect("Materiales", MATERIALES + ["Otro"], ficha.materiales)
+        transporte = st.multiselect("Recoge y mueve los materiales con", TRANSPORTES + ["Otro"],
+                                    ficha.medio_transporte)
         c5, c6 = st.columns(2)
         asociacion = c5.checkbox("Pertenece a una asociación", bool(ficha.pertenece_asociacion))
         nombre_asoc = c6.text_input("¿Cuál?", ficha.nombre_asociacion or "")
-        equipo = st.multiselect("Equipo de protección", ["Guantes", "Mascarilla", "Chaleco", "Botas", "Uniforme"],
-                                ficha.equipo_proteccion)
+        equipo = st.multiselect("Equipo de protección", EQUIPOS, ficha.equipo_proteccion)
         confirmado = st.form_submit_button("Guardar y crear constancia", type="primary", width="stretch")
 
     if confirmado:
@@ -194,8 +186,7 @@ else:
             ficha_final = ficha.model_copy(update={
                 "nombre_completo": nombre, "dni": dni, "edad": int(edad),
                 "distrito_vivienda": distrito, "sector_vivienda": sector or None,
-                "zonas_trabajo": zonas or None, "dias_por_semana": int(dias) or None,
-                "anios_reciclando": int(anios) or None, "materiales": materiales,
+                "materiales": materiales,
                 "medio_transporte": transporte, "pertenece_asociacion": asociacion,
                 "nombre_asociacion": nombre_asoc or None, "equipo_proteccion": equipo,
             })

@@ -26,7 +26,7 @@ from nucleo.config import BASE_DATOS, SINTETICOS
 from nucleo.extraccion import FichaReciclador
 
 COLUMNAS_LISTA = ["materiales", "medio_transporte", "equipo_proteccion", "campos_dudosos"]
-VERSION_ESQUEMA = 2   # súbelo si cambian las tablas: la base vieja se borra y se vuelve a crear
+VERSION_ESQUEMA = 3   # súbelo si cambian las tablas: la base vieja se borra y se vuelve a crear
 DIAS_PARA_RECOGER = 3  # si el reciclador no recoge en 3 días, el pedido vuelve a estar disponible
 
 TABLAS = {
@@ -36,8 +36,7 @@ TABLAS = {
         origen TEXT,               -- 'sintético' o 'registro por voz'
         metodo TEXT,               -- 'Gemini …' o 'Reglas simples'
         nombre_completo TEXT, dni TEXT, edad INTEGER,
-        distrito_vivienda TEXT, sector_vivienda TEXT, zonas_trabajo TEXT,
-        dias_por_semana INTEGER, anios_reciclando INTEGER,
+        distrito_vivienda TEXT, sector_vivienda TEXT,
         materiales TEXT,           -- lista guardada como texto JSON
         medio_transporte TEXT,     -- lista guardada como texto JSON
         pertenece_asociacion INTEGER, nombre_asociacion TEXT,

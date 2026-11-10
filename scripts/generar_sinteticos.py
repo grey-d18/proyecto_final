@@ -39,8 +39,6 @@ APELLIDOS = ["Quispe", "Rodríguez", "Vásquez", "Castillo", "Alayo", "Gutiérre
 DISTRITOS = {"El Porvenir": 30, "Florencia de Mora": 15, "La Esperanza": 20, "Alto Trujillo": 12,
              "Trujillo": 10, "Víctor Larco Herrera": 5, "Huanchaco": 4, "Moche": 4}
 SECTORES = ["Río Seco", "Alan García", "Gran Chimú", "Wichanzao", "Manuel Arévalo", "Jerusalén", "Centro"]
-ZONAS = ["Centro de Trujillo", "Mercado Mayorista", "Av. América", "Urb. California",
-         "Mercado La Hermelinda", "Urb. El Golf", "Av. España"]
 PESO_MATERIAL = [0.85, 0.4, 0.8, 0.45, 0.6, 0.15, 0.35, 0.15]  # probabilidad de que lo recoja
 TRANSPORTES = {"Saco": 35, "Carrito": 25, "Triciclo": 25, "Carretilla": 8, "Mototaxi": 4, "A pie": 3}
 
@@ -84,9 +82,6 @@ def un_reciclador(numero: int) -> dict:
         "edad": azar.randint(18, 72),
         "distrito_vivienda": distrito,
         "sector_vivienda": azar.choice(SECTORES),
-        "zonas_trabajo": azar.choice(ZONAS),
-        "dias_por_semana": azar.randint(3, 7),
-        "anios_reciclando": azar.randint(1, 25),
         "materiales": json.dumps(materiales, ensure_ascii=False),
         "medio_transporte": json.dumps(azar.choices(list(TRANSPORTES), weights=TRANSPORTES.values()),
                                        ensure_ascii=False),

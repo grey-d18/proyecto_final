@@ -36,13 +36,13 @@ def poner_estilo() -> None:
 
 @st.cache_data
 def audio_en_base64(clave: str) -> str | None:
-    """Lee el .wav y lo convierte en texto base64 (una sola vez: queda en caché)."""
-    archivo = AUDIOS_PREGUNTAS / f"{clave}.wav"
+    """Lee el .mp3 y lo convierte en texto base64 (una sola vez: queda en caché)."""
+    archivo = AUDIOS_PREGUNTAS / f"{clave}.mp3"
     return base64.b64encode(archivo.read_bytes()).decode() if archivo.exists() else None
 
 
 def hablar(clave: str) -> None:
-    """Reproduce en voz alta el audio datos/audios_preguntas/<clave>.wav al aparecer en pantalla.
+    """Reproduce en voz alta el audio datos/audios_preguntas/<clave>.mp3 al aparecer en pantalla.
 
     El audio va DENTRO de la página (base64) en una etiqueta <audio autoplay>, en vez de
     st.audio: así suena solo apenas aparece y no depende del servidor de archivos de
@@ -51,7 +51,7 @@ def hablar(clave: str) -> None:
     """
     datos = audio_en_base64(clave)
     if datos:
-        st.html(f'<audio controls autoplay style="width:100%" src="data:audio/wav;base64,{datos}"></audio>')
+        st.html(f'<audio controls autoplay style="width:100%" src="data:audio/mpeg;base64,{datos}"></audio>')
 
 
 def botones_grandes(opciones: list[tuple[str, str]]) -> None:
