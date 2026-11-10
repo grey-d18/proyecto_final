@@ -74,7 +74,7 @@ PREGUNTAS = [
     },
     {
         "clave": "asociacion",
-        "texto": "¿Pertenece a alguna asociación de recicladores? ¿A cuál?",
+        "texto": "¿Pertenece a alguna asociación de recicladores? Por favor, indique cuál.",
         "ejemplo": "No, a ninguna",
     },
     {
