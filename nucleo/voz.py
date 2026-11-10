@@ -22,6 +22,16 @@ VOCABULARIO = (
     "fierro, chatarra, cobre, aluminio, vidrio. DNI, acopiador, asociación, guantes, mascarilla."
 )
 
+# Apellidos frecuentes en el Perú. Whisper aprendió sobre todo con textos en inglés y en
+# español de otros países, así que confunde apellidos andinos: oía «Quispe Ramos» como
+# «y esperamos». Los "hotwords" son palabras a las que Whisper les da prioridad.
+# Un apellido que no esté en la lista igual puede salir mal: por eso el registrador revisa.
+APELLIDOS = (
+    "Quispe Ramos Huamán Mamani Flores Rodríguez Sánchez García Rojas Chávez Vásquez "
+    "Díaz Cruz Castillo Mendoza Paredes Gutiérrez Torres Ruiz Condori Ccori Huanca "
+    "Cárdenas Villanueva Alvarado Rengifo Zavaleta Cotrina Polo Lescano"
+)
+
 
 @st.cache_resource(show_spinner="Cargando el modelo de voz (solo la primera vez)…")
 def cargar_modelo() -> WhisperModel:
@@ -45,6 +55,7 @@ def transcribir(audio_bytes: bytes) -> str:
             archivo.name,
             language="es",            # forzamos español: evita que adivine otro idioma
             initial_prompt=VOCABULARIO,
+            hotwords=APELLIDOS,       # prioriza apellidos peruanos (Quispe, Huamán…)
             vad_filter=True,          # ignora los silencios
             beam_size=5,
         )
