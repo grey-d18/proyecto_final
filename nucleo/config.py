@@ -1,0 +1,52 @@
+"""Configuración de la app: rutas de carpetas y lectura de claves.
+
+¿Por qué existe este archivo?
+    Para que todos los demás módulos lean la configuración de UN solo lugar.
+    Si mañana cambias el modelo de Claude o de Whisper, solo tocas el .env
+    (en tu laptop) o los "Secrets" de Streamlit Cloud (en internet).
+
+¿De dónde salen los valores?
+    1. Primero se busca en las variables de entorno (el archivo .env en tu laptop).
+    2. Si no están, se busca en st.secrets (Streamlit Community Cloud).
+    3. Si tampoco están, se usa el valor por defecto.
+"""
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# --- Rutas ----------------------------------------------------------------
+# RAIZ es la carpeta del proyecto (la que contiene app.py).
+RAIZ = Path(__file__).resolve().parent.parent
+DATOS = RAIZ / "datos"
+BASE_DATOS = DATOS / "registro.db"  # SQLite: se crea sola la primera vez
+
+# Lee el archivo .env (si existe) y carga sus valores como variables de entorno.
+load_dotenv(RAIZ / ".env")
+
+
+def leer_ajuste(nombre: str, por_defecto: str | None = None) -> str | None:
+    """Devuelve un ajuste buscándolo en el entorno, luego en st.secrets y si no, el valor por defecto."""
+    valor = os.environ.get(nombre)
+    if valor:
+        return valor
+    try:
+        import streamlit as st
+
+        if nombre in st.secrets:
+            return str(st.secrets[nombre])
+    except Exception:
+        # st.secrets lanza un error si no hay archivo de secrets: no pasa nada.
+        pass
+    return por_defecto
+
+
+# --- Ajustes que usa la app ----------------------------------------------------
+CLAUDE_MODELO = leer_ajuste("CLAUDE_MODELO", "claude-opus-5-5")
+WHISPER_MODELO = leer_ajuste("WHISPER_MODELO", "base")
+
+
+def hay_clave_claude() -> bool:
+    """True si hay una clave de la API de Claude configurada (sin mostrarla nunca)."""
+    clave = leer_ajuste("ANTHROPIC_API_KEY")
+    return bool(clave) and not clave.startswith("sk-ant-...")
