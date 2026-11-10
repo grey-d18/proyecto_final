@@ -153,14 +153,6 @@ def primer_numero(texto: str) -> float | None:
     return float(total) if encontrado else None
 
 
-def numero_cerca_de(texto: str, palabras: list[str]) -> float | None:
-    """Número que aparece justo antes de alguna palabra (ej.: «5 días» → 5)."""
-    for palabra in palabras:
-        coincidencia = re.search(rf"(\d+)\s*{palabra}", simplificar(texto))
-        if coincidencia:
-            return float(coincidencia.group(1))
-    return None
-
 
 def extraer_con_reglas(respuestas: dict[str, str]) -> FichaReciclador:
     """Llena la ficha sin LLM. Cada respuesta se lee buscando números y palabras clave."""

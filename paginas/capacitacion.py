@@ -4,7 +4,7 @@ Pestañas:
     1. Buenas prácticas (módulos cortos).
     2. Cómo reconocer cada material.
     3. Precios y dónde vender: precios del trabajo de campo en El Porvenir frente al
-       precio de exportación, y un mapa de puntos de acopio (herramienta del curso:
+       precio de exportación, y un mapa de los locales de acopio (herramienta del curso:
        mapas con Folium, sesión 06).
     4. Quiz: si lo aprueba, queda marcado como "capacitado" en el registro.
 """
@@ -14,7 +14,7 @@ import plotly.express as px
 import streamlit as st
 from streamlit_folium import st_folium
 
-from nucleo.base_datos import marcar_capacitado
+from nucleo.base_datos import marcar_capacitado, precios_de_hoy
 from nucleo.capacitacion import MATERIALES, MODULOS, QUIZ
 from nucleo.config import DATOS
 from nucleo.interfaz import volver
@@ -75,22 +75,22 @@ with pestana_precios:
     )
 
     st.markdown("#### ¿Dónde vender?")
-    material = st.selectbox("¿Qué material quiere vender?", sorted(precios["material"]))
-    puntos = pd.read_csv(DATOS / "puntos_acopio.csv")
-    puntos = puntos[puntos["compra"].str.contains(material, regex=False)]
-
-    mapa = folium.Map(location=[-8.085, -79.015], zoom_start=13, tiles="OpenStreetMap")
-    precio_material = precios.set_index("material").loc[material, "precio_campo"]
-    for _, punto in puntos.iterrows():
-        folium.Marker(
-            [punto["lat"], punto["lon"]],
-            popup=f"<b>{punto['nombre']}</b><br>{punto['distrito']}<br>{punto['horario']}<br>"
-                  f"{material}: S/ {precio_material:.2f} por kg (referencial)",
-            tooltip=punto["nombre"], icon=folium.Icon(color="green", icon="recycle", prefix="fa"),
-        ).add_to(mapa)
-    st_folium(mapa, height=380, width="stretch", returned_objects=[])
-    st.caption("Puntos de acopio ilustrativos, con ubicaciones aproximadas: en producción los registraría "
-               "la municipalidad. Los precios son referenciales del trabajo de campo.")
+    # Los mismos locales y precios que ingresan los acopiadores en la app (ver Mi ruta).
+    hoy = precios_de_hoy()
+    if hoy.empty:
+        st.info("Todavía no hay precios de hoy.")
+    else:
+        material = st.selectbox("¿Qué material quiere vender?", sorted(hoy["material"].unique()))
+        mapa = folium.Map(location=[-8.085, -79.015], zoom_start=13, tiles="OpenStreetMap")
+        for _, fila in hoy[hoy["material"] == material].iterrows():
+            folium.Marker(
+                [fila["lat"], fila["lon"]],
+                popup=f"<b>{fila['acopio']}</b><br>{fila['direccion']}<br>"
+                      f"{material}: S/ {fila['precio_soles_kg']:.2f} por kg",
+                tooltip=fila["acopio"], icon=folium.Icon(color="green", icon="recycle", prefix="fa"),
+            ).add_to(mapa)
+        st_folium(mapa, height=380, width="stretch", returned_objects=[])
+        st.caption("Locales y precios de hoy que ingresan los acopiadores (datos inventados para el demo).")
 
 # --- 4. Quiz -------------------------------------------------------------------------
 with pestana_quiz:

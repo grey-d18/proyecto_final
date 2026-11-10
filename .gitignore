@@ -7,10 +7,10 @@ __pycache__/
 .env
 .streamlit/secrets.toml
 
-# Base de datos local que se crea al usar la app (se regenera desde datos/recicladores_sinteticos.csv)
+# Base de datos local que se crea al usar la app (se regenera desde los CSV *_sinteticos.csv)
 datos/registro.db
 
-# Audios grabados durante las pruebas
+# Voz de referencia para clonar (privada) y archivos del sistema/editor
 audios/
 .DS_Store
 .claude/
