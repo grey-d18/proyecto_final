@@ -1,0 +1,11 @@
+streamlit>=1.50
+anthropic>=2.7
+faster-whisper>=1.1
+av<19            # av 19 rompe faster-whisper 1.2 (error metadata_errors)
+fpdf2>=2.8
+pandas>=2.2
+plotly>=6.0
+folium>=0.18
+streamlit-folium>=0.24
+pydantic>=2.8
+python-dotenv>=1.0

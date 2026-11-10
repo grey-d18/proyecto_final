@@ -1,0 +1,16 @@
+# Entorno virtual y cachés de Python
+.venv/
+__pycache__/
+*.pyc
+
+# Secretos: NUNCA se suben al repo
+.env
+.streamlit/secrets.toml
+
+# Base de datos local que se crea al usar la app (se regenera desde datos/recicladores_sinteticos.csv)
+datos/registro.db
+
+# Audios grabados durante las pruebas
+audios/
+.DS_Store
+.claude/
