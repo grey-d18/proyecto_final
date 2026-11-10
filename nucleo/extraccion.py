@@ -226,4 +226,7 @@ def extraer_ficha(respuestas: dict[str, str]) -> tuple[FichaReciclador, str, dic
             # Cualquier problema (sin internet, clave mala, límite gratuito superado, respuesta lenta
             # o un JSON que no calza con el molde) no debe romper el demo: pasamos a las reglas.
             print(f"Falló Gemini, uso reglas: {error}")
+            # Mostramos el motivo en pantalla (el mensaje de error nunca incluye la clave).
+            motivo = f"{type(error).__name__}: {str(error)[:120]}"
+            return extraer_con_reglas(respuestas), f"Reglas simples (Gemini falló: {motivo})", {}
     return extraer_con_reglas(respuestas), "Reglas simples (sin LLM)", {}
