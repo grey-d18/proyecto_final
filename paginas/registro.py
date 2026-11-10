@@ -21,7 +21,8 @@ from audio_recorder_streamlit import audio_recorder
 from nucleo.base_datos import buscar_reciclador, guardar_ficha
 from nucleo.config import hay_clave_gemini
 from nucleo.constancia import crear_constancia
-from nucleo.extraccion import DISTRITOS_TRUJILLO, FichaReciclador, extraer_ficha
+from nucleo.catalogos import DISTRITOS_TRUJILLO
+from nucleo.extraccion import FichaReciclador, extraer_ficha
 from nucleo.interfaz import hablar, volver
 from nucleo.preguntas import PREGUNTAS
 from nucleo.voz import transcribir

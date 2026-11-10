@@ -14,7 +14,7 @@ import streamlit as st
 from streamlit_folium import st_folium
 
 from nucleo.base_datos import leer_todos
-from nucleo.config import DATOS
+from nucleo.config import FUENTES
 from nucleo.interfaz import volver
 from nucleo.ubicacion import CENTROS  # centro aproximado de cada distrito
 
@@ -76,7 +76,7 @@ st_folium(mapa, height=400, width="stretch", returned_objects=[])
 
 # --- Contexto oficial: SIGERSOL ----------------------------------------------------------
 st.subheader("Recicladores inscritos frente a lo que reporta el distrito")
-sigersol = pd.read_csv(DATOS / "sigersol_trujillo_distritos.csv")
+sigersol = pd.read_csv(FUENTES / "sigersol_trujillo_distritos.csv")
 sigersol = sigersol[sigersol["anio"] == sigersol["anio"].max()]
 sigersol["distrito"] = sigersol["distrito"].str.title().replace({"Victor Larco Herrera": "Víctor Larco Herrera"})
 comparacion = por_distrito.merge(sigersol, left_on="distrito_vivienda", right_on="distrito", how="left")

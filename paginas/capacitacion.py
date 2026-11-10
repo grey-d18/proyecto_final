@@ -16,7 +16,7 @@ from streamlit_folium import st_folium
 
 from nucleo.base_datos import marcar_capacitado, precios_de_hoy
 from nucleo.capacitacion import MATERIALES, MODULOS, QUIZ
-from nucleo.config import DATOS
+from nucleo.config import FUENTES
 from nucleo.interfaz import volver
 
 volver("paginas/reciclador.py" if st.session_state.get("reciclador") else "paginas/inicio.py")
@@ -47,7 +47,7 @@ with pestana_materiales:
 with pestana_precios:
     # Precios pagados por acopiadores en El Porvenir (tesis, 2026) y precio de exportación
     # del Perú en 2025 (UN Comtrade, valor FOB entre peso), los dos en soles por kilo.
-    precios = pd.read_csv(DATOS / "precios_campo_el_porvenir.csv")
+    precios = pd.read_csv(FUENTES / "precios_campo_el_porvenir.csv")
     precios["precio_campo"] = (precios["precio_min_soles_kg"] + precios["precio_max_soles_kg"]) / 2
 
     st.markdown("#### ¿Cuánto pagan por kilo en El Porvenir?")

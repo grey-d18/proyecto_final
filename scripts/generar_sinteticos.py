@@ -1,9 +1,9 @@
 """Genera los datos SINTÉTICOS del demo (nada de esto es real).
 
-    datos/recicladores_sinteticos.csv  60 recicladores inscritos
-    datos/acopios_sinteticos.csv       8 locales de acopio (nombres y ubicaciones inventados)
-    datos/precios_sinteticos.csv       precios del día que "ingresaron" los acopiadores
-    datos/recojos_sinteticos.csv       5 pedidos de recojo de vecinos
+    datos/sinteticos/recicladores.csv  60 recicladores inscritos
+    datos/sinteticos/acopios.csv       8 locales de acopio (nombres y ubicaciones inventados)
+    datos/sinteticos/precios.csv       precios del día que "ingresaron" los acopiadores
+    datos/sinteticos/recojos.csv       5 pedidos de recojo de vecinos
 
 
 Las reglas del curso prohíben usar datos personales sin consentimiento, así que el
@@ -19,9 +19,15 @@ Uso (desde la carpeta del proyecto):
 """
 import json
 import random
+import sys
 from pathlib import Path
 
 import pandas as pd
+
+RAIZ = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RAIZ))  # para poder importar nucleo/ al correrlo como script
+from nucleo.catalogos import MATERIALES  # noqa: E402
+from nucleo.config import SINTETICOS  # noqa: E402
 
 azar = random.Random(20261111)  # semilla fija: siempre salen los mismos datos
 
@@ -35,8 +41,6 @@ DISTRITOS = {"El Porvenir": 30, "Florencia de Mora": 15, "La Esperanza": 20, "Al
 SECTORES = ["Río Seco", "Alan García", "Gran Chimú", "Wichanzao", "Manuel Arévalo", "Jerusalén", "Centro"]
 ZONAS = ["Centro de Trujillo", "Mercado Mayorista", "Av. América", "Urb. California",
          "Mercado La Hermelinda", "Urb. El Golf", "Av. España"]
-MATERIALES = ["Cartón", "Papel", "Botella PET", "Plástico duro", "Fierro / chatarra",
-              "Cobre", "Aluminio", "Vidrio"]
 PESO_MATERIAL = [0.85, 0.4, 0.8, 0.45, 0.6, 0.15, 0.35, 0.15]  # probabilidad de que lo recoja
 TRANSPORTES = {"Saco": 35, "Carrito": 25, "Triciclo": 25, "Carretilla": 8, "Mototaxi": 4, "A pie": 3}
 
@@ -113,17 +117,16 @@ def precios_del_dia() -> list[dict]:
 
 
 if __name__ == "__main__":
-    carpeta = Path(__file__).resolve().parent.parent / "datos"
     tablas = {
-        "recicladores_sinteticos.csv": pd.DataFrame([un_reciclador(i) for i in range(1, 61)]),
-        "acopios_sinteticos.csv": pd.DataFrame(
+        "recicladores.csv": pd.DataFrame([un_reciclador(i) for i in range(1, 61)]),
+        "acopios.csv": pd.DataFrame(
             [{"id": i, "nombre": n, "distrito": d, "lat": la, "lon": lo, "direccion": dir_,
               "horario": "Lun-Sáb 7:00-17:00"} for i, (n, d, la, lo, dir_) in enumerate(ACOPIOS, start=1)]),
-        "precios_sinteticos.csv": pd.DataFrame(precios_del_dia()),
-        "recojos_sinteticos.csv": pd.DataFrame(
+        "precios.csv": pd.DataFrame(precios_del_dia()),
+        "recojos.csv": pd.DataFrame(
             [{"vecino": v, "distrito": d, "lat": la, "lon": lo, "descripcion": desc, "peso_kg": kg,
               "horas_atras": azar.randint(1, 30)} for v, d, la, lo, desc, kg in PEDIDOS]),
     }
     for archivo, tabla in tablas.items():
-        tabla.to_csv(carpeta / archivo, index=False)
-        print(f"Guardado datos/{archivo} ({len(tabla)} filas)")
+        tabla.to_csv(SINTETICOS / archivo, index=False)
+        print(f"Guardado datos/sinteticos/{archivo} ({len(tabla)} filas)")

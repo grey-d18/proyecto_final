@@ -8,9 +8,8 @@ import base64
 import streamlit as st
 
 from nucleo.base_datos import buscar_reciclador, recojos_disponibles
-from nucleo.config import DATOS
+from nucleo.config import AUDIOS_PREGUNTAS
 
-AUDIOS = DATOS / "audios_preguntas"  # voz de la fundadora clonada con Qwen3-TTS (scripts/clonar_voz.py)
 
 # CSS = las reglas de estilo de la página. Aquí solo agrandamos los botones.
 ESTILO = """
@@ -38,7 +37,7 @@ def poner_estilo() -> None:
 @st.cache_data
 def audio_en_base64(clave: str) -> str | None:
     """Lee el .wav y lo convierte en texto base64 (una sola vez: queda en caché)."""
-    archivo = AUDIOS / f"{clave}.wav"
+    archivo = AUDIOS_PREGUNTAS / f"{clave}.wav"
     return base64.b64encode(archivo.read_bytes()).decode() if archivo.exists() else None
 
 

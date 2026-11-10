@@ -10,7 +10,7 @@ import streamlit as st
 from PIL import Image
 
 from nucleo.base_datos import crear_recojo, recicladores_del_distrito, recojos_del_vecino
-from nucleo.extraccion import DISTRITOS_TRUJILLO
+from nucleo.catalogos import DISTRITOS_TRUJILLO
 from nucleo.interfaz import volver
 from nucleo.ubicacion import elegir_ubicacion
 

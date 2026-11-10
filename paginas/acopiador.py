@@ -7,11 +7,10 @@ import streamlit as st
 
 from nucleo.base_datos import (actualizar_ubicacion_acopio, guardar_acopio, guardar_precios, leer_acopios,
                                precios_de_hoy)
-from nucleo.extraccion import DISTRITOS_TRUJILLO
+from nucleo.catalogos import DISTRITOS_TRUJILLO, MATERIALES
 from nucleo.interfaz import volver
 from nucleo.ubicacion import elegir_ubicacion
 
-MATERIALES = ["Cartón", "Papel", "Botella PET", "Plástico duro", "Fierro / chatarra", "Cobre", "Aluminio", "Vidrio"]
 AVISO_LOCAL = "Usted tiene que estar en su local para usar esta opción."
 NUEVO = "➕ Mi local no está en la lista"
 

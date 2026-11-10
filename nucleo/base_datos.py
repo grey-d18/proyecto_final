@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 
-from nucleo.config import BASE_DATOS, DATOS
+from nucleo.config import BASE_DATOS, SINTETICOS
 from nucleo.extraccion import FichaReciclador
 
 COLUMNAS_LISTA = ["materiales", "medio_transporte", "equipo_proteccion", "campos_dudosos"]
@@ -84,18 +84,18 @@ def conectar() -> sqlite3.Connection:
 
 
 def cargar_sinteticos(conexion: sqlite3.Connection) -> None:
-    """Llena las tablas vacías con los CSV sintéticos de la carpeta datos/."""
-    pd.read_csv(DATOS / "recicladores_sinteticos.csv", dtype={"dni": str}).to_sql(
+    """Llena las tablas vacías con los CSV de la carpeta datos/sinteticos/."""
+    pd.read_csv(SINTETICOS / "recicladores.csv", dtype={"dni": str}).to_sql(
         "recicladores", conexion, if_exists="append", index=False)
-    pd.read_csv(DATOS / "acopios_sinteticos.csv").to_sql("acopios", conexion, if_exists="append", index=False)
+    pd.read_csv(SINTETICOS / "acopios.csv").to_sql("acopios", conexion, if_exists="append", index=False)
 
     # Los precios sintéticos solo traen la hora: les ponemos la fecha de HOY para que
     # la tabla «menor precio del día» siempre tenga datos.
-    precios = pd.read_csv(DATOS / "precios_sinteticos.csv")
+    precios = pd.read_csv(SINTETICOS / "precios.csv")
     precios["fecha_hora"] = f"{datetime.now():%Y-%m-%d} " + precios.pop("hora")
     precios.to_sql("precios", conexion, if_exists="append", index=False)
 
-    recojos = pd.read_csv(DATOS / "recojos_sinteticos.csv")
+    recojos = pd.read_csv(SINTETICOS / "recojos.csv")
     recojos["fecha_hora"] = recojos.pop("horas_atras").apply(
         lambda horas: f"{datetime.now() - timedelta(hours=int(horas)):%Y-%m-%d %H:%M}")
     recojos["estado"] = "disponible"

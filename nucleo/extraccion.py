@@ -22,24 +22,16 @@ from typing import Literal
 from google import genai
 from pydantic import BaseModel, Field
 
+from nucleo.catalogos import DISTRITOS_TRUJILLO, EQUIPOS, MATERIALES, TRANSPORTES
 from nucleo.config import GEMINI_MODELO, hay_clave_gemini, leer_ajuste
 from nucleo.preguntas import PREGUNTAS
 
 # --- 1. El esquema de la ficha ------------------------------------------------
 # Literal[...] limita los valores posibles: el modelo solo puede elegir de esta lista.
-Material = Literal[
-    "Cartón", "Papel", "Botella PET", "Plástico duro", "Fierro / chatarra",
-    "Cobre", "Aluminio", "Vidrio", "Otro",
-]
-Equipo = Literal["Guantes", "Mascarilla", "Chaleco", "Botas", "Uniforme"]
-# Con qué recoge y mueve los materiales (reemplaza a «kilos por semana»: casi nadie lleva
-# la cuenta de sus kilos, pero todos saben si usan saco, carrito o triciclo).
-Transporte = Literal["Saco", "Carrito", "Carretilla", "Triciclo", "Mototaxi", "A pie", "Otro"]
-
-DISTRITOS_TRUJILLO = [
-    "Trujillo", "El Porvenir", "Florencia de Mora", "La Esperanza", "Alto Trujillo",
-    "Víctor Larco Herrera", "Huanchaco", "Moche", "Laredo", "Salaverry", "Poroto", "Simbal",
-]
+# Las listas salen de nucleo/catalogos.py, así todas las pantallas usan los mismos nombres.
+Material = Literal[tuple(MATERIALES + ["Otro"])]
+Equipo = Literal[tuple(EQUIPOS)]
+Transporte = Literal[tuple(TRANSPORTES + ["Otro"])]
 
 
 class FichaReciclador(BaseModel):

@@ -95,7 +95,7 @@ flowchart LR
     D --> E[(SQLite<br>nucleo/base_datos.py)]
     D --> F[📄 Constancia PDF<br>nucleo/constancia.py]
     E --> G[📊 Panel municipal<br>Plotly + Folium]
-    H[SIGERSOL · precios de campo<br>datos/] --> G
+    H[SIGERSOL · precios de campo<br>datos/fuentes/] --> G
     H --> I[📚 Capacitación]
     K[🏪 Acopiador: precios<br>y ubicación del local] --> E
     L[🏠 Vecino: pedido de recojo<br>con foto] --> E
@@ -149,6 +149,7 @@ paginas/
   municipalidad.py         panel: indicadores, gráficos, mapa, SIGERSOL, lista
 nucleo/
   config.py                rutas y claves (.env o st.secrets)
+  catalogos.py             listas comunes: distritos, materiales, transporte y equipo
   preguntas.py             las 12 preguntas (texto, lo que dice el audio y un ejemplo) y los avisos
   voz.py                   Whisper
   extraccion.py            esquema de la ficha, Gemini y plan B con reglas
@@ -160,7 +161,10 @@ nucleo/
 scripts/
   generar_sinteticos.py    crea los datos inventados (recicladores, acopios, precios, pedidos)
   clonar_voz.py            crea los audios de las preguntas con mi voz clonada (Qwen3-TTS, local)
-datos/                     CSV (sintéticos, SIGERSOL, precios de campo) y audios de las preguntas
+datos/
+  sinteticos/              recicladores, acopios, precios y pedidos inventados para el demo
+  fuentes/                 datos reales: SIGERSOL y precios del trabajo de campo
+  audios_preguntas/        las preguntas con mi voz clonada
 docs/                      capturas y entrevistas
 ```
 
