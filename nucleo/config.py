@@ -43,7 +43,7 @@ def leer_ajuste(nombre: str, por_defecto: str | None = None) -> str | None:
 
 # --- Ajustes que usa la app ----------------------------------------------------
 GEMINI_MODELO = leer_ajuste("GEMINI_MODELO", "gemini-3.5-flash-lite")
-WHISPER_MODELO = leer_ajuste("WHISPER_MODELO", "base")
+WHISPER_MODELO = leer_ajuste("WHISPER_MODELO", "small")
 
 
 def hay_clave_gemini() -> bool:

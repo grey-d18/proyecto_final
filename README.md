@@ -96,7 +96,7 @@ flowchart LR
 
 | Pieza | Qué usamos | Por qué |
 |---|---|---|
-| Voz → texto | **faster-whisper** (modelo `base`, int8, CPU) | Gratis, corre en el servidor (la voz y el DNI no salen a otra empresa) y entra en el plan gratuito de Streamlit |
+| Voz → texto | **faster-whisper** (modelo `small`, int8, CPU) | Gratis, corre en el servidor (la voz y el DNI no salen a otra empresa) y entra en el plan gratuito de Streamlit |
 | Texto → ficha | **Gemini 3.5 Flash-Lite** (`gemini-3.5-flash-lite`, plan gratuito, ~2 s por ficha) con salidas estructuradas (esquema Pydantic) | Gratis, entiende respuestas con rodeos («de lunes a sábado» → 6 días) y devuelve siempre el JSON de la ficha |
 | Plan B | Reglas con expresiones regulares | El demo funciona aunque no haya clave o se caiga internet |
 | Mapas y gráficos | Folium + OpenStreetMap, Plotly | Herramientas del curso, sin costo |
