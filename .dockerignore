@@ -2,10 +2,8 @@
 .git
 .venv
 .env
-.streamlit/secrets.toml
 audios/
 datos/registro.db
 **/__pycache__
 web/
 docs/
-paginas/

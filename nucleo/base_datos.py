@@ -12,7 +12,7 @@ Tablas:
 La primera vez que se abre la app, las tablas se llenan con datos SINTÉTICOS
 (inventados, ver scripts/generar_sinteticos.py) para que el demo tenga qué mostrar.
 
-Nota: en Streamlit Community Cloud el archivo se borra cuando la app se reinicia.
+Nota: en el plan gratuito de Hugging Face Spaces el archivo se borra cuando la app se reinicia.
 Para el demo está bien; en producción se usaría una base en la nube (por ejemplo,
 Postgres en Supabase).
 """
@@ -89,7 +89,7 @@ def cargar_sinteticos(conexion: sqlite3.Connection) -> None:
     pd.read_csv(SINTETICOS / "acopios.csv").to_sql("acopios", conexion, if_exists="append", index=False)
 
     # Los precios sintéticos solo traen la hora: les ponemos la fecha de HOY para que
-    # la tabla «menor precio del día» siempre tenga datos.
+    # la tabla «mayor precio del día» siempre tenga datos.
     precios = pd.read_csv(SINTETICOS / "precios.csv")
     precios["fecha_hora"] = f"{datetime.now():%Y-%m-%d} " + precios.pop("hora")
     precios.to_sql("precios", conexion, if_exists="append", index=False)
@@ -209,7 +209,7 @@ def precios_de_hoy(distrito: str | None = None) -> pd.DataFrame:
 
 
 def tabla_de_precios(distrito: str | None = None) -> pd.DataFrame:
-    """Una fila por material: último precio actualizado, menor precio del día y dónde está.
+    """Una fila por material: último precio actualizado, mayor precio del día y dónde está.
 
     Si en el distrito todavía no hay precios de hoy, se usan los de toda la ciudad.
     """
@@ -219,13 +219,13 @@ def tabla_de_precios(distrito: str | None = None) -> pd.DataFrame:
     filas = []
     for material, grupo in precios.groupby("material"):
         ultimo = grupo.sort_values("fecha_hora").iloc[-1]       # el más reciente
-        menor = grupo.sort_values("precio_soles_kg").iloc[0]    # el más bajo del día
+        mayor = grupo.sort_values("precio_soles_kg").iloc[-1]   # el más alto del día: donde más le pagan
         filas.append({
             "Material": material,
             "Último precio": ultimo["precio_soles_kg"],
             "Hora": ultimo["fecha_hora"][-5:],
-            "Menor precio hoy": menor["precio_soles_kg"],
-            "Dónde (menor precio)": menor["acopio"],
+            "Mayor precio hoy": mayor["precio_soles_kg"],
+            "Dónde (mayor precio)": mayor["acopio"],
         })
     return pd.DataFrame(filas)
 

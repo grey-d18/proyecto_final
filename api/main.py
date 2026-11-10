@@ -4,8 +4,8 @@ La app web es solo HTML, CSS y JavaScript (se publica gratis en GitHub Pages) y 
 puede correr Whisper ni guardar datos. Por eso le pide todo a esta API, que corre en
 un servidor con Python (por ejemplo, Hugging Face Spaces).
 
-Casi no hay lógica aquí: cada ruta llama a una función de nucleo/, la misma que
-usaba la versión en Streamlit. Esta capa solo traduce entre la web (JSON) y Python.
+Casi no hay lógica aquí: cada ruta llama a una función de nucleo/.
+Esta capa solo traduce entre la web (JSON) y Python.
 
 Para correrla en tu laptop (desde la carpeta del proyecto):
     .venv/bin/uvicorn api.main:app --reload --port 8000
@@ -175,10 +175,10 @@ def revisar_quiz(datos: Quiz) -> dict:
 # --- Acopios y precios --------------------------------------------------------------------
 @app.get("/precios")
 def precios(distrito: str | None = None) -> list[dict]:
-    """Una fila por material: último precio, menor precio del día y dónde."""
+    """Una fila por material: último precio, mayor precio del día y dónde."""
     tabla = bd.tabla_de_precios(distrito)
     return [{"material": f["Material"], "ultimo": f["Último precio"], "hora": f["Hora"],
-             "menor": f["Menor precio hoy"], "donde": f["Dónde (menor precio)"]} for f in filas(tabla)]
+             "mayor": f["Mayor precio hoy"], "donde": f["Dónde (mayor precio)"]} for f in filas(tabla)]
 
 
 @app.get("/acopios")

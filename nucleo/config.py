@@ -3,12 +3,12 @@
 ¿Por qué existe este archivo?
     Para que todos los demás módulos lean la configuración de UN solo lugar.
     Si mañana cambias el modelo de Gemini o de Whisper, solo tocas el .env
-    (en tu laptop) o los "Secrets" de Streamlit Cloud (en internet).
+    (en tu laptop) o los "Secrets" del Space de Hugging Face (en internet).
 
 ¿De dónde salen los valores?
-    1. Primero se busca en las variables de entorno (el archivo .env en tu laptop).
-    2. Si no están, se busca en st.secrets (Streamlit Community Cloud).
-    3. Si tampoco están, se usa el valor por defecto.
+    1. Primero se busca en las variables de entorno (el archivo .env en tu laptop,
+       o los secretos del Space, que Hugging Face entrega como variables de entorno).
+    2. Si no están, se usa el valor por defecto.
 """
 import os
 from pathlib import Path
@@ -16,7 +16,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # --- Rutas ----------------------------------------------------------------
-# RAIZ es la carpeta del proyecto (la que contiene app.py).
+# RAIZ es la carpeta del proyecto (la que contiene api/, nucleo/ y web/).
 RAIZ = Path(__file__).resolve().parent.parent
 DATOS = RAIZ / "datos"
 SINTETICOS = DATOS / "sinteticos"            # datos inventados para el demo (scripts/generar_sinteticos.py)
@@ -29,19 +29,8 @@ load_dotenv(RAIZ / ".env")
 
 
 def leer_ajuste(nombre: str, por_defecto: str | None = None) -> str | None:
-    """Devuelve un ajuste buscándolo en el entorno, luego en st.secrets y si no, el valor por defecto."""
-    valor = os.environ.get(nombre)
-    if valor:
-        return valor
-    try:
-        import streamlit as st
-
-        if nombre in st.secrets:
-            return str(st.secrets[nombre])
-    except Exception:
-        # st.secrets lanza un error si no hay archivo de secrets: no pasa nada.
-        pass
-    return por_defecto
+    """Devuelve un ajuste buscándolo en el entorno y, si no está, el valor por defecto."""
+    return os.environ.get(nombre) or por_defecto
 
 
 # --- Ajustes que usa la app ----------------------------------------------------

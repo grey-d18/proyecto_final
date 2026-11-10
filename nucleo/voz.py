@@ -40,7 +40,7 @@ def cargar_modelo() -> WhisperModel:
     @cache guarda el resultado: las siguientes veces se reutiliza el mismo modelo
     en vez de volver a cargarlo (cargarlo tarda unos segundos).
     compute_type="int8" reduce la memoria que usa: así entra en el plan gratuito
-    de Streamlit Community Cloud.
+    de Hugging Face Spaces.
     """
     return WhisperModel(WHISPER_MODELO, device="cpu", compute_type="int8")
 

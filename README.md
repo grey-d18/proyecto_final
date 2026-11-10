@@ -4,7 +4,7 @@
 
 Proyecto final de la Diplomatura en Ciencia de Datos para las Ciencias Sociales y la Gestión Pública (Q-Lab PUCP).
 
-- **Demo:** https://proyectofinal-4h57dzu4nufopstr5nczcj.streamlit.app · o en local, ver [Cómo correrlo](#cómo-correrlo)
+- **Demo:** `[COMPLETAR: https://grey-d18.github.io/proyecto_final/ al publicar]` · o en local, ver [Cómo correrlo](#cómo-correrlo)
 - **Video de respaldo:** `[COMPLETAR]`
 
 ---
@@ -50,7 +50,7 @@ que cruza SIGERSOL, la OEFA, el Banco Mundial y UN Comtrade con mi trabajo de ca
      terminar. Whisper transcribe, Gemini llena la ficha del registro con un esquema fijo, la persona revisa y se
      descarga una **constancia en PDF**.
    - **Capacitación:** buenas prácticas, cómo reconocer cada material, precios de referencia y un quiz.
-   - **Mi ruta:** tabla de precios del día en su distrito (último precio, menor precio y en qué local) y un mapa con
+   - **Mi ruta:** tabla de precios del día en su distrito (último precio, mayor precio y en qué local) y un mapa con
      los locales de acopio y el reciclaje que hay para recoger.
    - **Recoger reciclaje** (con burbuja de aviso): los pedidos de los vecinos. Al marcar «Lo recogeré» se escucha que
      tiene 3 días; si no recoge, el pedido vuelve a estar disponible para otro reciclador de la zona.
@@ -76,19 +76,20 @@ trae datos que el formulario nunca pidió.
 
 ## 6. Demo
 
-**App web:** `[COMPLETAR: https://grey-d18.github.io/proyecto_final/ al publicar]` · versión anterior en Streamlit:
-https://proyectofinal-4h57dzu4nufopstr5nczcj.streamlit.app
+**App web:** `[COMPLETAR: https://grey-d18.github.io/proyecto_final/ al publicar]` · la versión anterior en Streamlit
+quedó guardada como respaldo en la rama [`version-streamlit`](../../tree/version-streamlit).
 
 La app tiene dos partes:
 
 - **`web/`, lo que ve la persona:** HTML, CSS y JavaScript, sin instalar nada. Se publica gratis en **GitHub Pages**
   y en el celular se puede «agregar a la pantalla de inicio» como una app.
 - **`api/`, el motor:** una API en Python (**FastAPI**) que corre Whisper, Gemini, la base de datos y el PDF. Usa
-  las mismas funciones de `nucleo/` que la versión en Streamlit. Se publica gratis en **Hugging Face Spaces**.
+  las funciones de `nucleo/`. Se publica gratis en **Hugging Face Spaces**.
 
 Empezamos con Streamlit porque permitía tener un prototipo en horas. Pero se veía como una página de datos y no como
 una app: se recargaba en cada toque, no permitía un menú fijo abajo ni un micrófono grande, y en el iPhone pedía
-permiso del micrófono en cada pregunta. Por eso separamos la interfaz (web) del motor (API).
+permiso del micrófono en cada pregunta. Por eso separamos la interfaz (web) del motor (API). La versión en
+Streamlit no se borró de la historia: está completa en la rama `version-streamlit`.
 
 ### Capturas
 
@@ -167,7 +168,7 @@ El script de clonación quedó en el historial de git (commit `f6f9b3a`) por si 
 - **Si igual se pierde el inicio.** Los ejemplos empiezan con una frase («Mi DNI es…») para que, si se corta el
   comienzo, se pierda esa frase y no un dato; Gemini ignora esas palabras de relleno, y si el DNI no queda con 8
   dígitos se marca para confirmar.
-- **La base de datos se borra al reiniciar.** En los planes gratuitos (Hugging Face, Streamlit) el archivo SQLite
+- **La base de datos se borra al reiniciar.** En los planes gratuitos (como Hugging Face) el archivo SQLite
   vive en un disco temporal. Para el demo está bien; en producción se usaría una base en la nube (por ejemplo,
   Postgres en Supabase).
 
@@ -184,8 +185,8 @@ cp .env.example .env                                   # y pon tu GEMINI_API_KEY
 python3 -m http.server 5500 --directory web            # terminal 2: la app, en http://localhost:5500
 ```
 
-Sin clave de Gemini la app funciona igual: llena la ficha con reglas simples. La versión anterior en Streamlit sigue
-funcionando con `uv pip install -r requirements.txt` y `streamlit run app.py`.
+Sin clave de Gemini la app funciona igual: llena la ficha con reglas simples. Para ver la versión anterior en
+Streamlit: `git switch version-streamlit`, luego `uv pip install -r requirements.txt` y `streamlit run app.py`.
 
 **Publicar la API en Hugging Face Spaces** (gratis): crear un Space de tipo **Docker** → subir este repositorio (usa
 el [`Dockerfile`](Dockerfile)) → en *Settings → Variables and secrets* agregar el secreto `GEMINI_API_KEY` (clave
@@ -214,7 +215,7 @@ web/                       la app que ve la persona (GitHub Pages)
 api/
   main.py                  la API: cada ruta llama a una función de nucleo/
   requirements.txt         lo que necesita la API
-nucleo/                    la lógica, sin interfaz (la usan la API y la versión en Streamlit)
+nucleo/                    la lógica, sin interfaz (la usa la API)
   config.py                rutas y claves (.env o secretos)
   catalogos.py             listas comunes: distritos, materiales, transporte y equipo
   preguntas.py             las 8 preguntas (texto, lo que dice el audio y un ejemplo) y los avisos
@@ -224,8 +225,6 @@ nucleo/                    la lógica, sin interfaz (la usan la API y la versió
   ubicacion.py             centros de distrito y búsqueda de direcciones (OpenStreetMap)
   constancia.py            PDF
   capacitacion.py          contenido de la capacitación
-  interfaz.py              piezas de pantalla, solo para la versión en Streamlit
-app.py, paginas/           la versión anterior en Streamlit
 scripts/
   generar_sinteticos.py    crea los datos inventados (recicladores, acopios, precios, pedidos)
   generar_voces.py         crea los audios de las preguntas (voz es-PE-CamilaNeural, edge-tts)
@@ -250,7 +249,7 @@ en papel.
 |---|---|
 | Whisper | US$ 0 (corre en el servidor) |
 | Gemini 3.5 Flash-Lite por registro (~500 tokens de entrada y ~300 de salida) | **US$ 0** en el plan gratuito (la app muestra los tokens de cada registro). En producción, con datos reales, se usaría el plan de pago, que no usa los datos para entrenar: menos de un centavo de dólar por registro |
-| Servidor | Gratis en Streamlit Community Cloud para el piloto; ~US$ 10 al mes en un VPS para producción |
+| Servidor | Gratis en GitHub Pages y Hugging Face Spaces para el piloto; ~US$ 10 al mes en un VPS para producción |
 
 El piloto cuesta US$ 0. En producción, un distrito con 300 recicladores costaría menos de US$ 3 en tokens al año: el margen es casi todo el precio.
 
@@ -263,9 +262,9 @@ y respuestas también habladas en Mi ruta (leer la tabla de precios en voz alta)
 |---|---|---|---|
 | **De la voz al texto con Whisper** | 13 | [`nucleo/voz.py`](nucleo/voz.py) | Reemplaza el formulario: la persona habla en vez de escribir |
 | **LLMs con salidas estructuradas** | 08 | [`nucleo/extraccion.py`](nucleo/extraccion.py) | Convierte respuestas con rodeos en la ficha exacta del registro |
-| Texto a voz (primero clonación con Qwen3-TTS, al final es-PE-CamilaNeural) | 15 | [`scripts/generar_voces.py`](scripts/generar_voces.py), [`nucleo/interfaz.py`](nucleo/interfaz.py) | La persona escucha cada pregunta: no necesita saber leer |
-| Dashboards | 05 | [`web/js/vistas/municipalidad.js`](web/js/vistas/municipalidad.js) (antes [`paginas/municipalidad.py`](paginas/municipalidad.py), en Streamlit) | Lo que ve (y paga) la municipalidad |
-| GeoPandas y Folium | 06 | [`web/js/vistas/mi_ruta.js`](web/js/vistas/mi_ruta.js), [`web/js/vistas/municipalidad.js`](web/js/vistas/municipalidad.js) | Dónde vender, qué recoger y dónde viven los recicladores. Folium genera mapas de **Leaflet**; en la app web usamos Leaflet directamente (la versión en Streamlit usa Folium) |
+| Texto a voz (primero clonación con Qwen3-TTS, al final es-PE-CamilaNeural) | 15 | [`scripts/generar_voces.py`](scripts/generar_voces.py), [`web/js/comun.js`](web/js/comun.js) | La persona escucha cada pregunta: no necesita saber leer |
+| Dashboards | 05 | [`web/js/vistas/municipalidad.js`](web/js/vistas/municipalidad.js) (antes `paginas/municipalidad.py`, en Streamlit) | Lo que ve (y paga) la municipalidad |
+| GeoPandas y Folium | 06 | [`web/js/vistas/mi_ruta.js`](web/js/vistas/mi_ruta.js), [`web/js/vistas/municipalidad.js`](web/js/vistas/municipalidad.js) | Dónde vender, qué recoger y dónde viven los recicladores. Folium genera mapas de **Leaflet**; en la app web usamos Leaflet directamente (la versión en Streamlit usaba Folium) |
 
 ## 9. Qué hizo el agente
 
@@ -274,7 +273,7 @@ Usé **Claude Code** en VS Code. `[REVISAR y completar]`
 - **Yo:** la idea, el diseño de la app por roles (reciclador, vecino, acopiador, municipalidad), la prueba de voces para las
   preguntas habladas (mi voz clonada con Qwen3-TTS y luego la voz con acento peruano), el problema y el usuario (de mi tesis), los precios de campo y los datos de SIGERSOL (de mi proyecto
   anterior), las preguntas del registro, las decisiones de producto y la revisión de cada archivo.
-- **Claude Code generó:** la estructura del proyecto, el código de `nucleo/` y `paginas/` con comentarios explicativos,
+- **Claude Code generó:** la estructura del proyecto, el código de `nucleo/`, `api/` y `web/` con comentarios explicativos,
   los scripts de datos sintéticos y de generación de voz, la prueba del flujo completo en el navegador y el borrador de
   este README.
 

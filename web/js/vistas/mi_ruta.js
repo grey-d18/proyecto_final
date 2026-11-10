@@ -22,14 +22,14 @@ export async function mostrar(raiz) {
       <div class="mapa" id="mapa" role="img" aria-label="Mapa con ${acopios.length} locales de acopio y ${recojos.length} recojos"></div>
       <div class="leyenda"><span style="--c:var(--verde)">Acopio</span><span style="--c:var(--naranja)">Reciclaje para recoger</span></div>
       <section style="display:flex;flex-direction:column;gap:8px">
-        <h2>Menor precio del día, por kilo</h2>
+        <h2>Mayor precio del día, por kilo</h2>
         ${precios.length ? `<div class="lista">${precios.map((p) => `
           <div class="fila">
             <div style="display:flex;flex-direction:column">
               <span class="principal">${esc(p.material)}</span>
               <span class="secundario">${esc(p.donde)} · último: ${soles(p.ultimo)} (${esc(p.hora)})</span>
             </div>
-            <span class="precio">${soles(p.menor)}</span>
+            <span class="precio">${soles(p.mayor)}</span>
           </div>`).join("")}</div>` : `<p class="vacio">Todavía no hay precios de hoy.</p>`}
         <p class="nota">Precios que ingresan los acopiadores en la app (datos inventados para el demo).</p>
       </section>
