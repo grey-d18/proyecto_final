@@ -35,7 +35,7 @@ def buscar_direccion(direccion: str, distrito: str) -> tuple[float, float] | Non
             params={"q": f"{direccion}, {distrito}, Trujillo, La Libertad, Perú",
                     "format": "json", "limit": 1, "countrycodes": "pe"},
             # Nominatim pide identificar la app; usamos un nombre genérico, sin datos personales.
-            headers={"User-Agent": "ReciclaContigo-demo/1.0"},
+            headers={"User-Agent": "Reciclamos-demo/1.0"},
             timeout=10,
         )
         resultados = respuesta.json()

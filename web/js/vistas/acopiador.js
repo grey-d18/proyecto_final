@@ -5,7 +5,7 @@ import { barra, cargando, esc, icono, mensajeError } from "../comun.js";
 import { elegirUbicacion } from "../ubicacion.js";
 
 const AVISO_LOCAL = "Usted tiene que estar en su local para usar esta opción.";
-const CLAVE = "reciclacontigo.acopio";
+const CLAVE = "reciclamos.acopio";
 const recordar = (id) => { try { localStorage.setItem(CLAVE, id); } catch { /* modo privado */ } };
 const recordado = () => { try { return localStorage.getItem(CLAVE); } catch { return null; } };
 

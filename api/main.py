@@ -1,4 +1,4 @@
-"""API de Recicla Contigo: el «motor» que usa la app web (carpeta web/).
+"""API de Reciclamos: el «motor» que usa la app web (carpeta web/).
 
 La app web es solo HTML, CSS y JavaScript (se publica gratis en GitHub Pages) y no
 puede correr Whisper ni guardar datos. Por eso le pide todo a esta API, que corre en
@@ -35,7 +35,7 @@ from nucleo.preguntas import PREGUNTAS, SEGUNDOS_POR_DEFECTO
 from nucleo.ubicacion import CENTROS, buscar_direccion
 from nucleo.voz import cargar_modelo, transcribir
 
-app = FastAPI(title="Recicla Contigo API", description="Registro de recicladores por voz")
+app = FastAPI(title="Reciclamos API", description="Registro de recicladores por voz")
 
 # Qué páginas pueden usar esta API (CORS). En tu laptop, la web corre en localhost;
 # en internet, en GitHub Pages. Se puede cambiar con la variable ORIGENES.

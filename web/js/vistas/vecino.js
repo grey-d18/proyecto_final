@@ -7,7 +7,7 @@ import { abrirMicrofono, cerrarMicrofono, grabar, microfonoAbierto } from "../gr
 import { elegirUbicacion } from "../ubicacion.js";
 
 const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-const CLAVE = "reciclacontigo.vecino.codigo";
+const CLAVE = "reciclamos.vecino.codigo";
 const guardarCodigo = (codigo) => { try { localStorage.setItem(CLAVE, codigo); } catch { /* modo privado */ } };
 const leerCodigo = () => { try { return localStorage.getItem(CLAVE) || ""; } catch { return ""; } };
 const olvidarCodigo = () => { try { localStorage.removeItem(CLAVE); } catch { /* modo privado */ } };
