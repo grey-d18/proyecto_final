@@ -1,4 +1,4 @@
-# ♻️ Reciclamos
+# ♻️ EcoBarrio
 
 > **Formalizamos a recicladores informales para las municipalidades del Perú mediante un registro por voz que llena la ficha con IA.**
 

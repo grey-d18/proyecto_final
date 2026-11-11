@@ -36,7 +36,7 @@ def crear_constancia(ficha: FichaReciclador, codigo: str) -> bytes:
     # Encabezado
     pdf.set_font("Helvetica", "B", 16)
     pdf.set_text_color(46, 125, 50)
-    pdf.cell(0, 10, "Reciclamos", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 10, "EcoBarrio", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("Helvetica", "B", 13)
     pdf.set_text_color(0, 0, 0)
     pdf.cell(0, 8, "Constancia de inscripción - Registro Municipal de Recicladores",

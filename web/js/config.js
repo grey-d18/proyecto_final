@@ -22,11 +22,11 @@ function direccionValida(texto) {
 }
 
 function leerGuardada() {
-  try { return localStorage.getItem("reciclamos-api"); } catch { return null; }
+  try { return localStorage.getItem("ecobarrio-api"); } catch { return null; }
 }
 
 function guardar(direccion) {
-  try { localStorage.setItem("reciclamos-api", direccion); } catch { /* modo privado: no pasa nada */ }
+  try { localStorage.setItem("ecobarrio-api", direccion); } catch { /* modo privado: no pasa nada */ }
 }
 
 const parametros = new URLSearchParams(location.search);

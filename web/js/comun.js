@@ -50,7 +50,7 @@ export function callar() {
 }
 
 // --- Memoria: qué reciclador está usando la app (queda guardado en este celular) -------------------
-const CLAVE = "reciclamos.reciclador";
+const CLAVE = "ecobarrio.reciclador";
 export const sesion = {
   get codigo() { try { return localStorage.getItem(CLAVE); } catch { return null; } },
   set codigo(valor) {

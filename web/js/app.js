@@ -39,7 +39,7 @@ async function mostrar() {
 function servidorApagado() {
   raiz.innerHTML = `
     <div class="pantalla">
-      <header><span class="subtitulo">Reciclamos · versión de prueba</span><h1>El servidor está apagado</h1></header>
+      <header><span class="subtitulo">EcoBarrio · versión de prueba</span><h1>El servidor está apagado</h1></header>
       <p>Esta demo funciona mientras la autora tiene encendido el servidor en su laptop. Para usarla, abra el
       enlace o el código QR que ella comparte al empezar la presentación.</p>
       <p class="nota">Por qué: la parte que entiende la voz (Whisper) necesita una computadora con más memoria de la

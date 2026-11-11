@@ -16,8 +16,8 @@ const fecha = (texto) => esc((texto || "").slice(0, 10));
 const lista = (v) => (Array.isArray(v) ? v.join(", ") : v ?? "");
 
 // La ventana del resumen se ofrece una vez por visita (no cada vez que se filtra).
-const yaOfrecido = () => { try { return sessionStorage.getItem("reciclamos.resumen") === "1"; } catch { return false; } };
-const marcarOfrecido = () => { try { sessionStorage.setItem("reciclamos.resumen", "1"); } catch { /* modo privado */ } };
+const yaOfrecido = () => { try { return sessionStorage.getItem("ecobarrio.resumen") === "1"; } catch { return false; } };
+const marcarOfrecido = () => { try { sessionStorage.setItem("ecobarrio.resumen", "1"); } catch { /* modo privado */ } };
 
 export async function mostrar(raiz) {
   raiz.innerHTML = `<div class="pantalla">${cargando()}</div>`;
@@ -41,7 +41,7 @@ export async function mostrar(raiz) {
   raiz.innerHTML = `
   <div class="panel">
     <aside>
-      <a class="marca" href="#/" style="color:#FFFFFF;padding:0">${logo}<span style="display:flex;flex-direction:column;line-height:1.2">Reciclamos<span style="font-size:13px;font-weight:400;color:#B8C4BC">Municipalidad de Trujillo</span></span></a>
+      <a class="marca" href="#/" style="color:#FFFFFF;padding:0">${logo}<span style="display:flex;flex-direction:column;line-height:1.2">EcoBarrio<span style="font-size:13px;font-weight:400;color:#B8C4BC">Municipalidad de Trujillo</span></span></a>
       <nav aria-label="Panel">
         ${[["resumen", "Resumen"], ["recicladores", "Recicladores"], ["mapa-panel", "Mapa"], ["acopios", "Acopios"],
            ["vecinos", "Vecinos"], ["recojos", "Recojos"], ["sigersol", "SIGERSOL"]]
@@ -51,7 +51,7 @@ export async function mostrar(raiz) {
     </aside>
     <main>
       <header id="resumen" style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
-        <div><h1>Reciclaje en la provincia</h1><p class="subtitulo">Lo que pasa en Reciclamos · datos sintéticos + lo registrado en el demo</p></div>
+        <div><h1>Reciclaje en la provincia</h1><p class="subtitulo">Lo que pasa en EcoBarrio · datos sintéticos + lo registrado en el demo</p></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="boton chico" type="button" id="ver-mes">${icono("grafico", 18)} Resumen del mes</button>
           <button class="boton chico principal" type="button" id="csv">${icono("descargar", 18)} Descargar CSV</button>
