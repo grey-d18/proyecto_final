@@ -1,20 +1,32 @@
 // Registro por voz: el flujo principal del producto.
-//   Paso 0      bienvenida y consentimiento (al apretar «Empezar» se abre el micrófono).
-//   Pasos 1–8   una pregunta por pantalla: se escucha sola; la persona toca el micrófono y habla.
-//   Paso 9      la IA llena la ficha; la persona la revisa y se inscribe.
+//   Paso 0      bienvenida, consentimiento y aviso de grabación (al apretar «Empezar» se abre el micrófono).
+//   Preguntas   5 preguntas abiertas, una por pantalla. Después de cada respuesta, la API llena la
+//               ficha con todo lo dicho y decide la siguiente (POST /entrevista): si ya se dijo un
+//               dato, su pregunta se salta; si falta, se repregunta una sola vez.
+//   Ficha       la persona revisa su ficha, la escucha (con los dígitos del DNI uno por uno) y
+//               dice «sí, acepto»: es su declaración jurada, y se guarda con la hora.
 //   Final       código de registro y constancia en PDF.
 import { enlace, enviar, enviarFormulario, leer } from "../api.js";
-import { barra, callar, cargando, esc, hablar, icono, mensajeError, sesion } from "../comun.js";
+import { barra, callar, cargando, esc, hablar, icono, leerEnVoz, mensajeError, sesion } from "../comun.js";
 import { abrirMicrofono, cerrarMicrofono, grabar, microfonoAbierto } from "../grabadora.js";
 
 let catalogo = null;
 // Lo que se va respondiendo. Vive mientras la página esté abierta (si vuelve atrás, no se pierde).
-const estado = { paso: 0, respuestas: {}, ficha: null, metodo: "", codigo: null };
+//   historial: las preguntas que se fueron haciendo (cambia según lo que la persona dice)
+//   paso:      0 = bienvenida; 1… = la pregunta historial[paso - 1]; después, la ficha
+const nuevo = () => ({ paso: 0, historial: [], respuestas: {}, saltadas: [], yaSaltadas: [], ficha: null, metodo: "", codigo: null });
+const estado = nuevo();
+const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+// Para avisar qué pregunta se saltó porque la persona ya lo había dicho.
+const LO_QUE_PIDE = {
+  dni: "su DNI", nombre_nacimiento: "su nombre y su fecha de nacimiento", vivienda_celular: "dónde vive y su celular",
+  trabajo: "sus materiales, zona y horario", equipo: "con qué trabaja",
+};
 let grabacion = null;
 const MIENTRAS_HABLA = "Le escuchamos… Toque el cuadrado cuando termine";
 
 export async function mostrar(raiz) {
-  if (estado.codigo) Object.assign(estado, { paso: 0, respuestas: {}, ficha: null, metodo: "", codigo: null });
+  if (estado.codigo) Object.assign(estado, nuevo());
   raiz.innerHTML = `<div class="pantalla">${cargando()}</div>`;
   catalogo ??= await leer("/catalogos");
   dibujar(raiz);
@@ -22,10 +34,9 @@ export async function mostrar(raiz) {
 }
 
 function dibujar(raiz) {
-  const total = catalogo.preguntas.length;
   if (estado.codigo) return dibujarFinal(raiz);
   if (estado.paso === 0) return dibujarBienvenida(raiz);
-  if (estado.paso <= total) return dibujarPregunta(raiz);
+  if (estado.paso <= estado.historial.length) return dibujarPregunta(raiz);
   return dibujarFicha(raiz);
 }
 
@@ -41,6 +52,8 @@ function dibujarBienvenida(raiz) {
       <button class="boton chico suave" type="button" id="escuchar" style="align-self:flex-start">${icono("parlante", 20)} Escuchar</button>
       <p>Le haremos <strong>${catalogo.preguntas.length} preguntas</strong>. Escuche cada una y responda hablando.</p>
       <p class="subtitulo">Sus datos solo se usan para el Registro Municipal de Recicladores (Ley 29419).</p>
+      <p class="subtitulo"><strong>Aviso:</strong> su voz se graba solo para convertirla en texto y llenar su ficha;
+        el audio no se guarda. Sus datos están protegidos por la Ley 29733.</p>
     </div>
     <label class="casilla"><input type="checkbox" id="acepto"> Acepto registrarme y que se usen mis datos para el registro.</label>
     <div id="aviso-micro"></div>
@@ -59,34 +72,40 @@ function dibujarBienvenida(raiz) {
         `<div class="aviso">${icono("alerta", 22)}<span>No pudimos usar el micrófono. Puede escribir las respuestas, o dar permiso al micrófono en el navegador.</span></div>`;
       await new Promise((r) => setTimeout(r, 1800));
     }
+    if (!estado.historial.length) estado.historial = [catalogo.preguntas[0]];
     irA(raiz, 1);
   });
 }
 
-// --- Pasos 1 a 8 -----------------------------------------------------------------------------
+// --- Preguntas -------------------------------------------------------------------------------
 function dibujarPregunta(raiz) {
   const total = catalogo.preguntas.length;
-  const pregunta = catalogo.preguntas[estado.paso - 1];
+  const pregunta = estado.historial[estado.paso - 1];
   const clave = pregunta.clave;
-  const ultima = estado.paso === total;
+  const delGuion = catalogo.preguntas.findIndex((p) => p.clave === clave);
+  const hechas = delGuion >= 0 ? delGuion + 1 : total; // en las repreguntas, la barra ya está llena
+  const titulo = delGuion >= 0 ? `Pregunta ${delGuion + 1} de ${total}` : "Una pregunta más";
+  const saltadas = estado.paso === estado.historial.length ? estado.saltadas : [];
 
   raiz.innerHTML = `
   <div class="pantalla">
     <div style="display:flex;flex-direction:column;gap:12px">
-      ${barra("#/registro", `Pregunta ${estado.paso} de ${total}`).replace('href="#/registro"', 'href="#/registro" id="volver"')}
+      ${barra("#/registro", titulo).replace('href="#/registro"', 'href="#/registro" id="volver"')}
       <div class="progreso" style="--total:${total}" aria-hidden="true">
-        ${catalogo.preguntas.map((_, i) => `<span class="${i < estado.paso ? "hecho" : ""}"></span>`).join("")}
+        ${catalogo.preguntas.map((_, i) => `<span class="${i < hechas ? "hecho" : ""}"></span>`).join("")}
       </div>
     </div>
+    ${saltadas.length ? `<p class="nota" role="status">${icono("check", 16)} Ya nos dijo ${esc(saltadas.map((c) => LO_QUE_PIDE[c] || c).join(" y "))}: no se lo volvemos a preguntar.</p>` : ""}
     <section class="tarjeta pregunta">
       <button class="boton chico suave" type="button" id="escuchar" style="align-self:flex-start">${icono("parlante", 20)} Escuchar otra vez</button>
       <h1>${esc(pregunta.texto)}</h1>
       <p class="subtitulo">Por ejemplo: «${esc(pregunta.ejemplo)}»</p>
     </section>
     <div class="zona-micro" id="zona"></div>
+    <div id="mensaje"></div>
     <div class="par">
       <button class="boton" type="button" id="anterior">Anterior</button>
-      <button class="boton principal" type="button" id="siguiente">${ultima ? "Terminar" : "Siguiente"}</button>
+      <button class="boton principal" type="button" id="siguiente">Siguiente</button>
     </div>
   </div>`;
 
@@ -186,113 +205,240 @@ function dibujarPregunta(raiz) {
   raiz.querySelector("#escuchar").addEventListener("click", () => hablar(clave));
   raiz.querySelector("#anterior").addEventListener("click", () => irA(raiz, estado.paso - 1));
   raiz.querySelector("#volver").addEventListener("click", (e) => { e.preventDefault(); irA(raiz, estado.paso - 1); });
-  raiz.querySelector("#siguiente").addEventListener("click", () => {
-    if (ultima) estado.ficha = null; // al terminar, la ficha se vuelve a llenar con las respuestas actuales
-    irA(raiz, estado.paso + 1);
-  });
+  raiz.querySelector("#siguiente").addEventListener("click", (e) => siguiente(raiz, e.target));
 }
 
-// --- Paso 9: revisar la ficha -----------------------------------------------------------------
-const NOMBRES_CAMPO = {
-  nombre_completo: "nombre", dni: "DNI", edad: "edad", distrito_vivienda: "distrito",
-  sector_vivienda: "barrio", materiales: "materiales", medio_transporte: "con qué recoge",
-  pertenece_asociacion: "asociación", nombre_asociacion: "asociación", equipo_proteccion: "protección",
-};
-
-async function dibujarFicha(raiz) {
-  if (!estado.ficha) {
-    raiz.innerHTML = `<div class="pantalla">${cargando("Ordenando sus respuestas en la ficha…")}</div>`;
-    try {
-      const { ficha, metodo } = await enviar("/ficha", { respuestas: estado.respuestas });
-      estado.ficha = ficha;
-      estado.metodo = metodo;
-    } catch (error) {
-      raiz.innerHTML = `<div class="pantalla">${mensajeError(error)}<button class="boton" id="reintentar">Intentar otra vez</button></div>`;
-      raiz.querySelector("#reintentar").addEventListener("click", () => dibujarFicha(raiz));
-      return;
-    }
+// Envía todo lo dicho hasta esta pregunta y la API responde qué preguntar después.
+async function siguiente(raiz, boton) {
+  callar();
+  grabacion?.detener();
+  boton.disabled = true;
+  boton.textContent = "Revisando…";
+  // Si volvió atrás y cambió una respuesta, lo que venía después se vuelve a decidir.
+  const historial = estado.historial.slice(0, estado.paso);
+  const hechas = historial.map((p) => p.clave);
+  const respuestas = Object.fromEntries(hechas.map((c) => [c, estado.respuestas[c] || ""]));
+  try {
+    const paso = await enviar("/entrevista", { respuestas, hechas });
+    estado.historial = historial;
+    estado.respuestas = respuestas;
+    // Solo se avisa de las que se saltaron recién (no se repite el aviso en cada pregunta).
+    estado.saltadas = paso.saltadas.filter((c) => !estado.yaSaltadas.includes(c));
+    estado.yaSaltadas = paso.saltadas;
+    estado.ficha = paso.ficha;
+    estado.metodo = paso.metodo;
+    if (paso.siguiente) estado.historial.push(paso.siguiente);
+    irA(raiz, estado.paso + 1); // si no hay siguiente, esto lleva a la ficha
+  } catch (error) {
+    boton.disabled = false;
+    boton.textContent = "Siguiente";
+    raiz.querySelector("#mensaje").innerHTML = mensajeError(error);
   }
+}
+
+// --- Revisar la ficha y declarar ---------------------------------------------------------------
+const NOMBRES_CAMPO = {
+  nombre_completo: "nombre", dni: "DNI", fecha_nacimiento: "fecha de nacimiento", genero: "género",
+  direccion: "dirección", distrito_vivienda: "distrito", telefono: "celular", materiales: "materiales",
+  zona_trabajo: "zona", dias_trabajo: "días", horario: "horario", equipo: "con qué trabaja",
+};
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre",
+  "octubre", "noviembre", "diciembre"];
+
+function edad(fecha) {
+  if (!fecha) return "";
+  const [a, m, d] = fecha.split("-").map(Number);
+  const hoy = new Date();
+  return hoy.getFullYear() - a - ((hoy.getMonth() + 1 < m || (hoy.getMonth() + 1 === m && hoy.getDate() < d)) ? 1 : 0);
+}
+
+// El resumen que se lee en voz alta. El DNI y el celular, dígito por dígito, para que la
+// persona confirme que se entendió bien.
+function resumen(f) {
+  const digitos = (t) => (t || "").split("").join(", ");
+  const lista = (l) => (l || []).join(", ").toLowerCase();
+  const partes = [`Tu ficha. Nombre: ${f.nombre_completo || "por completar"}.`,
+    f.dni ? `DNI: ${digitos(f.dni)}.` : "DNI: por completar."];
+  if (f.fecha_nacimiento) {
+    const [a, m, d] = f.fecha_nacimiento.split("-").map(Number);
+    partes.push(`Naciste el ${d} de ${MESES[m - 1]} de ${a}.`);
+  }
+  if (f.direccion) partes.push(`Vives en ${f.direccion}.`);
+  if (f.telefono) partes.push(`Celular: ${digitos(f.telefono)}.`);
+  if (f.materiales?.length) partes.push(`Recoges ${lista(f.materiales)}.`);
+  if (f.zona_trabajo) partes.push(`En ${f.zona_trabajo}.`);
+  if (f.dias_trabajo?.length) partes.push(`Los días ${lista(f.dias_trabajo)}${f.hora_desde ? `, de ${f.hora_desde} a ${f.hora_hasta}` : ""}.`);
+  const con = [...(f.medio_transporte || []), ...(f.equipo_proteccion || [])];
+  if (con.length) partes.push(`Trabajas con ${lista(con)}.`);
+  partes.push("Si todo está bien, toca el micrófono y di: sí, acepto. Es tu declaración jurada de que tus datos son verdaderos.");
+  return partes.join(" ");
+}
+
+function dibujarFicha(raiz) {
   const f = estado.ficha;
   const dudosos = new Set(f.campos_dudosos || []);
-  const clase = (campo) => `campo ${dudosos.has(campo) ? "dudoso" : ""}`;
-  const fichas = (nombre, opciones, elegidas) => `
-    <fieldset class="campo" style="border:none;padding:0;margin:0"><span>${nombre}</span>
+  const faltan = new Set(f.faltantes || []);
+  const clase = (campo) => `campo ${dudosos.has(campo) || faltan.has(campo) ? "dudoso" : ""}`;
+  const etiqueta = (texto, campo) => `<span>${texto}${faltan.has(campo) ? ' <em style="font-weight:400">· por completar</em>' : ""}</span>`;
+  const fichas = (nombre, campo, opciones, elegidas) => `
+    <fieldset class="campo" style="border:none;padding:0;margin:0">${etiqueta(nombre, campo)}
       <div class="chips" data-grupo="${nombre}">
-        ${opciones.map((o) => `<button type="button" class="chip" aria-pressed="${elegidas.includes(o)}" data-valor="${esc(o)}">${esc(o)}</button>`).join("")}
+        ${opciones.map((o) => `<button type="button" class="chip" aria-pressed="${(elegidas || []).includes(o)}" data-valor="${esc(o)}">${esc(o)}</button>`).join("")}
       </div></fieldset>`;
   const distritos = [...catalogo.distritos, "Otro"];
   const distritoActual = distritos.includes(f.distrito_vivienda) ? f.distrito_vivienda : "Otro";
-  const listaDudosos = [...new Set([...dudosos].map((c) => NOMBRES_CAMPO[c] || c))];
+  const revisar = [...new Set([...dudosos].map((c) => NOMBRES_CAMPO[c] || c))];
+  const pendientes = [...faltan].map((c) => NOMBRES_CAMPO[c] || c);
 
   raiz.innerHTML = `
   <div class="pantalla">
     <div class="barra">
       <button class="boton-redondo" type="button" id="volver" aria-label="Volver a las preguntas">${icono("atras", 22)}</button>
-      <div style="flex-grow:1"><h1 style="font-size:26px">Revise su ficha</h1><span class="nota">Llenada con: ${esc(estado.metodo)}</span></div>
+      <div style="flex-grow:1"><h1 style="font-size:26px">Revise su ficha</h1><span class="nota">Llenada con: ${esc(estado.metodo)} · ${estado.historial.length} preguntas</span></div>
     </div>
     <div class="aviso">${icono("alerta", 22)}<span>
-      ${listaDudosos.length ? `Confirme: <strong>${esc(listaDudosos.join(", "))}</strong>. ` : ""}
+      ${revisar.length ? `Confirme: <strong>${esc(revisar.join(", "))}</strong>. ` : ""}
+      ${pendientes.length ? `Quedan <strong>por completar</strong>: ${esc(pendientes.join(", "))}. Puede escribirlos ahora o completarlos después en la municipalidad. ` : ""}
       Revise bien su <strong>nombre</strong>: a veces la voz no se entiende bien.</span></div>
     <form id="ficha" class="tarjeta" novalidate>
-      <label class="${clase("nombre_completo")}"><span>Nombre completo</span><input name="nombre_completo" value="${esc(f.nombre_completo)}" autocomplete="off"></label>
+      <label class="${clase("nombre_completo")}">${etiqueta("Nombre completo", "nombre_completo")}<input name="nombre_completo" value="${esc(f.nombre_completo)}" autocomplete="off"></label>
+      <label class="${clase("dni")}">${etiqueta("DNI", "dni")}<input name="dni" value="${esc(f.dni)}" inputmode="numeric" maxlength="8" autocomplete="off">
+        <span class="nota" id="dni-digitos" style="letter-spacing:4px"></span></label>
       <div class="par">
-        <label class="${clase("dni")}"><span>DNI</span><input name="dni" value="${esc(f.dni)}" inputmode="numeric" maxlength="8" autocomplete="off"></label>
-        <label class="${clase("edad")}"><span>Edad</span><input name="edad" type="number" min="14" max="100" value="${esc(f.edad ?? "")}"></label>
+        <label class="${clase("fecha_nacimiento")}">${etiqueta("Fecha de nacimiento", "fecha_nacimiento")}<input name="fecha_nacimiento" type="date" value="${esc(f.fecha_nacimiento)}"></label>
+        <label class="campo"><span>Edad</span><input id="edad" value="${esc(edad(f.fecha_nacimiento))}" readonly tabindex="-1"></label>
       </div>
+      <label class="${clase("genero")}">${etiqueta("Género", "genero")}
+        <select name="genero">${["", "Femenino", "Masculino"].map((g) => `<option value="${g}" ${g === (f.genero || "") ? "selected" : ""}>${g || "—"}</option>`).join("")}</select></label>
+      <label class="${clase("direccion")}">${etiqueta("Dirección", "direccion")}<input name="direccion" value="${esc(f.direccion)}"></label>
+      <label class="${clase("distrito_vivienda")}"><span>Distrito</span>
+        <select name="distrito_vivienda">${distritos.map((d) => `<option ${d === distritoActual ? "selected" : ""}>${esc(d)}</option>`).join("")}</select></label>
       <div class="par">
-        <label class="${clase("distrito_vivienda")}"><span>Distrito</span>
-          <select name="distrito_vivienda">${distritos.map((d) => `<option ${d === distritoActual ? "selected" : ""}>${esc(d)}</option>`).join("")}</select></label>
-        <label class="${clase("sector_vivienda")}"><span>Barrio</span><input name="sector_vivienda" value="${esc(f.sector_vivienda)}"></label>
+        <label class="${clase("telefono")}">${etiqueta("Celular", "telefono")}<input name="telefono" value="${esc(f.telefono)}" inputmode="numeric" maxlength="9"></label>
+        <label class="campo"><span>Correo (opcional)</span><input name="correo" type="email" value="${esc(f.correo)}"></label>
       </div>
-      ${fichas("Materiales", [...catalogo.materiales, "Otro"], f.materiales)}
-      ${fichas("Recoge con", [...catalogo.transportes, "Otro"], f.medio_transporte)}
-      <label class="casilla"><input type="checkbox" name="pertenece_asociacion" ${f.pertenece_asociacion ? "checked" : ""}> Pertenece a una asociación</label>
-      <label class="campo"><span>¿Cuál asociación?</span><input name="nombre_asociacion" value="${esc(f.nombre_asociacion)}"></label>
-      ${fichas("Protección", catalogo.equipos, f.equipo_proteccion)}
+      <label class="campo"><span>Cargo en su organización</span><input name="cargo" value="${esc(f.cargo || "socio")}"></label>
+      ${fichas("Materiales", "materiales", [...catalogo.materiales, "Otro"], f.materiales)}
+      <label class="${clase("zona_trabajo")}">${etiqueta("Zona donde recoge", "zona_trabajo")}<input name="zona_trabajo" value="${esc(f.zona_trabajo)}"></label>
+      ${fichas("Días", "dias_trabajo", DIAS, f.dias_trabajo)}
+      <div class="par">
+        <label class="${clase("horario")}">${etiqueta("Desde", "horario")}<input name="hora_desde" type="time" value="${esc(f.hora_desde)}"></label>
+        <label class="${clase("horario")}"><span>Hasta</span><input name="hora_hasta" type="time" value="${esc(f.hora_hasta)}"></label>
+      </div>
+      ${fichas("Vehículo", "equipo", [...catalogo.transportes, "Otro"], f.medio_transporte)}
+      ${fichas("Protección", "equipo", catalogo.equipos, f.equipo_proteccion)}
     </form>
+
+    <section class="tarjeta" aria-labelledby="titulo-declaracion">
+      <h2 id="titulo-declaracion" style="margin:0">Declaración jurada</h2>
+      <p class="subtitulo" style="margin:0">Declaro que mis datos son verdaderos. Para inscribirse, escuche su ficha y diga <strong>«sí, acepto»</strong>.</p>
+      <button class="boton chico suave" type="button" id="escuchar-ficha" style="align-self:flex-start">${icono("parlante", 20)} Escuchar mi ficha</button>
+      <div class="zona-micro" id="zona-acepto" style="min-height:0"></div>
+    </section>
     <div id="mensaje"></div>
-    <button class="boton principal ancho" type="button" id="guardar">${icono("check", 22)} Todo está bien, inscribirme</button>
-    <span class="nota" style="text-align:center">Recibirá su constancia en PDF</span>
   </div>`;
 
+  const form = raiz.querySelector("#ficha");
+  const dniDigitos = raiz.querySelector("#dni-digitos");
+  const mostrarDigitos = () => { dniDigitos.textContent = (form.dni.value || "").replace(/\D/g, "").split("").join(" "); };
+  mostrarDigitos();
+  form.dni.addEventListener("input", mostrarDigitos);
+  form.fecha_nacimiento.addEventListener("change", () => { raiz.querySelector("#edad").value = edad(form.fecha_nacimiento.value); });
   raiz.querySelectorAll(".chips button").forEach((b) =>
     b.addEventListener("click", () => b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") !== "true")));
-  raiz.querySelector("#volver").addEventListener("click", () => irA(raiz, catalogo.preguntas.length));
-  raiz.querySelector("#guardar").addEventListener("click", async (e) => {
-    const datos = new FormData(raiz.querySelector("#ficha"));
+  raiz.querySelector("#volver").addEventListener("click", () => irA(raiz, estado.historial.length));
+
+  // La ficha tal como está en pantalla (con lo que la persona corrigió).
+  const leerFicha = () => {
+    const datos = new FormData(form);
     const elegidos = (grupo) => [...raiz.querySelectorAll(`[data-grupo="${grupo}"] [aria-pressed="true"]`)].map((b) => b.dataset.valor);
-    const dni = (datos.get("dni") || "").replace(/\D/g, "");
-    const mensaje = raiz.querySelector("#mensaje");
-    if (dni.length !== 8) {
-      mensaje.innerHTML = `<div class="error" role="alert">El DNI debe tener 8 números.</div>`;
-      return;
-    }
-    const ficha = {
+    const texto = (c) => (datos.get(c) || "").trim() || null;
+    return {
       ...f,
-      nombre_completo: datos.get("nombre_completo") || null,
-      dni,
-      edad: datos.get("edad") ? Number(datos.get("edad")) : null,
+      nombre_completo: texto("nombre_completo"),
+      dni: (datos.get("dni") || "").replace(/\D/g, ""),
+      fecha_nacimiento: texto("fecha_nacimiento"),
+      genero: texto("genero"),
+      direccion: texto("direccion"),
       distrito_vivienda: datos.get("distrito_vivienda"),
-      sector_vivienda: datos.get("sector_vivienda") || null,
+      telefono: (datos.get("telefono") || "").replace(/\D/g, "") || null,
+      correo: texto("correo"),
+      cargo: texto("cargo") || "socio",
       materiales: elegidos("Materiales"),
-      medio_transporte: elegidos("Recoge con"),
-      pertenece_asociacion: datos.get("pertenece_asociacion") === "on",
-      nombre_asociacion: datos.get("nombre_asociacion") || null,
+      zona_trabajo: texto("zona_trabajo"),
+      dias_trabajo: elegidos("Días"),
+      hora_desde: texto("hora_desde"),
+      hora_hasta: texto("hora_hasta"),
+      medio_transporte: elegidos("Vehículo"),
       equipo_proteccion: elegidos("Protección"),
     };
-    e.target.disabled = true;
+  };
+  raiz.querySelector("#escuchar-ficha").addEventListener("click", () => leerEnVoz(resumen(leerFicha())));
+
+  const mensaje = raiz.querySelector("#mensaje");
+  const zona = raiz.querySelector("#zona-acepto");
+
+  async function inscribir(declaracion) {
+    const ficha = leerFicha();
+    if (ficha.dni.length !== 8) {
+      mensaje.innerHTML = `<div class="error" role="alert">El DNI debe tener 8 números.</div>`;
+      return dibujarAcepto();
+    }
+    if (ficha.telefono && !/^9\d{8}$/.test(ficha.telefono)) {
+      mensaje.innerHTML = `<div class="error" role="alert">El celular debe tener 9 números y empezar con 9.</div>`;
+      return dibujarAcepto();
+    }
+    zona.innerHTML = `<div class="girando" role="status" aria-label="Inscribiendo"></div>`;
     try {
-      const { codigo } = await enviar("/recicladores", { ficha, metodo: estado.metodo });
+      const { codigo } = await enviar("/recicladores", { ficha, metodo: estado.metodo, declaracion });
       estado.ficha = ficha;
       estado.codigo = codigo;
       sesion.codigo = codigo; // desde ahora este celular sabe quién es
       cerrarMicrofono();
       dibujar(raiz);
     } catch (error) {
-      e.target.disabled = false;
       mensaje.innerHTML = mensajeError(error);
+      dibujarAcepto();
     }
-  });
+  }
+
+  function dibujarAcepto(aviso = "") {
+    zona.innerHTML = `
+      ${aviso ? `<div class="aviso">${icono("alerta", 22)}<span>${aviso}</span></div>` : ""}
+      <button class="micro" type="button" id="decir" aria-label="Tocar y decir: sí, acepto" style="color:#FFFFFF">${icono("micro", 56, 1.8)}</button>
+      <span style="font-size:20px;font-weight:700">Toque y diga «sí, acepto»</span>
+      <button class="enlace" type="button" id="tocar">Prefiero tocar: Sí, acepto</button>`;
+    zona.querySelector("#tocar").addEventListener("click", () => inscribir("Sí, acepto (tocó el botón)"));
+    zona.querySelector("#decir").addEventListener("click", async () => {
+      callar();
+      mensaje.innerHTML = "";
+      if (!microfonoAbierto()) {
+        try { await abrirMicrofono(); } catch { return dibujarAcepto("No pudimos usar el micrófono. Toque «Sí, acepto»."); }
+      }
+      zona.innerHTML = `
+        <button class="micro grabando" type="button" id="parar" aria-label="Terminar" style="color:#FFFFFF">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+        </button><span style="font-size:20px;font-weight:700">Diga: «sí, acepto»</span>`;
+      grabacion = grabar({ segundos: 10 });
+      zona.querySelector("#parar").addEventListener("click", () => grabacion?.detener());
+      const { audio, extension } = await grabacion.terminado;
+      grabacion = null;
+      if (!document.body.contains(zona)) return;
+      zona.innerHTML = `<div class="girando" role="status" aria-label="Escuchando"></div>`;
+      try {
+        const formulario = new FormData();
+        formulario.append("audio", audio, `acepto${extension}`);
+        const { texto } = await enviarFormulario("/transcribir", formulario);
+        if (/acepto/i.test(texto)) return inscribir(texto.trim());
+        dibujarAcepto(texto.trim() ? `Escuchamos «${esc(texto.trim())}». Para inscribirse, diga «sí, acepto».` : "No escuchamos nada. Hable cerca del celular.");
+      } catch (error) {
+        dibujarAcepto(esc(error.message));
+      }
+    });
+  }
+
+  dibujarAcepto();
+  leerEnVoz(resumen(f)); // puede no sonar si el navegador lo bloquea: queda el botón «Escuchar mi ficha»
 }
 
 // --- Final: inscrito ----------------------------------------------------------------------------

@@ -47,6 +47,22 @@ export function hablar(clave) {
 }
 export function callar() {
   if (audioActual) { audioActual.pause(); audioActual = null; }
+  try { speechSynthesis.cancel(); } catch { /* el navegador no tiene voz */ }
+}
+
+// Lee un texto que cambia (por ejemplo, el resumen de la ficha) con la voz del propio celular.
+// No usamos un servicio de voz en internet: el texto tiene datos personales (DNI, celular)
+// y así no sale del teléfono.
+export function leerEnVoz(texto) {
+  callar();
+  try {
+    const frase = new SpeechSynthesisUtterance(texto);
+    const voces = speechSynthesis.getVoices();
+    frase.voice = voces.find((v) => v.lang === "es-PE") || voces.find((v) => v.lang.startsWith("es")) || null;
+    frase.lang = frase.voice?.lang || "es-PE";
+    frase.rate = 0.9;
+    speechSynthesis.speak(frase);
+  } catch { /* sin voz: la ficha igual se puede leer en pantalla */ }
 }
 
 // --- Memoria: qué reciclador está usando la app (queda guardado en este celular) -------------------
