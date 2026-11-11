@@ -97,6 +97,10 @@ Streamlit no se borró de la historia: está completa en la rama `version-stream
 |---|---|---|
 | ![Inicio](docs/capturas/1_inicio.jpg) | ![Registro](docs/capturas/2_registro.jpg) | ![Mi ruta](docs/capturas/3_mi_ruta.jpg) |
 
+**Panel de la municipalidad** (en computadora):
+
+![Panel de la municipalidad](docs/capturas/4_municipalidad.jpg)
+
 ### Arquitectura
 
 ```mermaid
