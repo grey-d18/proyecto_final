@@ -30,8 +30,14 @@ que cruza SIGERSOL, la OEFA, el Banco Mundial y UN Comtrade con mi trabajo de ca
   Porvenir se paga entre el 15 % y el 18 % del precio de exportación (trabajo de campo, 2026).
 - **Las municipalidades.** La Ley 29419 y su reglamento (D. S. 005-2010-MINAM) les piden llevar un registro de
   recicladores y formalizarlos, pero lo hacen con fichas en papel, copias de DNI y firmas. El resultado es un
-  registro incompleto: en 2024, el distrito de Trujillo reportó solo 1 375 t valorizadas de 126 500 t generadas
-  (SIGERSOL), aunque en sus calles se recicla mucho más.
+  registro que nadie puede contar: el último censo de la Municipalidad Provincial de Trujillo (SEGAT, 2019) encontró
+  **756 recicladores** en la provincia, 724 de ellos en el distrito de Trujillo
+  ([Correo, 2019](https://diariocorreo.pe/edicion/la-libertad/mas-de-700-personas-se-dedican-al-reciclaje-en-trujillo-899635/)),
+  pero no hay una cifra pública de cuántos están inscritos hoy. Solo se informan asociaciones, y los números no
+  coinciden: 12 «operando» según la municipalidad en diciembre de 2024
+  ([Correo](https://diariocorreo.pe/edicion/la-libertad/recicladores-cierran-acceso-al-relleno-sanitario-de-trujillo-la-libertad-peru-noticia/))
+  y 24 «formalizadas» según el SEGAT en marzo de 2025
+  ([Correo](https://diariocorreo.pe/edicion/la-libertad/trujillo-87-recicladores-son-formalizados-por-segat-la-libertad-peru-noticia/)).
 
 **Cuánto cuesta hoy** (de mi trabajo de campo, ver [`docs/research/`](docs/research/))
 - **Papeles que no se entienden.** Algunos recicladores no saben leer, y formalizarse significa «muchos documentos»:
