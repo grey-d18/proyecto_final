@@ -29,6 +29,7 @@ from nucleo import base_datos as bd
 from nucleo.capacitacion import MATERIALES as GUIA_MATERIALES
 from nucleo.capacitacion import MODULOS, QUIZ
 from nucleo.catalogos import DISTRITOS_TRUJILLO, EQUIPOS, MATERIALES, TRANSPORTES
+from nucleo.config import FUENTES
 from nucleo.constancia import crear_constancia
 from nucleo.extraccion import DIAS_SEMANA, FichaReciclador, extraer_ficha, extraer_horario
 from nucleo.preguntas import PREGUNTAS, SEGUNDOS_POR_DEFECTO
