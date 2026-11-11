@@ -71,3 +71,27 @@ def test_la_entrevista_nunca_entra_en_bucle():
         siguiente = avanzar(respuestas, hechas)["siguiente"]
         assert len(hechas) <= 15
     assert len(hechas) == len(set(hechas))                    # ninguna pregunta se repite
+
+
+RESTO = {
+    "nombre_nacimiento": "Rosa Quispe Ramos, nací el 3 de mayo de 1978, soy mujer",
+    "trabajo": "cartón en el centro de Trujillo de lunes a sábado de 6 a 11",
+    "equipo": "triciclo y guantes",
+}
+
+
+def test_un_celular_con_una_cifra_de_menos_no_se_toma_como_dni():
+    # DNI con 7 cifras y celular con 8: el celular NO debe terminar como DNI.
+    respuestas = {"dni": "cuatro cinco siete ocho uno dos tres",
+                  "vivienda_celular": "Calle Los Pinos 245, El Porvenir, mi celular es 98765432", **RESTO}
+    paso = avanzar(respuestas, hechas=list(respuestas))
+    assert paso["ficha"].dni is None
+    assert paso["ficha"].telefono is None
+    assert paso["siguiente"]["clave"] == "re_dni"            # se repregunta el DNI
+
+
+def test_si_el_modelo_pone_el_celular_como_dni_se_descarta():
+    from nucleo.extraccion import DatosDichos, completar
+    respuestas = {"dni": "cuatro cinco siete", "vivienda_celular": "mi celular es 98765432"}
+    ficha = completar(DatosDichos(dni="98765432"), respuestas)
+    assert ficha.dni is None
