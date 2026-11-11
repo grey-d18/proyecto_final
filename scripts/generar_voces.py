@@ -25,14 +25,15 @@ import edge_tts
 RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ))  # para poder importar nucleo/ al correrlo como script
 from nucleo.config import AUDIOS_PREGUNTAS  # noqa: E402
-from nucleo.preguntas import AVISOS, PREGUNTAS  # noqa: E402
+from nucleo.preguntas import AVISOS, PREGUNTAS, REPREGUNTAS  # noqa: E402
 
 VOZ = "es-PE-CamilaNeural"
 VELOCIDAD = "-10%"  # un poco más lento que lo normal: se entiende mejor
 
 # Lo que se dice en cada audio. Se usa "voz" si la pregunta la tiene (texto hablado
 # distinto del que se ve en pantalla, por ejemplo con una indicación extra).
-TEXTOS = {p["clave"]: p.get("voz", p["texto"]) for p in PREGUNTAS} | AVISOS
+TEXTOS = ({p["clave"]: p.get("voz", p["texto"]) for p in PREGUNTAS}
+          | {r["clave"]: r.get("voz", r["texto"]) for r in REPREGUNTAS.values()} | AVISOS)
 
 
 async def generar(clave: str) -> None:
