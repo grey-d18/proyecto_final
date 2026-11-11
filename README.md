@@ -52,10 +52,11 @@ que cruza SIGERSOL, la OEFA, el Banco Mundial y UN Comtrade con mi trabajo de ca
 **¿Quién eres?**:
 
 1. **Soy reciclador**
-   - **Registro por voz:** 8 preguntas, una por pantalla. Cada pregunta **se escucha** (voz natural con acento
-     peruano, porque la persona puede no saber leer) y se responde hablando: se aprieta el micrófono para empezar y otra vez para
-     terminar. Whisper transcribe, Gemini llena la ficha del registro con un esquema fijo, la persona revisa y se
-     descarga una **constancia en PDF**.
+   - **Registro por voz:** 5 preguntas abiertas, una por pantalla. Cada pregunta **se escucha** (voz natural con
+     acento peruano, porque la persona puede no saber leer) y se responde hablando. Whisper transcribe y, después de
+     cada respuesta, Gemini llena la ficha con un esquema fijo: si la persona ya dijo un dato, su pregunta se salta, y
+     si falta uno, se repregunta una sola vez. Al final la app lee la ficha en voz alta (el DNI dígito por dígito), la
+     persona dice **«sí, acepto»** como declaración jurada y se descarga una **constancia en PDF**.
    - **Capacitación:** buenas prácticas, cómo reconocer cada material, precios de referencia y un quiz.
    - **Mi ruta:** tabla de precios del día en su distrito (último precio, mayor precio y en qué local) y un mapa con
      los locales de acopio y el reciclaje que hay para recoger.
@@ -111,7 +112,7 @@ Streamlit no se borró de la historia: está completa en la rama `version-stream
 
 ### Capturas
 
-| ¿Quién eres? | Registro por voz | Mi ruta |
+| ¿Quién eres? | Registro por voz (se saltó la pregunta 2: ya lo había dicho) | Mi ruta |
 |---|---|---|
 | ![Inicio](docs/capturas/1_inicio.jpg) | ![Registro](docs/capturas/2_registro.jpg) | ![Mi ruta](docs/capturas/3_mi_ruta.jpg) |
 
@@ -128,9 +129,11 @@ Streamlit no se borró de la historia: está completa en la rama `version-stream
 ```mermaid
 flowchart LR
     Q[🔊 Pregunta hablada<br>es-PE-CamilaNeural, generada una vez<br>web/audios/] --> A
-    A[🎙️ Celular: app web<br>GitHub Pages<br>responde 8 preguntas] -->|audio WebM/MP4<br>vía la API FastAPI| B[Whisper<br>faster-whisper, CPU<br>nucleo/voz.py]
+    A[🎙️ Celular: app web<br>GitHub Pages<br>responde 5 preguntas] -->|audio WebM/MP4<br>vía la API FastAPI| B[Whisper<br>faster-whisper, CPU<br>nucleo/voz.py]
     B -->|texto| C[Gemini<br>salida estructurada<br>nucleo/extraccion.py]
-    C -->|FichaReciclador JSON| D[Revisión humana<br>web/js/vistas/registro.js]
+    C -->|ficha + faltantes| N[¿Qué preguntar?<br>salta lo ya dicho,<br>repregunta una vez<br>nucleo/entrevista.py]
+    N -->|siguiente pregunta| A
+    N -->|terminó| D[Revisión humana<br>y «sí, acepto»<br>web/js/vistas/registro.js]
     D --> E[(SQLite<br>nucleo/base_datos.py)]
     D --> F[📄 Constancia PDF<br>nucleo/constancia.py]
     E --> G[📊 Panel municipal<br>y resumen del mes]
@@ -191,7 +194,8 @@ El script de clonación quedó en el historial de git (commit `f6f9b3a`) por si 
   Antes de cortar muestra una cuenta regresiva («¿Terminó? Termino en 3…») y, si la persona vuelve a hablar, sigue
   grabando. Al empezar mide el ruido del lugar para reconocer también la voz bajita. Y si igual se cortó, el botón
   **«Agregar más»** graba de nuevo y suma lo nuevo a lo que ya dijo. Cada respuesta puede durar hasta 30 segundos;
-  las que suelen ser largas tienen más: dirección 40 s, y materiales, transporte y asociación 50 s (`nucleo/preguntas.py`).
+  las que suelen ser largas tienen más: nombre y fecha de nacimiento 40 s, y dirección y celular, trabajo y equipo
+  50 s (`nucleo/preguntas.py`).
   Además le pedimos al navegador que **no** aplique cancelación de eco ni supresión de ruido: están hechas para
   llamadas y, en nuestras pruebas, deformaban la voz lo suficiente para que Whisper confundiera números.
 - **Si igual se pierde el inicio.** Los ejemplos empiezan con una frase («Mi DNI es…») para que, si se corta el
@@ -233,7 +237,9 @@ cp .env.example .env                                   # y pon tu GEMINI_API_KEY
 python3 -m http.server 5500 --directory web            # terminal 2: la app, en http://localhost:5500
 ```
 
-Sin clave de Gemini la app funciona igual: llena la ficha con reglas simples. Para ver la versión anterior en
+Sin clave de Gemini la app funciona igual: llena la ficha con reglas simples. Las pruebas automáticas (DNI dicho en
+palabras, respuesta con varios datos, faltante «por completar») se corren con
+`uv run --with pytest --with-requirements api/requirements.txt pytest tests/`. Para ver la versión anterior en
 Streamlit: `git switch version-streamlit`, luego `uv pip install -r requirements.txt` y `streamlit run app.py`.
 
 **Prueba en vivo desde cualquier celular** (la API en tu laptop + un túnel de Cloudflare):
@@ -273,10 +279,11 @@ api/
 nucleo/                    la lógica, sin interfaz (la usa la API)
   config.py                rutas y claves (.env o secretos)
   catalogos.py             listas comunes: distritos, materiales, transporte y equipo
-  preguntas.py             las 8 preguntas (texto, lo que dice el audio y un ejemplo) y los avisos
+  preguntas.py             las 5 preguntas, las repreguntas (texto, audio, ejemplo) y los avisos
   voz.py                   Whisper
-  extraccion.py            esquema de la ficha, Gemini y plan B con reglas
-  base_datos.py            SQLite: recicladores, acopios, precios y recojos
+  extraccion.py            esquema de la ficha (art. 34 b), Gemini, plan B con reglas y DNI dicho en palabras
+  entrevista.py            qué preguntar después: salta lo ya dicho y repregunta cada faltante una vez
+  base_datos.py            SQLite: recicladores, vecinos, acopios, precios y recojos
   ubicacion.py             centros de distrito y búsqueda de direcciones (OpenStreetMap)
   constancia.py            PDF
   capacitacion.py          contenido de la capacitación
@@ -287,6 +294,7 @@ scripts/
 datos/
   sinteticos/              recicladores, vecinos, acopios, precios y recojos inventados para el demo
   fuentes/                 datos reales: SIGERSOL y precios del trabajo de campo
+tests/                     pruebas del registro (pytest)
 docs/                      capturas y entrevistas
 ```
 
