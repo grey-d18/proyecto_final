@@ -1,5 +1,6 @@
 // Recoger reciclaje: pedidos de los vecinos. «Lo recogeré» lo asigna por 3 días; si no se
 // recoge en ese plazo, vuelve a estar disponible para otro reciclador de la zona.
+// Arriba van los recojos que el reciclador ya aceptó; debajo, los demás pedidos de su zona.
 import { enlace, enviar, leer } from "../api.js";
 import { barra, cargando, esc, hablar, icono, mensajeError, menuReciclador, sesion } from "../comun.js";
 import { textoHorario } from "./vecino.js";
@@ -27,20 +28,7 @@ export async function mostrar(raiz, aviso = false) {
       <h1>Recoger reciclaje</h1>
       ${aviso ? `<div class="aviso" role="alert">${icono("alerta", 22)}<span>Recuerde que tiene un máximo de <strong>3 días</strong> para hacer su recojo. Si no, se asignará a otro reciclador de la zona.</span></div>` : ""}
 
-      <h2>Para recoger en ${esc(yo.distrito_vivienda)}</h2>
-      ${disponibles.length ? disponibles.map((r) => `
-        <article class="tarjeta">
-          ${foto(r)}
-          <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline">
-            <strong style="font-size:20px">${esc(r.descripcion)}</strong>
-            <span class="chip">${Math.round(r.peso_kg)} kg</span>
-          </div>
-          <span class="subtitulo">${esc(r.vecino)} · ${esc(r.direccion || r.distrito)}</span>
-          ${r.hora_desde ? `<span class="chip" style="align-self:flex-start">${icono("reloj", 18)} ${esc(textoHorario(r))}</span>` : ""}
-          <button class="boton principal" type="button" data-tomar="${r.id}">${icono("check", 22)} Lo recogeré</button>
-        </article>`).join("") : `<p class="vacio">Por ahora no hay reciclaje para recoger en su zona.</p>`}
-
-      ${mios.length ? `<h2>Mis recojos</h2>
+      ${mios.length ? `<h2>Mis recojos pendientes</h2>
         <div class="lista">${mios.map((r) => `
           <div class="fila">
             <div style="display:flex;flex-direction:column">
@@ -51,6 +39,19 @@ export async function mostrar(raiz, aviso = false) {
             </div>
             <button class="boton chico suave" type="button" data-hecho="${r.id}">Ya lo recogí</button>
           </div>`).join("")}</div>` : ""}
+
+      <h2>${mios.length ? "Otros para recoger" : "Para recoger"} en ${esc(yo.distrito_vivienda)}</h2>
+      ${disponibles.length ? disponibles.map((r) => `
+        <article class="tarjeta">
+          ${foto(r)}
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline">
+            <strong style="font-size:20px">${esc(r.descripcion)}</strong>
+            <span class="chip">${Math.round(r.peso_kg)} kg</span>
+          </div>
+          <span class="subtitulo">${esc(r.vecino)} · ${esc(r.direccion || r.distrito)}</span>
+          ${r.hora_desde ? `<span class="chip" style="align-self:flex-start">${icono("reloj", 18)} ${esc(textoHorario(r))}</span>` : ""}
+          <button class="boton principal" type="button" data-tomar="${r.id}">${icono("check", 22)} Lo recogeré</button>
+        </article>`).join("") : `<p class="vacio">${mios.length ? "Por ahora no hay otros pedidos en su zona." : "Por ahora no hay reciclaje para recoger en su zona."}</p>`}
     </div>
     ${menuReciclador("recoger", disponibles.length)}`;
 
