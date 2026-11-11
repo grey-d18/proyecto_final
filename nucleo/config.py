@@ -3,11 +3,11 @@
 ¿Por qué existe este archivo?
     Para que todos los demás módulos lean la configuración de UN solo lugar.
     Si mañana cambias el modelo de Gemini o de Whisper, solo tocas el .env
-    (en tu laptop) o los "Secrets" del Space de Hugging Face (en internet).
+    (en tu laptop) o las variables de entorno del servidor (en producción).
 
 ¿De dónde salen los valores?
     1. Primero se busca en las variables de entorno (el archivo .env en tu laptop,
-       o los secretos del Space, que Hugging Face entrega como variables de entorno).
+       o las variables del servidor).
     2. Si no están, se usa el valor por defecto.
 """
 import os

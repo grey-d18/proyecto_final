@@ -84,7 +84,7 @@ La app tiene dos partes:
 - **`web/`, lo que ve la persona:** HTML, CSS y JavaScript, sin instalar nada. Se publica gratis en **GitHub Pages**
   y en el celular se puede «agregar a la pantalla de inicio» como una app.
 - **`api/`, el motor:** una API en Python (**FastAPI**) que corre Whisper, Gemini, la base de datos y el PDF. Usa
-  las funciones de `nucleo/`. Se publica gratis en **Hugging Face Spaces**.
+  las funciones de `nucleo/`. En esta **versión de prueba** corre en la laptop de la autora (ver abajo).
 
 Empezamos con Streamlit porque permitía tener un prototipo en horas. Pero se veía como una página de datos y no como
 una app: se recargaba en cada toque, no permitía un menú fijo abajo ni un micrófono grande, y en el iPhone pedía
@@ -121,7 +121,7 @@ flowchart LR
 
 | Pieza | Qué usamos | Por qué |
 |---|---|---|
-| Voz → texto | **faster-whisper** (modelo `small`, int8, CPU) | Gratis y abierto, corre en nuestro servidor (la voz y el DNI no salen a otra empresa) y entra en el plan gratuito de Hugging Face |
+| Voz → texto | **faster-whisper** (modelo `small`, int8, CPU) | Gratis y abierto, corre en nuestro servidor (la voz y el DNI no salen a otra empresa) y corre en una laptop común |
 | Texto → ficha | **Gemini 3.5 Flash-Lite** (`gemini-3.5-flash-lite`, plan gratuito, ~2 s por ficha) con salidas estructuradas (esquema Pydantic) | Gratis, entiende respuestas con rodeos («cartón y a veces latitas» → Cartón, Aluminio) y devuelve siempre el JSON de la ficha |
 | Texto → voz | **`es-PE-CamilaNeural`** (voz neuronal de Microsoft con acento peruano) a través de la librería [`edge-tts`](https://github.com/rany2/edge-tts), velocidad −10 % | Natural, con la misma entonación en todas las preguntas y gratis sin cuenta. Los audios se generan una vez ([`scripts/generar_voces.py`](scripts/generar_voces.py)) y la app solo reproduce los MP3. Antes probé clonar mi voz: ver abajo |
 | Plan B | Reglas con expresiones regulares | El demo funciona aunque no haya clave o se caiga internet |
@@ -168,9 +168,17 @@ El script de clonación quedó en el historial de git (commit `f6f9b3a`) por si 
 - **Si igual se pierde el inicio.** Los ejemplos empiezan con una frase («Mi DNI es…») para que, si se corta el
   comienzo, se pierda esa frase y no un dato; Gemini ignora esas palabras de relleno, y si el DNI no queda con 8
   dígitos se marca para confirmar.
-- **La base de datos se borra al reiniciar.** En los planes gratuitos (como Hugging Face) el archivo SQLite
-  vive en un disco temporal. Para el demo está bien; en producción se usaría una base en la nube (por ejemplo,
-  Postgres en Supabase).
+- **Es una versión de prueba: la API corre en una laptop.** La página está publicada en GitHub Pages, pero el motor
+  (Whisper, Gemini, la base de datos) corre en la laptop de la autora y se conecta a internet con un **túnel
+  temporal de Cloudflare**, gratis y sin cuenta ([`scripts/demo_en_vivo.sh`](scripts/demo_en_vivo.sh)). Así se puede
+  probar en tiempo real desde cualquier celular, pero solo mientras la laptop está encendida; si no, la página
+  avisa «El servidor está apagado». Buscamos un servidor gratuito y no hubo uno que alcance: Hugging Face ya solo
+  da gratis páginas estáticas (correr Python pide el plan PRO, US$ 9 al mes) y los planes gratuitos de otros
+  servicios dan 512 MB de memoria, menos de lo que necesita Whisper `small`. **Publicarlo de verdad implica pagar
+  un servidor** (unos US$ 10 al mes, ver [Costos](#7-modelo-de-negocio)) y poner su dirección fija en
+  [`web/js/config.js`](web/js/config.js).
+- **La base de datos es local.** El archivo SQLite vive en la laptop: sirve para la prueba. En producción se usaría
+  una base en la nube (por ejemplo, Postgres).
 
 ### Cómo correrlo
 
@@ -188,10 +196,17 @@ python3 -m http.server 5500 --directory web            # terminal 2: la app, en 
 Sin clave de Gemini la app funciona igual: llena la ficha con reglas simples. Para ver la versión anterior en
 Streamlit: `git switch version-streamlit`, luego `uv pip install -r requirements.txt` y `streamlit run app.py`.
 
-**Publicar la API en Hugging Face Spaces** (gratis): crear un Space de tipo **Docker** → subir este repositorio (usa
-el [`Dockerfile`](Dockerfile)) → en *Settings → Variables and secrets* agregar el secreto `GEMINI_API_KEY` (clave
-gratis de [Google AI Studio](https://aistudio.google.com/apikey), sin tarjeta). Copiar la dirección del Space
-(`https://<usuario>-<space>.hf.space`) en [`web/js/config.js`](web/js/config.js).
+**Prueba en vivo desde cualquier celular** (la API en tu laptop + un túnel de Cloudflare):
+
+```bash
+brew install cloudflared                 # una sola vez
+bash scripts/demo_en_vivo.sh             # enciende la API y el túnel; muestra un enlace y un código QR
+```
+
+El enlace se ve así: `https://grey-d18.github.io/proyecto_final/?api=https://<algo>.trycloudflare.com`. La página
+guarda esa dirección en el navegador. Por seguridad solo acepta direcciones `trycloudflare.com` o de la propia
+laptop, para que nadie pueda mandar un enlace que desvíe los datos (DNI, voz) a otro servidor. Cada vez que se
+enciende, el túnel tiene una dirección nueva: hay que compartir el enlace nuevo. Ctrl+C apaga todo.
 
 **Publicar la app en GitHub Pages:** en GitHub, *Settings → Pages → Source: GitHub Actions*. Desde ahí, cada cambio
 en `web/` que llega a `main` se publica solo ([`.github/workflows/pagina.yml`](.github/workflows/pagina.yml)).
@@ -228,10 +243,10 @@ nucleo/                    la lógica, sin interfaz (la usa la API)
 scripts/
   generar_sinteticos.py    crea los datos inventados (recicladores, acopios, precios, pedidos)
   generar_voces.py         crea los audios de las preguntas (voz es-PE-CamilaNeural, edge-tts)
+  demo_en_vivo.sh          prueba en vivo: enciende la API y el túnel de Cloudflare, muestra enlace y QR
 datos/
   sinteticos/              recicladores, acopios, precios y pedidos inventados para el demo
   fuentes/                 datos reales: SIGERSOL y precios del trabajo de campo
-Dockerfile                 receta para publicar la API en Hugging Face Spaces
 docs/                      capturas y entrevistas
 ```
 
@@ -249,7 +264,7 @@ en papel.
 |---|---|
 | Whisper | US$ 0 (corre en el servidor) |
 | Gemini 3.5 Flash-Lite por registro (~500 tokens de entrada y ~300 de salida) | **US$ 0** en el plan gratuito (la app muestra los tokens de cada registro). En producción, con datos reales, se usaría el plan de pago, que no usa los datos para entrenar: menos de un centavo de dólar por registro |
-| Servidor | Gratis en GitHub Pages y Hugging Face Spaces para el piloto; ~US$ 10 al mes en un VPS para producción |
+| Servidor | Gratis en la prueba (GitHub Pages + la API en una laptop con túnel de Cloudflare); ~US$ 10 al mes en un VPS para producción |
 
 El piloto cuesta US$ 0. En producción, un distrito con 300 recicladores costaría menos de US$ 3 en tokens al año: el margen es casi todo el precio.
 

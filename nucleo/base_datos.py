@@ -12,7 +12,7 @@ Tablas:
 La primera vez que se abre la app, las tablas se llenan con datos SINTÉTICOS
 (inventados, ver scripts/generar_sinteticos.py) para que el demo tenga qué mostrar.
 
-Nota: en el plan gratuito de Hugging Face Spaces el archivo se borra cuando la app se reinicia.
+Nota: es un archivo local; en un servidor gratuito se borraría al reiniciar.
 Para el demo está bien; en producción se usaría una base en la nube (por ejemplo,
 Postgres en Supabase).
 """

@@ -2,7 +2,7 @@
 
 La app web es solo HTML, CSS y JavaScript (se publica gratis en GitHub Pages) y no
 puede correr Whisper ni guardar datos. Por eso le pide todo a esta API, que corre en
-un servidor con Python (por ejemplo, Hugging Face Spaces).
+un servidor con Python (en la prueba, la laptop de la autora con un túnel de Cloudflare).
 
 Casi no hay lógica aquí: cada ruta llama a una función de nucleo/.
 Esta capa solo traduce entre la web (JSON) y Python.

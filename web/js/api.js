@@ -6,7 +6,7 @@ async function pedir(ruta, opciones = {}) {
   try {
     respuesta = await fetch(API + ruta, opciones);
   } catch {
-    throw new Error("No hay conexión con el servidor. Revise su internet e intente otra vez.");
+    throw new Error("No hay conexión con el servidor. Revise su internet; si sigue igual, puede que el servidor de prueba esté apagado.");
   }
   if (!respuesta.ok) {
     let mensaje = `El servidor respondió con un error (${respuesta.status}).`;

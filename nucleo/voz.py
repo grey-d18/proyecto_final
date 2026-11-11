@@ -39,8 +39,8 @@ def cargar_modelo() -> WhisperModel:
 
     @cache guarda el resultado: las siguientes veces se reutiliza el mismo modelo
     en vez de volver a cargarlo (cargarlo tarda unos segundos).
-    compute_type="int8" reduce la memoria que usa: así entra en el plan gratuito
-    de Hugging Face Spaces.
+    compute_type="int8" reduce la memoria que usa: así cabe en la memoria
+    de una laptop o un servidor pequeño.
     """
     return WhisperModel(WHISPER_MODELO, device="cpu", compute_type="int8")
 

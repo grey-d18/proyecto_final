@@ -2,6 +2,7 @@
 // pantalla u otra (por ejemplo, …/index.html#/mi-ruta). Así funciona en GitHub Pages, que
 // solo sirve archivos, y los botones «atrás» del celular siguen funcionando.
 import { callar, mensajeError } from "./comun.js";
+import { API } from "./config.js";
 
 const pantallas = {
   "": () => import("./vistas/inicio.js"),
@@ -34,5 +35,21 @@ async function mostrar() {
   }
 }
 
-window.addEventListener("hashchange", mostrar);
-mostrar();
+// Versión de prueba: si no llegó la dirección del servidor (la laptop de la autora), se avisa.
+function servidorApagado() {
+  raiz.innerHTML = `
+    <div class="pantalla">
+      <header><span class="subtitulo">ReciclaVoz · versión de prueba</span><h1>El servidor está apagado</h1></header>
+      <p>Esta demo funciona mientras la autora tiene encendido el servidor en su laptop. Para usarla, abra el
+      enlace o el código QR que ella comparte al empezar la presentación.</p>
+      <p class="nota">Por qué: la parte que entiende la voz (Whisper) necesita una computadora con más memoria de la
+      que dan los servicios gratuitos. En producción correría en un servidor pagado (unos US$ 10 al mes).</p>
+    </div>`;
+}
+
+if (API) {
+  window.addEventListener("hashchange", mostrar);
+  mostrar();
+} else {
+  servidorApagado();
+}

@@ -1,9 +1,0 @@
-# Nada de esto entra en la imagen de Docker de la API
-.git
-.venv
-.env
-audios/
-datos/registro.db
-**/__pycache__
-web/
-docs/
