@@ -26,29 +26,19 @@ que cruza SIGERSOL, la OEFA, el Banco Mundial y UN Comtrade con mi trabajo de ca
 **Quién lo sufre**
 - **Las personas que reciclan.** En el Perú hay unos **53 000 recicladores informales** frente a unos **13 800
   formales** (WIEGO 2021, recogido en *What a Waste 3.0* del Banco Mundial). Sin registro no entran a los programas
-  de segregación en la fuente, no acceden a equipo ni capacitación y venden al precio del día: por el fierro, en El
-  Porvenir se paga entre el 15 % y el 18 % del precio de exportación (trabajo de campo, 2026).
+  de segregación en la fuente, no acceden a equipo ni capacitación y aceptan precios no regulados.
 - **Las municipalidades.** La Ley 29419 y su reglamento (D. S. 005-2010-MINAM) les piden llevar un registro de
-  recicladores y formalizarlos, pero lo hacen con fichas en papel, copias de DNI y firmas. El resultado es un
-  registro que nadie puede contar: el último censo de la Municipalidad Provincial de Trujillo (SEGAT, 2019) encontró
-  **756 recicladores** en la provincia, 724 de ellos en el distrito de Trujillo
-  ([Correo, 2019](https://diariocorreo.pe/edicion/la-libertad/mas-de-700-personas-se-dedican-al-reciclaje-en-trujillo-899635/)),
-  pero no hay una cifra pública de cuántos están inscritos hoy. Solo se informan asociaciones, y los números no
-  coinciden: 12 «operando» según la municipalidad en diciembre de 2024
-  ([Correo](https://diariocorreo.pe/edicion/la-libertad/recicladores-cierran-acceso-al-relleno-sanitario-de-trujillo-la-libertad-peru-noticia/))
-  y 24 «formalizadas» según el SEGAT en marzo de 2025
-  ([Correo](https://diariocorreo.pe/edicion/la-libertad/trujillo-87-recicladores-son-formalizados-por-segat-la-libertad-peru-noticia/)).
+  recicladores y formalizarlos, pero lo hacen con fichas en papel, copias de DNI y firmas. Sin embargo, es difícil medir el logro del programa si no se sabe cuál es la población total de recicladores.
 
-**Cuánto cuesta hoy** (de mi trabajo de campo, ver [`docs/research/`](docs/research/))
-- **Papeles que no se entienden.** Algunos recicladores no saben leer, y formalizarse significa «muchos documentos»:
-  dependen de que alguien les lea y les explique, o no se inscriben.
-- **Precio.** Muchos venden por costumbre siempre al mismo comprador, sin saber que en otro lado les pagarían más.
+
+**¿Qué problemas enfrentan?** (de mi trabajo de campo, ver [`docs/research/`](docs/research/))
+- **Papeles que no se entienden.** Algunos recicladores no saben leer y/o escribir, y formalizarse significa documentación y trámites con los que no están familiarizados.
+- **Precio.** El acopiador puede cambiar el precio repentinamente y muchos venden por costumbre siempre al mismo comprador, sin saber que en otro lado les pagarían más.
 - **Salud.** La mayoría no sabe cómo cuidarse: trabajan sin guantes ni mascarilla.
-- **Material que se pierde.** Hay vecinos que separan su reciclaje, pero sin el número de un reciclador no tienen a
+- **Material que se pierde.** Hay vecinos que separan su reciclaje, pero sin el contacto de un reciclador no tienen a
   quién avisar.
-- `[COMPLETAR si tienes el dato: horas que toma una ficha en la municipalidad o días de trabajo perdidos]`
 
-**Cómo se resuelve hoy:** fichas en papel en la municipalidad, campañas puntuales de empadronamiento y Excel.
+**Cómo se resuelve hoy:** fichas en papel en la municipalidad y campañas de empadronamiento pobres.
 
 **Evidencia:** notas de 3 conversaciones con usuarios en [`docs/research/`](docs/research/).
 
