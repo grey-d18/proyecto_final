@@ -95,3 +95,10 @@ def test_si_el_modelo_pone_el_celular_como_dni_se_descarta():
     respuestas = {"dni": "cuatro cinco siete", "vivienda_celular": "mi celular es 98765432"}
     ficha = completar(DatosDichos(dni="98765432"), respuestas)
     assert ficha.dni is None
+
+
+def test_el_genero_se_dice_en_la_pregunta_2():
+    respuestas = {"dni": "45781234", "nombre_nacimiento": "Rosa Elena Quispe Ramos, nací el 3 de mayo de 1978, soy mujer"}
+    paso = avanzar(respuestas, hechas=list(respuestas))
+    assert paso["ficha"].genero == "Femenino"
+    assert paso["siguiente"]["clave"] == "vivienda_celular"

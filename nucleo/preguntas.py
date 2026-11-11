@@ -46,8 +46,11 @@ PREGUNTAS = [
     {
         "clave": "nombre_nacimiento",
         "segundos": 40,
-        "texto": "Dígame su nombre completo y su fecha de nacimiento.",
-        "ejemplo": "Rosa Elena Quispe Ramos, nací el 3 de mayo de 1978",
+        "texto": "Dígame su nombre completo, su fecha de nacimiento y si es mujer u hombre.",
+        "ejemplo": "Rosa Elena Quispe Ramos, nací el 3 de mayo de 1978, soy mujer",
+        # El género se pide aquí (lo dice la persona; nunca se adivina por el nombre). No está en
+        # «campos»: si el nombre y la fecha ya se dijeron antes, esta pregunta se salta igual y el
+        # género, si falta, se repregunta al final (re_genero).
         "campos": ["nombre_completo", "fecha_nacimiento"],
     },
     {
@@ -110,6 +113,11 @@ AVISOS = {
     "inicio": "¿Quién es usted? Toque «Soy reciclador», «Soy vecino» o «Soy acopiador».",
     "aviso_recojo": "Recuerde que tiene un máximo de tres días para hacer su recojo. "
                     "Si no, se asignará a otro reciclador de la zona.",
+    # El resumen de la ficha: Camila dice el inicio y el final (frases fijas); los datos
+    # personales los lee la voz del propio celular, para que no salgan del teléfono.
+    "resumen_inicio": "Escuche su ficha y revise que sus datos estén bien.",
+    "resumen_final": "Si todo está bien, toque el micrófono y diga: sí, acepto. "
+                     "Es su declaración jurada de que sus datos son verdaderos.",
     "bienvenida_registro": "Le voy a hacer cinco preguntas para inscribirle en el registro de recicladores. "
                            "Su voz se graba solo para llenar su ficha. Toque el micrófono y responda hablando.",
 }
