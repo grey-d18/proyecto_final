@@ -91,8 +91,9 @@ desconfían de firmar papeles. Si el registro es una conversación, la barrera d
 
 ## 6. Demo
 
-**App web:** `[COMPLETAR: https://grey-d18.github.io/proyecto_final/ al publicar]` · la versión anterior en Streamlit
-quedó guardada como respaldo en la rama [`version-streamlit`](../../tree/version-streamlit).
+**App web:** https://grey-d18.github.io/proyecto_final/ (para registrar necesita la API encendida en la laptop de la
+autora; ver [Cómo correrlo](#cómo-correrlo)) · la versión anterior en Streamlit quedó guardada como respaldo en la rama
+[`version-streamlit`](../../tree/version-streamlit).
 
 La app tiene dos partes:
 
