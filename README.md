@@ -4,7 +4,7 @@
 
 Proyecto final de la Diplomatura en Ciencia de Datos para las Ciencias Sociales y la Gestión Pública (Q-Lab PUCP).
 
-- **Demo:** `[COMPLETAR: https://grey-d18.github.io/proyecto_final/ al publicar]` · o en local, ver [Cómo correrlo](#cómo-correrlo)
+- **Demo:** https://grey-d18.github.io/proyecto_final/ · o en local, ver [Cómo correrlo](#cómo-correrlo)
 - **Video de respaldo:** `[COMPLETAR]`
 
 ---
