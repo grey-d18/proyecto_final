@@ -33,7 +33,7 @@ export function mostrar(raiz) {
       </div>
       <div class="muestra" aria-hidden="true">
         <div class="telefono"><div class="dentro">
-          <span class="nota" style="text-align:center;font-weight:700">Pregunta 2 de 8</span>
+          <span class="nota" style="text-align:center;font-weight:700">Pregunta 1 de 5</span>
           <div class="tarjeta" style="padding:16px"><strong style="font-size:22px;line-height:1.2">¿Cuál es su número de DNI?</strong></div>
           <div class="zona-micro" style="min-height:0">
             <span class="micro" style="width:112px;height:112px;border-width:8px;color:#FFFFFF">${icono("micro", 46, 1.8)}</span>
