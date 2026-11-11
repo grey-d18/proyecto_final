@@ -22,11 +22,11 @@ function direccionValida(texto) {
 }
 
 function leerGuardada() {
-  try { return localStorage.getItem("reciclavoz-api"); } catch { return null; }
+  try { return localStorage.getItem("reciclacontigo-api"); } catch { return null; }
 }
 
 function guardar(direccion) {
-  try { localStorage.setItem("reciclavoz-api", direccion); } catch { /* modo privado: no pasa nada */ }
+  try { localStorage.setItem("reciclacontigo-api", direccion); } catch { /* modo privado: no pasa nada */ }
 }
 
 const parametros = new URLSearchParams(location.search);

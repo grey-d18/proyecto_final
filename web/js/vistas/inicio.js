@@ -15,7 +15,7 @@ export function mostrar(raiz) {
   raiz.innerHTML = `
   <div class="pantalla inicio">
     <header class="barra">
-      <a class="marca" href="#/">${logo}ReciclaVoz</a>
+      <a class="marca" href="#/">${logo}Recicla Contigo</a>
       <button class="boton-redondo" type="button" id="escuchar" aria-label="Escuchar esta pantalla">${icono("parlante", 22)}</button>
     </header>
 

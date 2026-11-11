@@ -1,4 +1,4 @@
-# ♻️ ReciclaVoz
+# ♻️ Recicla Contigo
 
 > **Formalizamos a recicladores informales para las municipalidades del Perú mediante un registro por voz que llena la ficha con IA.**
 
@@ -293,7 +293,9 @@ en papel.
 
 El piloto cuesta US$ 0. En producción, un distrito con 300 recicladores costaría menos de US$ 3 en tokens al año: el margen es casi todo el precio.
 
-**Qué sigue:** piloto con una municipalidad de Trujillo, clases interactivas para que los acopiadores
+**Qué sigue:** piloto con una municipalidad de Trujillo, **entrenar Whisper (fine-tuning) con audios reales de
+vecinos y recicladores, con su permiso, para que reconozca bien las calles, barrios y asentamientos de Trujillo**
+(hoy los confunde: le damos una lista de palabras y Gemini corrige los distritos, pero no basta), clases interactivas para que los acopiadores
 sepan qué implica formalizarse como empresa operadora de residuos sólidos (un proyecto aparte), acopiadores reales publicando sus precios, WhatsApp como canal
 y respuestas también habladas en Mi ruta (leer la tabla de precios en voz alta).
 
