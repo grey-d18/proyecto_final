@@ -194,7 +194,7 @@ El script de clonación quedó en el historial de git (commit `f6f9b3a`) por si 
   Antes de cortar muestra una cuenta regresiva («¿Terminó? Termino en 3…») y, si la persona vuelve a hablar, sigue
   grabando. Al empezar mide el ruido del lugar para reconocer también la voz bajita. Y si igual se cortó, el botón
   **«Agregar más»** graba de nuevo y suma lo nuevo a lo que ya dijo. Cada respuesta puede durar hasta 30 segundos;
-  las que suelen ser largas tienen más: nombre y fecha de nacimiento 40 s, y dirección y celular, trabajo y equipo
+  las que suelen ser largas tienen más: nombre, fecha de nacimiento y género 40 s, y dirección y celular, trabajo y equipo
   50 s (`nucleo/preguntas.py`).
   Además le pedimos al navegador que **no** aplique cancelación de eco ni supresión de ruido: están hechas para
   llamadas y, en nuestras pruebas, deformaban la voz lo suficiente para que Whisper confundiera números.
@@ -221,6 +221,10 @@ El script de clonación quedó en el historial de git (commit `f6f9b3a`) por si 
   solo para el registro. Hoy el panel muestra el DNI, el correo y el celular ocultos, y el demo usa solo datos inventados.
 - **Consentimiento explícito.** Antes de la primera pregunta la persona marca «Acepto» y, al final, dice «sí, acepto»
   como declaración jurada; se guarda lo que dijo y la hora. Sin eso, no se inscribe.
+- **Los datos no se adivinan ni se envían a más servicios.** El género lo dice la persona en la pregunta 2: no se
+  deduce del nombre. Antes del «sí, acepto», el resumen de la ficha se escucha así: la voz grabada (Camila) dice las
+  frases fijas y los datos personales los lee la voz del propio celular, para no enviarlos a un servicio de voz en
+  internet. El único servicio externo que recibe los datos es Gemini, con una espera máxima de 10 segundos.
 - **Aviso de grabación de voz.** La bienvenida avisa, en pantalla y en voz alta, que la voz se graba solo para
   convertirla en texto. El audio se transcribe en el servidor y **no se guarda**: se borra apenas Whisper lo lee.
 
