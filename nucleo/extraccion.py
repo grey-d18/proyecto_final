@@ -219,6 +219,16 @@ def dni_desde_texto(texto: str) -> str | None:
     return next((g for g in grupos_de_cifras(texto) if len(g) == 8), None)
 
 
+# Las respuestas donde se pide el celular. Ahí NO se busca el DNI: un celular dicho con una
+# cifra de menos (98765432) tiene 8 cifras y se confundiría con un DNI.
+PREGUNTAS_DEL_CELULAR = ("vivienda_celular", "re_celular")
+
+
+def texto_sin_celular(respuestas: dict[str, str]) -> str:
+    """Todas las respuestas juntas, menos las del celular (para buscar el DNI)."""
+    return " . ".join(t for clave, t in respuestas.items() if clave not in PREGUNTAS_DEL_CELULAR)
+
+
 def celular_desde_texto(texto: str) -> str | None:
     """Un celular peruano: 9 cifras que empiezan con 9."""
     return next((g for g in grupos_de_cifras(texto) if len(g) == 9 and g.startswith("9")), None)
@@ -345,7 +355,7 @@ def extraer_con_reglas(respuestas: dict[str, str]) -> DatosDichos:
 
     return DatosDichos(
         nombre_completo=nombre,
-        dni=dni_desde_texto(de("dni", "re_dni") or todo) or dni_desde_texto(todo),
+        dni=dni_desde_texto(de("dni", "re_dni")) or dni_desde_texto(texto_sin_celular(respuestas)),
         fecha_nacimiento=fecha_desde_texto(todo),
         genero=genero,
         direccion=direccion,
@@ -381,12 +391,15 @@ def completar(datos: DatosDichos, respuestas: dict[str, str]) -> FichaReciclador
     """
     ficha = FichaReciclador(**datos.model_dump())
     dudosos = set(ficha.campos_dudosos)
-    todo = " . ".join(respuestas.values())
+    sin_celular = texto_sin_celular(respuestas)
 
     # DNI: exactamente 8 cifras. Si el modelo no lo logró, probamos convertir las palabras.
     dni = re.sub(r"\D", "", ficha.dni or "")
+    # Si el modelo tomó como DNI un número que solo aparece donde se pidió el celular, no vale.
+    if len(dni) == 8 and dni not in grupos_de_cifras(sin_celular) and dni not in re.sub(r"\D", "", sin_celular):
+        dni = ""
     if len(dni) != 8:
-        dni = dni_desde_texto(respuestas.get("re_dni") or respuestas.get("dni") or "") or dni_desde_texto(todo)
+        dni = dni_desde_texto(respuestas.get("re_dni") or respuestas.get("dni") or "") or dni_desde_texto(sin_celular)
         if ficha.dni and not dni:
             dudosos.add("dni")
     ficha.dni = dni or None
