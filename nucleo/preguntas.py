@@ -21,8 +21,8 @@ Los audios están en web/audios/<clave>.mp3 y se generan con
 scripts/generar_voces.py (voz neuronal es-PE-CamilaNeural, acento peruano).
 """
 
-# Cuánto puede durar cada respuesta hablada. Las preguntas que admiten respuestas largas
-# llevan "segundos": 60.
+# Cuánto puede durar cada respuesta hablada, en segundos. Las preguntas que admiten respuestas
+# largas (dirección, materiales, transporte, asociación) llevan su propio "segundos".
 SEGUNDOS_POR_DEFECTO = 30
 
 PREGUNTAS = [
@@ -44,21 +44,25 @@ PREGUNTAS = [
     },
     {
         "clave": "vivienda",
+        "segundos": 40,
         "texto": "¿Dónde vive? Dígame su distrito y su barrio.",
         "ejemplo": "En El Porvenir, en Río Seco",
     },
     {
         "clave": "materiales",
+        "segundos": 50,
         "texto": "¿Qué materiales recoge?",
         "ejemplo": "Cartón, botellas y fierro; a veces latas",
     },
     {
         "clave": "transporte",
+        "segundos": 50,
         "texto": "¿Con qué recoge y mueve los materiales? Por ejemplo: un saco, un carrito o un triciclo.",
         "ejemplo": "Con un triciclo",
     },
     {
         "clave": "asociacion",
+        "segundos": 50,
         "texto": "¿Pertenece a alguna asociación de recicladores? Por favor, indique cuál.",
         "ejemplo": "No, a ninguna",
     },

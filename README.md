@@ -177,8 +177,8 @@ El script de clonación quedó en el historial de git (commit `f6f9b3a`) por si 
   registro: el permiso se pide una vez, la grabación empieza al instante y **se detiene sola** tras 3,5 s de silencio.
   Antes de cortar muestra una cuenta regresiva («¿Terminó? Termino en 3…») y, si la persona vuelve a hablar, sigue
   grabando. Al empezar mide el ruido del lugar para reconocer también la voz bajita. Y si igual se cortó, el botón
-  **«Agregar más»** graba de nuevo y suma lo nuevo a lo que ya dijo. Cada pregunta tiene un máximo de 30 segundos,
-  que puede ser más en las preguntas que admiten respuestas largas (`nucleo/preguntas.py`).
+  **«Agregar más»** graba de nuevo y suma lo nuevo a lo que ya dijo. Cada respuesta puede durar hasta 30 segundos;
+  las que suelen ser largas tienen más: dirección 40 s, y materiales, transporte y asociación 50 s (`nucleo/preguntas.py`).
   Además le pedimos al navegador que **no** aplique cancelación de eco ni supresión de ruido: están hechas para
   llamadas y, en nuestras pruebas, deformaban la voz lo suficiente para que Whisper confundiera números.
 - **Si igual se pierde el inicio.** Los ejemplos empiezan con una frase («Mi DNI es…») para que, si se corta el
