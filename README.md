@@ -1,6 +1,6 @@
 # ♻️ EcoBarrio
 
-> **Formalizamos a recicladores informales para las municipalidades del Perú mediante un registro por voz que llena la ficha con IA.**
+> **Registramos a recicladores informales, como primer paso para su formalización, para las municipalidades del Perú mediante un registro por voz que llena la ficha con IA.**
 
 Proyecto final de la Diplomatura en Ciencia de Datos para las Ciencias Sociales y la Gestión Pública (Q-Lab PUCP).
 
@@ -11,15 +11,14 @@ Proyecto final de la Diplomatura en Ciencia de Datos para las Ciencias Sociales 
 
 ## 1. One-liner
 
-Hacemos **el registro y la formalización de recicladores** para **las municipalidades y las personas que reciclan**
-mediante **una conversación por voz que Whisper transcribe y Gemini convierte en la ficha oficial**.
+Hacemos **el registro para la formalización de recicladores** para **las municipalidades y las personas que reciclan**
+mediante **una conversación por voz que Whisper transcribe y Gemini convierte en la ficha del registro**.
 
 ## 2. Founder
 
 **Greicy Rodríguez**: antropóloga (PUCP). Mi tesis de licenciatura es una etnografía de los circuitos informales de
-reciclaje en El Porvenir (Trujillo): conozco a quién le venden los recicladores, a qué precio y por qué desconfían
-de los trámites. Ya construí el tablero [Lo que vale la basura](https://grey-d18.github.io/lo-que-vale-la-basura/),
-que cruza SIGERSOL, la OEFA, el Banco Mundial y UN Comtrade con mi trabajo de campo. `[COMPLETAR: algo personal: por qué te importa]`
+reciclaje en El Porvenir (Trujillo). He acompañado de cerca a recicladores y acopiadores informales, y he visto las dificultades que enfrentan día a día, como los cambios de precio. Son una población subrepresentada: hay muy pocos datos sobre ellos y mucho menos sobre la realidad que viven. Hoy, para formalizarse, la mas grande barrera es el requisito de pertenecer a una asociación. Que no estén formalizados no quita que sea un problema que necesitamos conocer: sin datos no se pueden tomar decisiones ni diseñar políticas públicas para ellos. Por eso
+empecé mi tesis, y por eso este proyecto empieza por lo básico: tener registros reales.
 
 ## 3. Problema
 
@@ -74,7 +73,7 @@ que cruza SIGERSOL, la OEFA, el Banco Mundial y UN Comtrade con mi trabajo de ca
 (D. S. 005-2010-MINAM, modificado por el D. S. 001-2022-MINAM); el resto (estado civil, estudios, ingresos, seguro)
 es opcional y no se pregunta. Así la entrevista bajó de **8 a 5 preguntas** abiertas, y se salta la que ya se respondió.
 
-**Insight.** El cuello de botella de la formalización no es la ley sino **el formulario**. En el trabajo de campo, la
+**Insight.** El cuello de botella del registro no es la ley sino **el formulario**. En el trabajo de campo, la
 gente que recicla habla con fluidez de su trabajo (rutas, kilos, precios), pero muchas personas leen con dificultad y
 desconfían de firmar papeles. Si el registro es una conversación, la barrera de entrada baja: la persona responde con sus palabras, sin leer ni firmar papeles.
 

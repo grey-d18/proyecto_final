@@ -45,7 +45,7 @@ export function mostrar(raiz) {
 
     <section class="pasos-portada" aria-label="Cómo funciona">
       ${paso(1, "Escucha y responde", "Cada pregunta se escucha en voz alta. La persona responde hablando, sin escribir.")}
-      ${paso(2, "La IA llena la ficha", "Whisper convierte la voz en texto y Gemini ordena las respuestas en la ficha oficial.")}
+      ${paso(2, "La IA llena la ficha", "Whisper convierte la voz en texto y Gemini ordena las respuestas en la ficha del registro.")}
       ${paso(3, "Constancia y panel", "La persona recibe su constancia en PDF y la municipalidad ve el registro en su panel.")}
     </section>
 

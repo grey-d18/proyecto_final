@@ -37,13 +37,41 @@ export function icono(nombre, tamano = 24, grosor = 2) {
 export const logo = `<span class="logo" style="color:#FFFFFF">${icono("micro", 22)}</span>`;
 
 // --- Voz: reproduce las preguntas y avisos grabados (carpeta audios/) ------------------------------
+// Safari (iPhone y Mac) solo deja sonar un audio si se «activó» con un toque de la persona.
+// Por eso usamos UN SOLO reproductor para toda la app y lo activamos en el primer toque
+// (por ejemplo, «Iniciar registro»). Así las preguntas suenan solas aunque antes la app
+// haya esperado al micrófono o a «Revisando…».
+const reproductor = new Audio();
+const SILENCIO = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=";
+let activado = false;
+function activarSonido() {
+  if (activado) return;
+  activado = true;
+  if (!reproductor.src) { // si ya hay un audio sonando, ese toque ya lo activó
+    reproductor.src = SILENCIO;
+    reproductor.play().catch(() => { activado = false; });
+  }
+  try { // la voz del celular (para leer la ficha) también se activa con un toque
+    const nada = new SpeechSynthesisUtterance(" ");
+    nada.volume = 0;
+    speechSynthesis.speak(nada);
+  } catch { /* el navegador no tiene voz */ }
+}
+for (const evento of ["pointerdown", "touchend", "click", "keydown"]) {
+  document.addEventListener(evento, activarSonido, { capture: true });
+}
+
 let audioActual = null;
+function sonar(clave) {
+  reproductor.src = `audios/${clave}.mp3`;
+  audioActual = reproductor;
+  // Si aun así el navegador lo bloquea, queda el botón «Escuchar»: no es un error.
+  reproductor.play().catch(() => {});
+  return reproductor;
+}
 export function hablar(clave) {
   callar();
-  audioActual = new Audio(`audios/${clave}.mp3`);
-  // El navegador puede bloquear el sonido hasta que la persona toque algo: no es un error.
-  audioActual.play().catch(() => {});
-  return audioActual;
+  return sonar(clave);
 }
 let turno = 0; // sube cada vez que algo nuevo empieza a sonar: así una lectura vieja no sigue
 export function callar() {
@@ -74,10 +102,12 @@ export function leerFichaEnVoz(claveInicio, datos, claveFinal) {
   const mio = turno;
   const sigue = (paso) => () => { if (turno === mio) paso(); };
   const camila = (clave, despues) => {
-    audioActual = new Audio(`audios/${clave}.mp3`);
-    audioActual.addEventListener("ended", sigue(despues));
-    audioActual.addEventListener("error", sigue(despues)); // si falta el audio, sigue con lo demás
-    audioActual.play().catch(() => {});
+    // Mismo reproductor: al terminar (o si falta el audio) sigue una sola vez con lo demás.
+    const fin = new AbortController();
+    const listo = () => { fin.abort(); sigue(despues)(); };
+    reproductor.addEventListener("ended", listo, { signal: fin.signal });
+    reproductor.addEventListener("error", listo, { signal: fin.signal });
+    sonar(clave);
   };
   const celular = (texto, despues) => {
     try {
