@@ -14,11 +14,10 @@
 - **Cuánto les cuesta:** precio. Venderle siempre al mismo comprador, sin comparar, significa aceptar el precio que
   les pongan (en El Porvenir el fierro se paga entre el 15 % y el 18 % del precio de exportación). Y salud: trabajan
   sin protección.
-- **Frases o ideas que se repetían:** «son muchos papeles», «eso no se entiende».
 - **Qué opinaron del demo:** no se les mostró: las conversaciones fueron antes de construir la app.
 - **Qué cambié en el producto por esta conversación:**
   - **Registro hablado:** la app lee cada pregunta en voz alta y la persona responde hablando, sin leer ni escribir.
-  - **8 preguntas** en vez de una ficha larga, y una constancia en PDF que se puede mostrar.
+  - **5 preguntas** en vez de una ficha larga, y una constancia en PDF que se puede mostrar.
   - **Mi ruta:** el **mayor precio del día** por material y en qué acopio, para que pueda comparar.
-  - **Aprender:** capacitación corta sobre cuidados, materiales y precios, también con audio.
+  - **Aprender:** capacitación corta sobre cuidados, materiales y precios.
   - La pregunta «¿Está en una asociación?» y el panel de la municipalidad muestran cuántos no lo están.
