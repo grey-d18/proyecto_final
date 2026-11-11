@@ -83,8 +83,9 @@ palabras, sin leer ni firmar papeles, y la app guarda solo lo que pide la ley.
 
 - **Reconocimiento de voz abierto y barato:** Whisper (2022) y faster-whisper (2023) transcriben español en un CPU
   común, sin pagar por minuto y sin que el audio salga del servidor.
-- **LLMs con salidas estructuradas y gratis:** hoy las APIs de modelos como Gemini obligan a que la respuesta cumpla un esquema JSON, y tienen un plan gratuito.
-  Antes había que "rogarle" al modelo y limpiar el texto; hoy la ficha sale siempre en el formato del registro.
+- **La IA ya puede llenar un formulario sin errores de formato:** antes, cuando uno le pedía a la IA que ordenara
+  datos, a veces respondía con texto de más o se olvidaba de un dato. Hoy se le da el molde de la ficha (nombre, DNI,
+  fecha…) y la IA está obligada a llenarlo tal cual. Además, Gemini tiene un plan gratuito.
 - **Micrófono en el navegador y celulares en todas partes:** no hay que instalar nada.
 - **Presión por metas:** las municipalidades reportan valorización a SIGERSOL y tienen programas de segregación que
   exigen incluir recicladores formalizados.
