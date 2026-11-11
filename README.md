@@ -73,6 +73,10 @@ que cruza SIGERSOL, la OEFA, el Banco Mundial y UN Comtrade con mi trabajo de ca
    mes** (inscritos nuevos, recojos hechos, kilos y cuántos días recogió en promedio cada reciclador, contando solo
    los recojos hechos con la app). Los datos personales se ven ocultos, y hay botones para ir a SIGERSOL.
 
+**Solo lo que pide la ley.** El registro pide únicamente lo que exige el art. 34 b) del Reglamento de la Ley 29419
+(D. S. 005-2010-MINAM, modificado por el D. S. 001-2022-MINAM); el resto (estado civil, estudios, ingresos, seguro)
+es opcional y no se pregunta. Así la entrevista bajó de **8 a 5 preguntas** abiertas, y se salta la que ya se respondió.
+
 **Insight.** El cuello de botella de la formalización no es la ley sino **el formulario**. En el trabajo de campo, la
 gente que recicla habla con fluidez de su trabajo (rutas, kilos, precios), pero muchas personas leen con dificultad y
 desconfían de firmar papeles. Si el registro es una conversación, la barrera de entrada baja, y la conversación además
@@ -205,6 +209,17 @@ El script de clonación quedó en el historial de git (commit `f6f9b3a`) por si 
 - **La base de datos es local.** El archivo SQLite vive en la laptop: sirve para la prueba. En producción se usaría
   una base en la nube (por ejemplo, Postgres).
 
+### Riesgos
+
+- **Datos personales y datos sensibles (Ley 29733).** El registro guarda DNI, dirección, celular y fecha de
+  nacimiento. Si se agregan el carné de vacunación o datos de salud (ver [Roadmap](#10-roadmap)), esos son **datos
+  sensibles**: la ley pide para ellos un consentimiento expreso y por escrito, guardarlos con más protección y usarlos
+  solo para el registro. Hoy el panel muestra el DNI, el correo y el celular ocultos, y el demo usa solo datos inventados.
+- **Consentimiento explícito.** Antes de la primera pregunta la persona marca «Acepto» y, al final, dice «sí, acepto»
+  como declaración jurada; se guarda lo que dijo y la hora. Sin eso, no se inscribe.
+- **Aviso de grabación de voz.** La bienvenida avisa, en pantalla y en voz alta, que la voz se graba solo para
+  convertirla en texto. El audio se transcribe en el servidor y **no se guarda**: se borra apenas Whisper lo lee.
+
 ### Cómo correrlo
 
 En la terminal de VS Code, desde la carpeta del proyecto (dos terminales):
@@ -321,6 +336,20 @@ Usé **Claude Code** en VS Code. `[REVISAR y completar]`
 - **Claude Code generó:** la estructura del proyecto, el código de `nucleo/`, `api/` y `web/` con comentarios explicativos,
   los scripts de datos sintéticos y de generación de voz, la prueba del flujo completo en el navegador y el borrador de
   este README.
+
+## 10. Roadmap
+
+> ⚠️ **Nada de esta lista está implementado todavía.** Es lo que sigue después del curso.
+
+- **Foto del DNI con OCR** (Document AI, sesión 10): llena nombre, DNI, fecha de nacimiento, sexo y dirección, y la
+  entrevista baja de 5 a 3 preguntas. La foto también sirve como la copia simple del DNI que piden las municipalidades.
+- **Foto del carné de vacunación** (tétanos y hepatitis B) **y de la constancia de capacitación**, para completar los
+  requisitos del art. 34 c) y d).
+- **Dirigente de la organización:** registra una vez los datos de la asociación (RUC con consulta a SUNAT, partida
+  registral, junta directiva) e invita a sus socios con un enlace; la organización y el cargo se llenan solos.
+- **Expediente completo para la mesa de partes** de la municipalidad: fichas, padrón de socios y la lista de
+  requisitos de los art. 34 y 39.
+- **Canal por WhatsApp con notas de voz**, para no tener que instalar nada.
 
 ---
 
