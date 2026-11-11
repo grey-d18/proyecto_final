@@ -74,7 +74,11 @@ class DatosDichos(BaseModel):
     faltantes: list[str] = Field(default_factory=list, description=f"Campos obligatorios que nadie dijo, de esta lista: {OBLIGATORIOS}")
     campos_dudosos: list[str] = Field(
         default_factory=list, description="Campos que no quedaron claros y la persona debe confirmar")
-    observaciones: str = Field("", description="Una o dos frases con lo importante que no cabe en otros campos")
+    # Solo notas sobre la propia ficha, para quien la revisa. NO es para guardar lo demás que la
+    # persona cuente: la Ley 29733 pide guardar solo los datos necesarios para el registro.
+    observaciones: str = Field("", description=(
+        "Solo notas sobre los datos de esta ficha para quien la revisa (por ejemplo: «no recordó su fecha de "
+        "nacimiento», «dijo dos celulares»). Nunca salud, familia, ingresos ni otros datos personales."))
 
 
 class FichaReciclador(DatosDichos):
@@ -102,7 +106,9 @@ Horario en 24 h: «de 6 a 11 de la mañana» → 06:00 a 11:00; «de lunes a sá
 «Plástico PET» es Botella PET; «metales» o «chatarra» es Fierro / chatarra.
 En faltantes pon los campos de esta lista que nadie dijo: {OBLIGATORIOS}.
 Si un dato parece mal transcrito (un DNI que no tiene 8 dígitos), anótalo en campos_dudosos.
-Escribe las observaciones en español sencillo."""
+En observaciones escribe, en español sencillo, solo notas sobre los datos de esta ficha (qué no recordó, qué dijo
+dos veces distinto). No anotes nada más de lo que la persona cuente: ni salud, ni familia, ni ingresos, ni opiniones,
+ni otros datos personales. Si no hay nada que anotar sobre la ficha, deja observaciones vacío."""
 
 
 def armar_mensaje(respuestas: dict[str, str]) -> str:
