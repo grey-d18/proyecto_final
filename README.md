@@ -33,7 +33,14 @@ que cruza SIGERSOL, la OEFA, el Banco Mundial y UN Comtrade con mi trabajo de ca
   registro incompleto: en 2024, el distrito de Trujillo reportó solo 1 375 t valorizadas de 126 500 t generadas
   (SIGERSOL), aunque en sus calles se recicla mucho más.
 
-**Cuánto cuesta hoy** `[COMPLETAR con las entrevistas: horas por ficha, días de trabajo perdidos, personal de la oficina]`
+**Cuánto cuesta hoy** (de mi trabajo de campo, ver [`docs/research/`](docs/research/))
+- **Papeles que no se entienden.** Algunos recicladores no saben leer, y formalizarse significa «muchos documentos»:
+  dependen de que alguien les lea y les explique, o no se inscriben.
+- **Precio.** Muchos venden por costumbre siempre al mismo comprador, sin saber que en otro lado les pagarían más.
+- **Salud.** La mayoría no sabe cómo cuidarse: trabajan sin guantes ni mascarilla.
+- **Material que se pierde.** Hay vecinos que separan su reciclaje, pero sin el número de un reciclador no tienen a
+  quién avisar.
+- `[COMPLETAR si tienes el dato: horas que toma una ficha en la municipalidad o días de trabajo perdidos]`
 
 **Cómo se resuelve hoy:** fichas en papel en la municipalidad, campañas puntuales de empadronamiento y Excel.
 
@@ -272,7 +279,8 @@ en papel.
 
 El piloto cuesta US$ 0. En producción, un distrito con 300 recicladores costaría menos de US$ 3 en tokens al año: el margen es casi todo el precio.
 
-**Qué sigue:** piloto con una municipalidad de Trujillo, acopiadores reales publicando sus precios, WhatsApp como canal
+**Qué sigue:** piloto con una municipalidad de Trujillo, clases interactivas para que los acopiadores
+sepan qué implica formalizarse como empresa operadora de residuos sólidos (un proyecto aparte), acopiadores reales publicando sus precios, WhatsApp como canal
 y respuestas también habladas en Mi ruta (leer la tabla de precios en voz alta).
 
 ## 8. Herramientas del curso

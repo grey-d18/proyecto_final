@@ -1,7 +1,21 @@
 # Conversaciones con usuarios potenciales
 
-El issue pide **3 conversaciones reales**. Hazlas antes de la presentación y anota lo que te dijeron en
-`entrevista_1.md`, `entrevista_2.md` y `entrevista_3.md` (copia la plantilla de abajo).
+## Lo que hay en esta carpeta
+
+Las tres conversaciones vienen del **trabajo de campo de mi tesis de licenciatura** (etnografía de los circuitos
+informales de reciclaje en El Porvenir, Trujillo). Fueron antes de construir la app, así que nadie vio el demo: lo
+que sí hice fue diseñar la app a partir de lo que me dijeron. No anoto nombres reales.
+
+| # | Con quién | Lo principal | Archivo |
+|---|---|---|---|
+| 1 | Recicladores | Algunos no saben leer; «muchos papeles que no se entienden»; venden por costumbre al mismo comprador; no saben cómo cuidarse | [`entrevista_1_recicladores.md`](entrevista_1_recicladores.md) |
+| 2 | Acopiadores | Formalizarse es registrarse como empresa operadora de residuos sólidos, y eso desmotiva | [`entrevista_2_acopiadores.md`](entrevista_2_acopiadores.md) |
+| 3 | Una vecina | Apoya a varios recicladores; sin el número de contacto no hay forma de avisarles | [`entrevista_3_vecina.md`](entrevista_3_vecina.md) |
+
+---
+
+## Guía que usé para preparar más conversaciones
+
 
 ## A quién entrevistar
 
