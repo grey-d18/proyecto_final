@@ -7,6 +7,7 @@ Tablas:
     recicladores  las fichas del registro (lo que llena la IA y confirma la persona)
     acopios       los locales de acopio (los registra el acopiador)
     precios       cada precio que un acopiador ingresa (material, S/ por kg, fecha y hora)
+    vecinos       los vecinos inscritos (nombre, dirección, correo y teléfono)
     recojos       los pedidos de los vecinos («tengo reciclaje para que alguien lo recoja»)
 
 La primera vez que se abre la app, las tablas se llenan con datos SINTÉTICOS
@@ -26,7 +27,7 @@ from nucleo.config import BASE_DATOS, SINTETICOS
 from nucleo.extraccion import FichaReciclador
 
 COLUMNAS_LISTA = ["materiales", "medio_transporte", "equipo_proteccion", "campos_dudosos"]
-VERSION_ESQUEMA = 4   # súbelo si cambian las tablas: la base vieja se borra y se vuelve a crear
+VERSION_ESQUEMA = 5   # súbelo si cambian las tablas: la base vieja se borra y se vuelve a crear
 DIAS_PARA_RECOGER = 3  # si el reciclador no recoge en 3 días, el pedido vuelve a estar disponible
 
 TABLAS = {
@@ -45,20 +46,29 @@ TABLAS = {
         capacitado INTEGER DEFAULT 0""",
     "acopios": """
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT, distrito TEXT, direccion TEXT, lat REAL, lon REAL, horario TEXT""",
+        nombre TEXT, distrito TEXT, direccion TEXT, lat REAL, lon REAL, horario TEXT,
+        fecha_registro TEXT""",
+    "vecinos": """
+        codigo TEXT PRIMARY KEY,   -- por ejemplo VEC-2026-0001
+        fecha_registro TEXT, origen TEXT,
+        nombre TEXT, distrito TEXT, direccion TEXT, lat REAL, lon REAL,
+        correo TEXT, telefono TEXT -- datos personales: el panel los muestra ocultos""",
     "precios": """
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         acopio_id INTEGER, material TEXT, precio_soles_kg REAL,
         fecha_hora TEXT            -- 'AAAA-MM-DD HH:MM'""",
     "recojos": """
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        fecha_hora TEXT, vecino TEXT, distrito TEXT, direccion TEXT, lat REAL, lon REAL,
+        fecha_hora TEXT, vecino_codigo TEXT, vecino TEXT, distrito TEXT, direccion TEXT, lat REAL, lon REAL,
         descripcion TEXT, peso_kg REAL,
         foto BLOB,                 -- la imagen tal cual (bytes)
+        dias TEXT,                 -- días en que se puede pasar, como texto JSON: ["Lunes", "Miércoles"]
         hora_desde TEXT, hora_hasta TEXT,  -- horario en que se puede pasar a recoger («09:00» a «12:00»)
+        horario_dicho TEXT,        -- lo que dijo el vecino, tal cual («lunes y miércoles de 7 a 9»)
+        compartir_telefono INTEGER DEFAULT 0,  -- 1 = el reciclador que lo acepte puede ver su teléfono
         reciclador_preferido TEXT, -- código del reciclador elegido, o vacío = cualquiera de la zona
         estado TEXT,               -- 'disponible', 'asignado' o 'recogido'
-        reciclador_asignado TEXT, fecha_asignacion TEXT""",
+        reciclador_asignado TEXT, fecha_asignacion TEXT, fecha_recogido TEXT""",
 }
 
 
@@ -88,6 +98,8 @@ def cargar_sinteticos(conexion: sqlite3.Connection) -> None:
     pd.read_csv(SINTETICOS / "recicladores.csv", dtype={"dni": str}).to_sql(
         "recicladores", conexion, if_exists="append", index=False)
     pd.read_csv(SINTETICOS / "acopios.csv").to_sql("acopios", conexion, if_exists="append", index=False)
+    pd.read_csv(SINTETICOS / "vecinos.csv", dtype={"telefono": str}).to_sql(
+        "vecinos", conexion, if_exists="append", index=False)
 
     # Los precios sintéticos solo traen la hora: les ponemos la fecha de HOY para que
     # la tabla «mayor precio del día» siempre tenga datos.
@@ -99,11 +111,10 @@ def cargar_sinteticos(conexion: sqlite3.Connection) -> None:
     recojos["fecha_hora"] = recojos.pop("horas_atras").apply(
         lambda horas: f"{datetime.now() - timedelta(hours=int(horas)):%Y-%m-%d %H:%M}")
     recojos["estado"] = "disponible"
-    # Horarios de recojo de ejemplo (mañana, tarde o noche), repartidos entre los pedidos inventados.
-    horarios = [("08:00", "11:00"), ("14:00", "17:00"), ("18:00", "20:00")]
-    recojos["hora_desde"] = [horarios[i % 3][0] for i in range(len(recojos))]
-    recojos["hora_hasta"] = [horarios[i % 3][1] for i in range(len(recojos))]
     recojos.to_sql("recojos", conexion, if_exists="append", index=False)
+    # El historial (junio a hoy) ya trae sus fechas: alimenta el resumen del mes del panel.
+    historial = pd.read_csv(SINTETICOS / "recojos_historial.csv")
+    historial[historial["fecha_hora"] <= ahora()].to_sql("recojos", conexion, if_exists="append", index=False)
     conexion.commit()
 
 
@@ -180,8 +191,8 @@ def guardar_acopio(nombre: str, distrito: str, direccion: str, lat: float, lon: 
     """Registra un local de acopio nuevo y devuelve su número (id)."""
     with conectar() as conexion:
         cursor = conexion.execute(
-            "INSERT INTO acopios (nombre, distrito, direccion, lat, lon, horario) VALUES (?, ?, ?, ?, ?, ?)",
-            (nombre, distrito, direccion, lat, lon, ""))
+            "INSERT INTO acopios (nombre, distrito, direccion, lat, lon, horario, fecha_registro) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)", (nombre, distrito, direccion, lat, lon, "", ahora()))
     return cursor.lastrowid
 
 
@@ -244,16 +255,19 @@ def liberar_vencidos(conexion: sqlite3.Connection) -> None:
         "WHERE estado = 'asignado' AND fecha_asignacion < ?", (limite,))
 
 
-def crear_recojo(vecino: str, distrito: str, direccion: str, lat: float, lon: float,
-                 descripcion: str, peso_kg: float, foto: bytes | None, preferido: str | None,
-                 hora_desde: str, hora_hasta: str) -> int:
+def crear_recojo(vecino_codigo: str, direccion: str, lat: float, lon: float, descripcion: str,
+                 peso_kg: float, foto: bytes | None, preferido: str | None, dias: list[str],
+                 hora_desde: str, hora_hasta: str, horario_dicho: str, compartir_telefono: bool) -> int:
+    """Guarda un pedido de recojo de un vecino inscrito (su nombre y distrito salen de su inscripción)."""
+    vecino = buscar_vecino(vecino_codigo)
     with conectar() as conexion:
         cursor = conexion.execute(
-            "INSERT INTO recojos (fecha_hora, vecino, distrito, direccion, lat, lon, descripcion, peso_kg, "
-            "foto, hora_desde, hora_hasta, reciclador_preferido, estado) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'disponible')",
-            (ahora(), vecino, distrito, direccion, lat, lon, descripcion, peso_kg, foto,
-             hora_desde, hora_hasta, preferido))
+            "INSERT INTO recojos (fecha_hora, vecino_codigo, vecino, distrito, direccion, lat, lon, descripcion, "
+            "peso_kg, foto, dias, hora_desde, hora_hasta, horario_dicho, compartir_telefono, reciclador_preferido, "
+            "estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'disponible')",
+            (ahora(), vecino_codigo, vecino["nombre"], vecino["distrito"], direccion, lat, lon, descripcion,
+             peso_kg, foto, json.dumps(dias, ensure_ascii=False), hora_desde, hora_hasta, horario_dicho,
+             int(compartir_telefono), preferido))
     return cursor.lastrowid
 
 
@@ -269,10 +283,14 @@ def recojos_disponibles(distrito: str, codigo: str) -> pd.DataFrame:
 
 
 def mis_recojos(codigo: str) -> pd.DataFrame:
+    """Los pedidos que aceptó este reciclador. El teléfono del vecino solo viene si él aceptó compartirlo."""
     with conectar() as conexion:
         liberar_vencidos(conexion)
-        return pd.read_sql("SELECT * FROM recojos WHERE estado = 'asignado' AND reciclador_asignado = ? "
-                           "ORDER BY fecha_asignacion", conexion, params=(codigo,))
+        return pd.read_sql(
+            "SELECT r.*, CASE WHEN r.compartir_telefono = 1 THEN v.telefono END AS telefono_vecino "
+            "FROM recojos r LEFT JOIN vecinos v ON v.codigo = r.vecino_codigo "
+            "WHERE r.estado = 'asignado' AND r.reciclador_asignado = ? ORDER BY r.fecha_asignacion",
+            conexion, params=(codigo,))
 
 
 def asignar_recojo(recojo_id: int, codigo: str) -> None:
@@ -284,11 +302,43 @@ def asignar_recojo(recojo_id: int, codigo: str) -> None:
 
 def marcar_recogido(recojo_id: int) -> None:
     with conectar() as conexion:
-        conexion.execute("UPDATE recojos SET estado = 'recogido' WHERE id = ?", (recojo_id,))
+        conexion.execute("UPDATE recojos SET estado = 'recogido', fecha_recogido = ? WHERE id = ?",
+                         (ahora(), recojo_id))
 
 
-def recojos_del_vecino(vecino: str) -> pd.DataFrame:
+def recojos_del_vecino(vecino_codigo: str) -> pd.DataFrame:
     with conectar() as conexion:
-        return pd.read_sql("SELECT fecha_hora, descripcion, peso_kg, hora_desde, hora_hasta, estado FROM recojos "
-                           "WHERE vecino = ? "
-                           "ORDER BY fecha_hora DESC", conexion, params=(vecino,))
+        return pd.read_sql("SELECT fecha_hora, descripcion, peso_kg, dias, hora_desde, hora_hasta, estado "
+                           "FROM recojos WHERE vecino_codigo = ? ORDER BY fecha_hora DESC",
+                           conexion, params=(vecino_codigo,))
+
+
+# --- Vecinos ----------------------------------------------------------------------------
+def guardar_vecino(nombre: str, distrito: str, direccion: str, lat: float, lon: float,
+                   correo: str, telefono: str) -> str:
+    """Inscribe a un vecino y devuelve su código (VEC-2026-0001)."""
+    with conectar() as conexion:
+        total = conexion.execute("SELECT COUNT(*) FROM vecinos").fetchone()[0]
+        codigo = f"VEC-{datetime.now():%Y}-{total + 1:04d}"
+        conexion.execute(
+            "INSERT INTO vecinos (codigo, fecha_registro, origen, nombre, distrito, direccion, lat, lon, correo, "
+            "telefono) VALUES (?, ?, 'inscripción en la app', ?, ?, ?, ?, ?, ?, ?)",
+            (codigo, ahora(), nombre, distrito, direccion, lat, lon, correo, telefono))
+    return codigo
+
+
+def buscar_vecino(codigo: str) -> dict | None:
+    with conectar() as conexion:
+        conexion.row_factory = sqlite3.Row
+        fila = conexion.execute("SELECT * FROM vecinos WHERE codigo = ?", (codigo,)).fetchone()
+    return dict(fila) if fila else None
+
+
+def leer_tabla(nombre: str) -> pd.DataFrame:
+    """Una tabla entera, para el panel (sin las fotos, que pesan)."""
+    assert nombre in TABLAS
+    columnas = "*" if nombre != "recojos" else ", ".join(
+        c for c in ("id", "fecha_hora", "vecino_codigo", "vecino", "distrito", "descripcion", "peso_kg", "dias",
+                    "hora_desde", "hora_hasta", "estado", "reciclador_asignado", "fecha_recogido"))
+    with conectar() as conexion:
+        return pd.read_sql(f"SELECT {columnas} FROM {nombre}", conexion)

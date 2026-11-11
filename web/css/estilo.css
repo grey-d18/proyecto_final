@@ -212,3 +212,13 @@ tr:last-child td { border-bottom: none; }
 td.sin-corte { white-space: nowrap; }
 .tabla-caja.con-limite { max-height: 560px; overflow: auto; border: 1px solid var(--linea); border-radius: 12px; }
 .tabla-caja.con-limite thead th { position: sticky; top: 0; background: var(--tarjeta); z-index: 1; }
+
+/* Ventana del resumen del mes (panel municipal) */
+.velo { position: fixed; inset: 0; z-index: 2000; background: rgba(20, 30, 24, 0.55); display: flex;
+        align-items: center; justify-content: center; padding: 16px; }
+.velo[hidden] { display: none; }
+.ventana { background: var(--fondo); color: var(--tinta); border-radius: 20px; padding: 24px; width: min(460px, 100%);
+           max-height: calc(100vh - 32px); overflow-y: auto; display: flex; flex-direction: column; gap: 16px;
+           box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25); }
+.ventana.ancha { width: min(980px, 100%); }
+.ventana h2 { margin: 0; }

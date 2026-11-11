@@ -1,6 +1,7 @@
 // Mi ruta: precios de hoy en su distrito y un mapa con los locales de acopio y los recojos.
 import { leer } from "../api.js";
 import { barra, cargando, esc, mensajeError, menuReciclador, nuevoMapa, pin, sesion, soles } from "../comun.js";
+import { textoHorario } from "./vecino.js";
 
 export async function mostrar(raiz) {
   if (!sesion.codigo) { location.hash = "#/reciclador"; return; }
@@ -40,7 +41,7 @@ export async function mostrar(raiz) {
     acopios.forEach((a) => L.marker([a.lat, a.lon], { icon: pin("acopio", "S/") })
       .bindPopup(`<strong>${esc(a.nombre)}</strong><br>${esc(a.direccion)}`).addTo(mapa));
     recojos.forEach((r) => L.marker([r.lat, r.lon], { icon: pin("recojo") })
-      .bindPopup(`${esc(r.descripcion)} · ${Math.round(r.peso_kg)} kg${r.hora_desde ? `<br>De ${esc(r.hora_desde)} a ${esc(r.hora_hasta)}` : ""}`).addTo(mapa));
+      .bindPopup(`${esc(r.descripcion)} · ${Math.round(r.peso_kg)} kg${r.hora_desde ? `<br>${esc(textoHorario(r))}` : ""}`).addTo(mapa));
   } catch (error) {
     raiz.innerHTML = `<div class="pantalla con-menu">${barra("#/reciclador")}${mensajeError(error)}</div>${menuReciclador("mi-ruta")}`;
   }

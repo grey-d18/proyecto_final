@@ -222,3 +222,87 @@ def extraer_ficha(respuestas: dict[str, str]) -> tuple[FichaReciclador, str, dic
             motivo = f"{type(error).__name__}: {str(error)[:120]}"
             return extraer_con_reglas(respuestas), f"Reglas simples (Gemini falló: {motivo})", {}
     return extraer_con_reglas(respuestas), "Reglas simples (sin LLM)", {}
+
+
+# --- 5. Horario de recojo del vecino ------------------------------------------------
+# El vecino dice cuándo puede pasar el reciclador («lunes, miércoles y viernes de 7 a 9») y
+# lo convertimos en días y horas que el reciclador ve en la app. Igual que la ficha:
+# Gemini con salida estructurada y, si no se puede, reglas simples.
+DIAS_SEMANA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+Dia = Literal[tuple(DIAS_SEMANA)]
+
+
+class HorarioRecojo(BaseModel):
+    """Cuándo puede pasar el reciclador a recoger. None = el vecino no lo dijo."""
+
+    dias: list[Dia] = Field(description="Días de la semana en que se puede pasar a recoger")
+    hora_desde: str | None = Field(description="Hora de inicio en formato 24 h HH:MM, por ejemplo 07:00 o 14:30")
+    hora_hasta: str | None = Field(description="Hora de fin en formato 24 h HH:MM; después de hora_desde")
+
+
+INSTRUCCIONES_HORARIO = """Un vecino de Trujillo (Perú) dijo, con su voz, cuándo puede pasar un reciclador a recoger su reciclaje.
+El texto viene de Whisper y puede tener errores. Devuelve los días y el rango de horas.
+- «de lunes a viernes» son los cinco días; «fin de semana» es sábado y domingo; «todos los días» o «cualquier día» son los siete.
+- Usa formato de 24 horas: «de 2 a 5 de la tarde» → 14:00 a 17:00; «de 6 a 8 de la noche» → 18:00 a 20:00.
+- Si no dice mañana ni tarde, elige lo más lógico para recoger reciclaje (de 7 a 9 es de la mañana).
+- Si no dice los días o las horas, deja la lista vacía o null. No inventes."""
+
+
+def horario_con_gemini(texto: str) -> HorarioRecojo:
+    cliente = genai.Client(api_key=leer_ajuste("GEMINI_API_KEY"),
+                           http_options={"timeout": 20_000, "retry_options": {"attempts": 2}})
+    respuesta = cliente.models.generate_content(
+        model=GEMINI_MODELO,
+        contents=texto,
+        config={"system_instruction": INSTRUCCIONES_HORARIO, "response_mime_type": "application/json",
+                "response_json_schema": HorarioRecojo.model_json_schema(), "temperature": 0},
+    )
+    return HorarioRecojo.model_validate_json(respuesta.text)
+
+
+def horario_con_reglas(texto: str) -> HorarioRecojo:
+    """Plan B: busca nombres de días, «de X a Y» y si es de la tarde o de la noche."""
+    t = simplificar(texto)
+    nombres = [simplificar(d) for d in DIAS_SEMANA]
+    if re.search(r"todos los dias|cualquier dia|toda la semana", t):
+        dias = list(DIAS_SEMANA)
+    else:
+        dias = set()
+        if "fin de semana" in t:
+            dias |= {"Sábado", "Domingo"}
+        for a, b in re.findall(r"(lunes|martes|miercoles|jueves|viernes|sabado|domingo) a (lunes|martes|miercoles|jueves|viernes|sabado|domingo)", t):
+            dias |= set(DIAS_SEMANA[nombres.index(a):nombres.index(b) + 1])
+        dias |= {DIAS_SEMANA[i] for i, n in enumerate(nombres) if re.search(rf"\b{n}", t)}
+        dias = [d for d in DIAS_SEMANA if d in dias]
+    if "menos domingo" in t or "menos el domingo" in t:
+        dias = DIAS_SEMANA[:6]
+
+    # Las horas: «de 7 a 9», «de 7:30 a 9», «entre las 2 y las 5»
+    for palabra, numero in NUMEROS.items():
+        t = re.sub(rf"\b{palabra}\b", str(numero), t)
+    rango = re.search(r"(?:de|desde|entre)(?: las?)? (\d{1,2})(?::(\d{2}))? (?:a|hasta|y)(?: las?)? (\d{1,2})(?::(\d{2}))?", t)
+    if not rango:
+        return HorarioRecojo(dias=dias, hora_desde=None, hora_hasta=None)
+    h1, m1, h2, m2 = int(rango[1]), int(rango[2] or 0), int(rango[3]), int(rango[4] or 0)
+    if re.search(r"tarde|noche", t) and h1 < 12:   # «de 2 a 5 de la tarde» → 14:00 a 17:00
+        h1 += 12
+        h2 += 12 if h2 < 12 else 0
+    elif h2 <= h1 and h2 < 12:       # «de 9 a 1» → de 9:00 a 13:00
+        h2 += 12
+    if not (0 <= h1 < 24 and 0 < h2 < 24 and (h1, m1) < (h2, m2)):
+        return HorarioRecojo(dias=dias, hora_desde=None, hora_hasta=None)
+    return HorarioRecojo(dias=dias, hora_desde=f"{h1:02d}:{m1:02d}", hora_hasta=f"{h2:02d}:{m2:02d}")
+
+
+def extraer_horario(texto: str) -> tuple[HorarioRecojo, str]:
+    """Devuelve (horario, método usado). Nunca falla: si Gemini no responde, usa las reglas."""
+    if hay_clave_gemini():
+        try:
+            horario = horario_con_gemini(texto)
+            # Validamos el formato: si Gemini devolvió algo raro, lo corregimos con las reglas.
+            formato = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+            if all(h is None or formato.match(h) for h in (horario.hora_desde, horario.hora_hasta)):
+                return horario, f"Gemini ({GEMINI_MODELO})"
+        except Exception as error:
+            print(f"Falló Gemini (horario), uso reglas: {error}")
+    return horario_con_reglas(texto), "Reglas simples"

@@ -18,20 +18,19 @@ import threading
 from pathlib import Path
 
 import pandas as pd
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from PIL import Image
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from nucleo import base_datos as bd
 from nucleo.capacitacion import MATERIALES as GUIA_MATERIALES
 from nucleo.capacitacion import MODULOS, QUIZ
 from nucleo.catalogos import DISTRITOS_TRUJILLO, EQUIPOS, MATERIALES, TRANSPORTES
-from nucleo.config import FUENTES
 from nucleo.constancia import crear_constancia
-from nucleo.extraccion import FichaReciclador, extraer_ficha
+from nucleo.extraccion import DIAS_SEMANA, FichaReciclador, extraer_ficha, extraer_horario
 from nucleo.preguntas import PREGUNTAS, SEGUNDOS_POR_DEFECTO
 from nucleo.ubicacion import CENTROS, buscar_direccion
 from nucleo.voz import cargar_modelo, transcribir
@@ -237,6 +236,7 @@ SIN_FOTO = ["foto"]  # la foto no va en las listas: se pide aparte, por su núme
 
 def recojos_json(tabla: pd.DataFrame) -> list[dict]:
     tabla = tabla.assign(tiene_foto=tabla["foto"].notna()).drop(columns=SIN_FOTO)
+    tabla["dias"] = tabla["dias"].apply(lambda d: json.loads(d) if d else [])
     return filas(tabla)
 
 
@@ -252,8 +252,61 @@ def mis_recojos(codigo: str) -> list[dict]:
 
 
 @app.get("/recojos")
-def recojos_del_vecino(vecino: str) -> list[dict]:
-    return filas(bd.recojos_del_vecino(vecino))
+def recojos_del_vecino(vecino_codigo: str) -> list[dict]:
+    tabla = bd.recojos_del_vecino(vecino_codigo)
+    tabla["dias"] = tabla["dias"].apply(lambda d: json.loads(d) if d else [])
+    return filas(tabla)
+
+
+# --- Vecinos ---------------------------------------------------------------------------
+def ocultar(texto: str | None, visibles: int = 2) -> str:
+    """Muestra solo el comienzo de un dato personal: 987654321 → 98*******."""
+    texto = texto or ""
+    return texto[:visibles] + "*" * max(0, len(texto) - visibles)
+
+
+class Vecino(BaseModel):
+    nombre: str = Field(min_length=2, max_length=80)
+    distrito: str
+    direccion: str = Field(max_length=200)
+    lat: float
+    lon: float
+    correo: str = Field(pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$", max_length=120)
+    telefono: str = Field(pattern=r"^9\d{8}$")   # celular peruano: 9 dígitos, empieza con 9
+    acepto: bool                                 # aceptó que la municipalidad guarde sus datos
+
+
+@app.post("/vecinos")
+def inscribir_vecino(datos: Vecino) -> dict:
+    if not datos.acepto:
+        raise HTTPException(422, "Para inscribirse tiene que aceptar que la municipalidad guarde sus datos.")
+    if datos.distrito not in DISTRITOS_TRUJILLO:
+        raise HTTPException(422, "Ese distrito no es de la provincia de Trujillo.")
+    codigo = bd.guardar_vecino(datos.nombre.strip(), datos.distrito, datos.direccion.strip(), datos.lat,
+                               datos.lon, datos.correo.strip().lower(), datos.telefono)
+    return {"codigo": codigo}
+
+
+@app.get("/vecinos/{codigo}")
+def vecino(codigo: str) -> dict:
+    """Lo que la app necesita para el formulario. El correo y el teléfono van ocultos:
+    los códigos son correlativos y cualquiera podría probar uno ajeno."""
+    v = bd.buscar_vecino(codigo)
+    if not v:
+        raise HTTPException(404, "No hay un vecino con ese código.")
+    return {"codigo": v["codigo"], "nombre": v["nombre"], "distrito": v["distrito"], "direccion": v["direccion"],
+            "lat": v["lat"], "lon": v["lon"], "telefono": ocultar(v["telefono"]), "correo": ocultar(v["correo"], 3)}
+
+
+class TextoHorario(BaseModel):
+    texto: str = Field(max_length=500)
+
+
+@app.post("/horario")
+def entender_horario(datos: TextoHorario) -> dict:
+    """«Lunes y miércoles de 7 a 9» → días y horas (Gemini con salida estructurada, o reglas)."""
+    horario, metodo = extraer_horario(datos.texto)
+    return {**horario.model_dump(), "metodo": metodo}
 
 
 def achicar_foto(contenido: bytes) -> bytes:
@@ -267,17 +320,29 @@ def achicar_foto(contenido: bytes) -> bytes:
 
 @app.post("/recojos")
 async def pedir_recojo(
-    vecino: str = Form(...), descripcion: str = Form(...), peso_kg: float = Form(...),
-    distrito: str = Form(...), direccion: str = Form(""), lat: float = Form(...), lon: float = Form(...),
+    vecino_codigo: str = Form(...), descripcion: str = Form(..., max_length=200),
+    peso_kg: float = Form(..., ge=0, le=500),
+    direccion: str = Form(""), lat: float = Form(...), lon: float = Form(...),
     preferido: str = Form(""), foto: UploadFile | None = File(None),
+    dias: str = Form(..., description='Lista JSON, por ejemplo ["Lunes", "Miércoles"]'),
     hora_desde: str = Form(..., pattern=r"^([01]\d|2[0-3]):[0-5]\d$"),
     hora_hasta: str = Form(..., pattern=r"^([01]\d|2[0-3]):[0-5]\d$"),
+    horario_dicho: str = Form("", max_length=500),
+    compartir_telefono: bool = Form(False),
 ) -> dict:
+    if not bd.buscar_vecino(vecino_codigo):
+        raise HTTPException(404, "Primero tiene que inscribirse como vecino.")
+    try:
+        lista_dias = [d for d in json.loads(dias) if d in DIAS_SEMANA]
+    except (ValueError, TypeError):
+        lista_dias = []
+    if not lista_dias:
+        raise HTTPException(422, "Elija al menos un día en que pueden pasar a recoger.")
     if hora_desde >= hora_hasta:
         raise HTTPException(422, "La hora «hasta» tiene que ser después de la hora «desde».")
     imagen = await run_in_threadpool(achicar_foto, await foto.read()) if foto else None
-    nuevo = bd.crear_recojo(vecino, distrito, direccion, lat, lon, descripcion, peso_kg, imagen,
-                            preferido or None, hora_desde, hora_hasta)
+    nuevo = bd.crear_recojo(vecino_codigo, direccion, lat, lon, descripcion, peso_kg, imagen, preferido or None,
+                            lista_dias, hora_desde, hora_hasta, horario_dicho, compartir_telefono)
     return {"id": nuevo}
 
 
@@ -315,45 +380,133 @@ def ubicar(direccion: str, distrito: str) -> dict:
 
 
 # --- Panel municipal ------------------------------------------------------------------------
+# Todo sale de la propia app: recicladores, vecinos, acopios y recojos. Los datos personales
+# (DNI, teléfono, correo) llegan ocultos: el panel no los necesita completos.
+FRANJAS = [("Mañana", "00:00", "12:00"), ("Tarde", "12:00", "18:00"), ("Noche", "18:00", "24:00")]
+
+
+def franja(hora: str | None) -> str | None:
+    return next((nombre for nombre, desde, hasta in FRANJAS if hora and desde <= hora < hasta), None)
+
+
+def dias_promedio_con_recojo(recogidos: pd.DataFrame) -> float:
+    """En promedio, cuántos días distintos recogió algo cada reciclador (solo recojos hechos con la app)."""
+    if recogidos.empty:
+        return 0.0
+    dias = recogidos.assign(dia=recogidos["fecha_recogido"].str[:10]).groupby("reciclador_asignado")["dia"].nunique()
+    return round(float(dias.mean()), 1)
+
+
+def datos_del_panel(distritos: str) -> dict[str, pd.DataFrame]:
+    """Las cuatro tablas, filtradas por los distritos elegidos (vacío = todos)."""
+    elegidos = [d for d in distritos.split(",") if d]
+    tablas = {
+        "recicladores": (bd.leer_todos(), "distrito_vivienda"),
+        "vecinos": (bd.leer_tabla("vecinos"), "distrito"),
+        "acopios": (bd.leer_tabla("acopios"), "distrito"),
+        "recojos": (bd.leer_tabla("recojos"), "distrito"),
+    }
+    return {nombre: tabla[tabla[columna].isin(elegidos)] if elegidos else tabla
+            for nombre, (tabla, columna) in tablas.items()}
+
+
 @app.get("/panel")
 def panel(distritos: str = "") -> dict:
-    """Indicadores, gráficos y lista para la municipalidad. distritos: separados por comas."""
-    fichas = bd.leer_todos()
-    elegidos = [d for d in distritos.split(",") if d]
-    if elegidos:
-        fichas = fichas[fichas["distrito_vivienda"].isin(elegidos)]
+    """Indicadores, gráficos y listas para la municipalidad. distritos: separados por comas."""
+    d = datos_del_panel(distritos)
+    fichas, vecinos, acopios, recojos = d["recicladores"], d["vecinos"], d["acopios"], d["recojos"]
     total = len(fichas) or 1
+    recogidos = recojos[recojos["estado"] == "recogido"]
+    precios = bd.leer_tabla("precios")
 
-    por_distrito = fichas["distrito_vivienda"].value_counts()
-    materiales = fichas.explode("materiales")["materiales"].dropna().value_counts()
+    # Acopios: qué compran y cuándo actualizaron sus precios por última vez
+    lista_acopios = []
+    for _, a in acopios.sort_values("nombre").iterrows():
+        suyos = precios[precios["acopio_id"] == a["id"]]
+        lista_acopios.append({
+            "nombre": a["nombre"], "distrito": a["distrito"], "direccion": a["direccion"],
+            "lat": a["lat"], "lon": a["lon"], "horario": a["horario"] or "—",
+            "compra": sorted(suyos["material"].unique().tolist()),
+            "ultima_actualizacion": suyos["fecha_hora"].max() if not suyos.empty else None,
+        })
 
-    sigersol = pd.read_csv(FUENTES / "sigersol_trujillo_distritos.csv")
-    anio = int(sigersol["anio"].max())
-    sigersol = sigersol[sigersol["anio"] == anio]
-    sigersol["distrito"] = sigersol["distrito"].str.title().replace({"Victor Larco Herrera": "Víctor Larco Herrera"})
-    oficial = sigersol.set_index("distrito")
+    pedidos_por_vecino = recojos["vecino_codigo"].value_counts()
+    lista_vecinos = [{
+        "codigo": v["codigo"], "fecha_registro": v["fecha_registro"], "nombre": v["nombre"],
+        "distrito": v["distrito"], "telefono": ocultar(v["telefono"]), "correo": ocultar(v["correo"], 3),
+        "pedidos": int(pedidos_por_vecino.get(v["codigo"], 0)),
+    } for _, v in vecinos.sort_values("fecha_registro", ascending=False).iterrows()]
+
+    dias_pedidos = recojos["dias"].dropna().apply(json.loads).explode().value_counts()
+    franjas = recojos["hora_desde"].apply(franja).value_counts()
 
     lista = fichas.copy()
     lista["dni"] = lista["dni"].astype(str).str[:2] + "******"  # protegemos el dato personal
     columnas = ["codigo", "fecha_registro", "origen", "nombre_completo", "dni", "distrito_vivienda",
                 "materiales", "medio_transporte", "equipo_proteccion", "capacitado"]
+
+    todos = datos_del_panel("")
+    con_datos = set(todos["recicladores"]["distrito_vivienda"]) | set(todos["vecinos"]["distrito"])
+    meses = pd.concat([todos["recicladores"]["fecha_registro"], todos["vecinos"]["fecha_registro"],
+                       todos["recojos"]["fecha_hora"]]).dropna().str[:7]
     return {
-        "todos_los_distritos": sorted(bd.leer_todos()["distrito_vivienda"].dropna().unique()),
+        "todos_los_distritos": [x for x in DISTRITOS_TRUJILLO if x in con_datos],
+        "meses": sorted(meses.unique(), reverse=True),
         "indicadores": {
-            "inscritos": len(fichas),
+            "recicladores": len(fichas), "vecinos": len(vecinos), "acopios": len(acopios),
+            "recojos_pedidos": len(recojos), "recojos_recogidos": len(recogidos),
+            "kg_recogidos": round(float(recogidos["peso_kg"].sum())),
             # Quien solo tiene un saco carga poco: dato útil para entregar triciclos o carretillas.
             "solo_saco": int(fichas["medio_transporte"].apply(lambda t: t == ["Saco"] or not t).sum()),
             "en_asociacion": round(fichas["pertenece_asociacion"].fillna(0).sum() / total * 100),
             "sin_guantes": round(fichas["equipo_proteccion"].apply(lambda e: "Guantes" not in e).sum() / total * 100),
             "capacitados": round(fichas["capacitado"].sum() / total * 100),
         },
-        "por_distrito": [
-            {"distrito": d, "inscritos": int(n), "centro": CENTROS.get(d),
-             "valorizado_t": None if d not in oficial.index else round(float(oficial.loc[d, "valorizado_t"])),
-             "generado_t": None if d not in oficial.index else round(float(oficial.loc[d, "generado_t"])),
-             "pct_valorizado": None if d not in oficial.index else round(float(oficial.loc[d, "pct_valorizado"]), 1)}
-            for d, n in por_distrito.items()],
-        "anio_sigersol": anio,
-        "materiales": [{"material": m, "personas": int(n)} for m, n in materiales.items()],
+        "por_distrito": [{
+            "distrito": x, "centro": CENTROS.get(x),
+            "recicladores": int((fichas["distrito_vivienda"] == x).sum()),
+            "vecinos": int((vecinos["distrito"] == x).sum()),
+            "acopios": int((acopios["distrito"] == x).sum()),
+            "recojos": int((recojos["distrito"] == x).sum()),
+        } for x in DISTRITOS_TRUJILLO if x in con_datos],
+        "materiales": [{"material": m, "personas": int(n)}
+                       for m, n in fichas.explode("materiales")["materiales"].dropna().value_counts().items()],
+        "recojos": {
+            "por_franja": [{"franja": f, "pedidos": int(franjas.get(f, 0))} for f, _a, _b in FRANJAS],
+            "por_dia": [{"dia": x, "pedidos": int(dias_pedidos.get(x, 0))} for x in DIAS_SEMANA],
+            "pendientes": int((recojos["estado"] != "recogido").sum()),
+        },
+        "acopios": lista_acopios,
+        "vecinos": lista_vecinos,
         "lista": filas(lista.sort_values("fecha_registro", ascending=False)[columnas]),
+    }
+
+
+@app.get("/panel/mes")
+def resumen_del_mes(mes: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"), distritos: str = "") -> dict:
+    """Lo que pasó en un mes (AAAA-MM): inscritos nuevos, recojos y días con recojo."""
+    d = datos_del_panel(distritos)
+    del_mes = lambda tabla, columna: tabla[tabla[columna].fillna("").str[:7] == mes]  # noqa: E731
+    pedidos = del_mes(d["recojos"], "fecha_hora")
+    recogidos = del_mes(d["recojos"][d["recojos"]["estado"] == "recogido"], "fecha_recogido")
+    anio, numero = map(int, mes.split("-"))
+    anterior = f"{anio - (numero == 1)}-{12 if numero == 1 else numero - 1:02d}"
+    recogidos_antes = d["recojos"][(d["recojos"]["estado"] == "recogido")
+                                   & (d["recojos"]["fecha_recogido"].fillna("").str[:7] == anterior)]
+    franjas = pedidos["hora_desde"].apply(franja).value_counts()
+    por_distrito = recogidos["distrito"].value_counts()
+    return {
+        "mes": mes,
+        "mes_en_curso": mes == f"{pd.Timestamp.now():%Y-%m}",
+        "recicladores_nuevos": len(del_mes(d["recicladores"], "fecha_registro")),
+        "vecinos_nuevos": len(del_mes(d["vecinos"], "fecha_registro")),
+        "acopios_nuevos": len(del_mes(d["acopios"], "fecha_registro")),
+        "recojos_pedidos": len(pedidos),
+        "recojos_recogidos": len(recogidos),
+        "recojos_recogidos_mes_anterior": len(recogidos_antes),
+        "kg_recogidos": round(float(recogidos["peso_kg"].sum())),
+        "recicladores_activos": int(recogidos["reciclador_asignado"].nunique()),
+        "dias_promedio_con_recojo": dias_promedio_con_recojo(recogidos),
+        "franja_mas_pedida": franjas.idxmax() if not franjas.empty else None,
+        "distrito_con_mas_recojos": por_distrito.idxmax() if not por_distrito.empty else None,
     }

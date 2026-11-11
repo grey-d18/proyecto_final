@@ -61,11 +61,17 @@ que cruza SIGERSOL, la OEFA, el Banco Mundial y UN Comtrade con mi trabajo de ca
      los locales de acopio y el reciclaje que hay para recoger.
    - **Recoger reciclaje** (con burbuja de aviso): los pedidos de los vecinos. Al marcar «Lo recogeré» se escucha que
      tiene 3 días; si no recoge, el pedido vuelve a estar disponible para otro reciclador de la zona.
-2. **Soy vecino:** pide un recojo con descripción, peso, foto y **el horario en que pueden pasar** (desde–hasta); elige
-   un reciclador o «cualquiera de la zona».
+2. **Soy vecino:** se **inscribe una vez** (nombre, dirección, correo y celular, con su consentimiento) y pide recojos
+   con descripción, peso y foto. Dice **cuándo pueden pasar** con su voz («lunes, miércoles y viernes de 7 a 9»):
+   Whisper lo transcribe y Gemini lo convierte en días y horas, que puede corregir. Elige si **comparte su celular**
+   con el reciclador que acepte el pedido (solo ese reciclador lo ve) y si lo recoge uno en particular o
+   «cualquiera de la zona».
 3. **Soy acopiador:** ubica su local (con la ubicación del celular o escribiendo la dirección) y publica sus precios.
-4. **Soy municipalidad** (en «más»): panel con inscritos por distrito, materiales, con qué se movilizan, quién no
-   tiene guantes y la comparación con lo que el distrito reporta a SIGERSOL.
+4. **Soy municipalidad:** un panel con lo que pasa en la app: **recicladores** (por distrito, qué recogen, quién no
+   tiene guantes o solo tiene un saco), **locales de acopio** (qué compran y cuándo actualizaron sus precios),
+   **vecinos** inscritos y **recojos** (cuántos, a qué hora y qué días los piden). Al entrar ofrece un **resumen del
+   mes** (inscritos nuevos, recojos hechos, kilos y cuántos días recogió en promedio cada reciclador, contando solo
+   los recojos hechos con la app). Los datos personales se ven ocultos, y hay botones para ir a SIGERSOL.
 
 **Insight.** El cuello de botella de la formalización no es la ley sino **el formulario**. En el trabajo de campo, la
 gente que recicla habla con fluidez de su trabajo (rutas, kilos, precios), pero muchas personas leen con dificultad y
@@ -109,6 +115,10 @@ Streamlit no se borró de la historia: está completa en la rama `version-stream
 
 ![Panel de la municipalidad](docs/capturas/4_municipalidad.jpg)
 
+**Resumen del mes** (se ofrece al entrar al panel):
+
+![Resumen del mes](docs/capturas/5_resumen_mes.jpg)
+
 ### Arquitectura
 
 ```mermaid
@@ -119,11 +129,10 @@ flowchart LR
     C -->|FichaReciclador JSON| D[Revisión humana<br>web/js/vistas/registro.js]
     D --> E[(SQLite<br>nucleo/base_datos.py)]
     D --> F[📄 Constancia PDF<br>nucleo/constancia.py]
-    E --> G[📊 Panel municipal<br>Leaflet + OpenStreetMap]
-    H[SIGERSOL · precios de campo<br>datos/fuentes/] --> G
-    H --> I[📚 Capacitación]
+    E --> G[📊 Panel municipal<br>y resumen del mes]
+    H[Precios de campo<br>datos/fuentes/] --> I[📚 Capacitación]
     K[🏪 Acopiador: precios<br>y ubicación del local] --> E
-    L[🏠 Vecino: pedido de recojo<br>con foto] --> E
+    L[🏠 Vecino inscrito: pedido de recojo<br>horario dicho con la voz → Whisper → Gemini] --> E
     E --> M[🗺️ Mi ruta y 🚚 Recoger reciclaje]
     C -.sin clave o sin internet.-> J[Reglas simples<br>extraer_con_reglas]
     J --> D
@@ -141,7 +150,7 @@ flowchart LR
 | API | **FastAPI** + uvicorn ([`api/main.py`](api/main.py)) | Abierta, simple y documenta sola sus rutas (`/docs`) |
 | Mapas y gráficos | **Leaflet** + OpenStreetMap; barras hechas con HTML | Abiertos y sin costo |
 | Grabación y ubicación | `MediaRecorder` del navegador ([`web/js/grabadora.js`](web/js/grabadora.js)), `navigator.geolocation` (GPS), Nominatim de OpenStreetMap (dirección → mapa) | Estándares del navegador: nada que instalar en el celular |
-| Datos | 60 recicladores, 8 acopios, precios del día y 5 pedidos **sintéticos**; SIGERSOL (MINAM), precios del trabajo de campo, UN Comtrade | No se usan datos personales reales |
+| Datos | 60 recicladores, 40 vecinos, 8 acopios, precios del día y 117 recojos (junio a noviembre) **sintéticos**; SIGERSOL (MINAM), precios del trabajo de campo, UN Comtrade | No se usan datos personales reales |
 
 #### Texto a voz: lo que probamos primero
 
@@ -261,7 +270,7 @@ scripts/
   generar_voces.py         crea los audios de las preguntas (voz es-PE-CamilaNeural, edge-tts)
   demo_en_vivo.sh          prueba en vivo: enciende la API y el túnel de Cloudflare, muestra enlace y QR
 datos/
-  sinteticos/              recicladores, acopios, precios y pedidos inventados para el demo
+  sinteticos/              recicladores, vecinos, acopios, precios y recojos inventados para el demo
   fuentes/                 datos reales: SIGERSOL y precios del trabajo de campo
 docs/                      capturas y entrevistas
 ```
@@ -293,10 +302,12 @@ y respuestas también habladas en Mi ruta (leer la tabla de precios en voz alta)
 | Herramienta | Sesión | Dónde está | Por qué esta |
 |---|---|---|---|
 | **De la voz al texto con Whisper** | 13 | [`nucleo/voz.py`](nucleo/voz.py) | Reemplaza el formulario: la persona habla en vez de escribir |
-| **LLMs con salidas estructuradas** | 08 | [`nucleo/extraccion.py`](nucleo/extraccion.py) | Convierte respuestas con rodeos en la ficha exacta del registro |
-| Texto a voz (primero clonación con Qwen3-TTS, al final es-PE-CamilaNeural) | 15 | [`scripts/generar_voces.py`](scripts/generar_voces.py), [`web/js/comun.js`](web/js/comun.js) | La persona escucha cada pregunta: no necesita saber leer |
-| Dashboards | 05 | [`web/js/vistas/municipalidad.js`](web/js/vistas/municipalidad.js) (antes `paginas/municipalidad.py`, en Streamlit) | Lo que ve (y paga) la municipalidad |
-| GeoPandas y Folium | 06 | [`web/js/vistas/mi_ruta.js`](web/js/vistas/mi_ruta.js), [`web/js/vistas/municipalidad.js`](web/js/vistas/municipalidad.js) | Dónde vender, qué recoger y dónde viven los recicladores. Folium genera mapas de **Leaflet**; en la app web usamos Leaflet directamente (la versión en Streamlit usaba Folium) |
+| **LLMs con salidas estructuradas** | 08 | [`nucleo/extraccion.py`](nucleo/extraccion.py) | Convierte respuestas con rodeos en la ficha exacta del registro, y el horario que dice el vecino («lunes y miércoles de 7 a 9») en días y horas |
+
+**Extras** (no los contamos como herramientas del curso): las preguntas se escuchan en voz alta (texto a voz con
+es-PE-CamilaNeural, [`scripts/generar_voces.py`](scripts/generar_voces.py); antes probamos clonar mi voz con
+Qwen3-TTS), el panel de la municipalidad ([`web/js/vistas/municipalidad.js`](web/js/vistas/municipalidad.js)) y los
+mapas con Leaflet y OpenStreetMap ([`web/js/vistas/mi_ruta.js`](web/js/vistas/mi_ruta.js)).
 
 ## 9. Qué hizo el agente
 

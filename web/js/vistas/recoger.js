@@ -2,6 +2,7 @@
 // recoge en ese plazo, vuelve a estar disponible para otro reciclador de la zona.
 import { enlace, enviar, leer } from "../api.js";
 import { barra, cargando, esc, hablar, icono, mensajeError, menuReciclador, sesion } from "../comun.js";
+import { textoHorario } from "./vecino.js";
 
 export async function mostrar(raiz, aviso = false) {
   if (!sesion.codigo) { location.hash = "#/reciclador"; return; }
@@ -35,7 +36,7 @@ export async function mostrar(raiz, aviso = false) {
             <span class="chip">${Math.round(r.peso_kg)} kg</span>
           </div>
           <span class="subtitulo">${esc(r.vecino)} · ${esc(r.direccion || r.distrito)}</span>
-          ${r.hora_desde && r.hora_hasta ? `<span class="chip" style="align-self:flex-start">${icono("reloj", 18)} Pasar de ${esc(r.hora_desde)} a ${esc(r.hora_hasta)}</span>` : ""}
+          ${r.hora_desde ? `<span class="chip" style="align-self:flex-start">${icono("reloj", 18)} ${esc(textoHorario(r))}</span>` : ""}
           <button class="boton principal" type="button" data-tomar="${r.id}">${icono("check", 22)} Lo recogeré</button>
         </article>`).join("") : `<p class="vacio">Por ahora no hay reciclaje para recoger en su zona.</p>`}
 
@@ -44,7 +45,9 @@ export async function mostrar(raiz, aviso = false) {
           <div class="fila">
             <div style="display:flex;flex-direction:column">
               <span class="principal">${esc(r.descripcion)} · ${Math.round(r.peso_kg)} kg</span>
-              <span class="secundario">${esc(r.direccion || r.distrito)}${r.hora_desde ? ` · de ${esc(r.hora_desde)} a ${esc(r.hora_hasta)}` : ""} · hasta el ${limite(r.fecha_asignacion)}</span>
+              <span class="secundario">${esc(r.vecino)} · ${esc(r.direccion || r.distrito)}</span>
+              ${r.hora_desde ? `<span class="secundario">${icono("reloj", 16)} ${esc(textoHorario(r))} · hasta el ${limite(r.fecha_asignacion)}</span>` : ""}
+              ${r.telefono_vecino ? `<a class="secundario" href="tel:${esc(r.telefono_vecino)}" style="font-weight:700">📞 ${esc(r.telefono_vecino)}</a>` : ""}
             </div>
             <button class="boton chico suave" type="button" data-hecho="${r.id}">Ya lo recogí</button>
           </div>`).join("")}</div>` : ""}

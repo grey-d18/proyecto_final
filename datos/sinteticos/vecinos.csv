@@ -1,0 +1,41 @@
+codigo,fecha_registro,origen,nombre,distrito,direccion,lat,lon,correo,telefono
+VEC-2026-0001,2026-10-07 18:00,sintético,Vecina Carmen,El Porvenir,El Porvenir (dirección inventada),-8.077,-79.001,carmen1@ejemplo.pe,900927955
+VEC-2026-0002,2026-10-17 18:00,sintético,Vecino Jorge,El Porvenir,El Porvenir (dirección inventada),-8.0805,-78.996,jorge2@ejemplo.pe,900315441
+VEC-2026-0003,2026-11-07 18:00,sintético,Tienda La Económica,La Esperanza,La Esperanza (dirección inventada),-8.074,-79.047,economica3@ejemplo.pe,900958756
+VEC-2026-0004,2026-11-04 18:00,sintético,Vecina Lucía,Florencia de Mora,Florencia de Mora (dirección inventada),-8.081,-79.02,lucia4@ejemplo.pe,900733398
+VEC-2026-0005,2026-11-02 18:00,sintético,Taller Mecánico Ruiz,Trujillo,Trujillo (dirección inventada),-8.106,-79.03,ruiz5@ejemplo.pe,900897271
+VEC-2026-0006,2026-08-08 18:00,sintético,Elena Mendoza,El Porvenir,El Porvenir (dirección inventada),-8.07941,-79.00568,mendoza6@ejemplo.pe,900617647
+VEC-2026-0007,2026-06-28 18:00,sintético,Manuel Alayo,Florencia de Mora,Florencia de Mora (dirección inventada),-8.07268,-79.02255,alayo7@ejemplo.pe,900361982
+VEC-2026-0008,2026-08-28 18:00,sintético,Flor Quispe,Alto Trujillo,Alto Trujillo (dirección inventada),-8.06725,-78.98227,quispe8@ejemplo.pe,900298470
+VEC-2026-0009,2026-08-22 18:00,sintético,María Quispe,Florencia de Mora,Florencia de Mora (dirección inventada),-8.0814,-79.01686,quispe9@ejemplo.pe,900391831
+VEC-2026-0010,2026-06-03 18:00,sintético,Julia Sánchez,El Porvenir,El Porvenir (dirección inventada),-8.07648,-78.99541,sanchez10@ejemplo.pe,900453050
+VEC-2026-0011,2026-08-05 18:00,sintético,Teresa Alayo,La Esperanza,La Esperanza (dirección inventada),-8.08148,-79.03864,alayo11@ejemplo.pe,900765223
+VEC-2026-0012,2026-06-16 18:00,sintético,Flor Paredes,Víctor Larco Herrera,Víctor Larco Herrera (dirección inventada),-8.13913,-79.04844,paredes12@ejemplo.pe,900784226
+VEC-2026-0013,2026-07-05 18:00,sintético,Pedro Sánchez,El Porvenir,El Porvenir (dirección inventada),-8.08526,-79.00796,sanchez13@ejemplo.pe,900592239
+VEC-2026-0014,2026-09-03 18:00,sintético,Elena Cabrera,El Porvenir,El Porvenir (dirección inventada),-8.07853,-78.99762,cabrera14@ejemplo.pe,900670185
+VEC-2026-0015,2026-06-05 18:00,sintético,Teresa Gutiérrez,Alto Trujillo,Alto Trujillo (dirección inventada),-8.05688,-78.99078,gutierrez15@ejemplo.pe,900540703
+VEC-2026-0016,2026-07-05 18:00,sintético,Teresa Polo,El Porvenir,El Porvenir (dirección inventada),-8.07857,-78.99547,polo16@ejemplo.pe,900683038
+VEC-2026-0017,2026-08-21 18:00,sintético,Miguel Rojas,El Porvenir,El Porvenir (dirección inventada),-8.07784,-79.00351,rojas17@ejemplo.pe,900696958
+VEC-2026-0018,2026-06-07 18:00,sintético,Juana Rojas,La Esperanza,La Esperanza (dirección inventada),-8.08273,-79.03716,rojas18@ejemplo.pe,900375691
+VEC-2026-0019,2026-08-02 18:00,sintético,José Paredes,La Esperanza,La Esperanza (dirección inventada),-8.0707,-79.05063,paredes19@ejemplo.pe,900699463
+VEC-2026-0020,2026-09-26 18:00,sintético,Juan Paredes,Trujillo,Trujillo (dirección inventada),-8.10719,-79.02515,paredes20@ejemplo.pe,900730198
+VEC-2026-0021,2026-06-24 18:00,sintético,Segundo Polo,El Porvenir,El Porvenir (dirección inventada),-8.08106,-79.00168,polo21@ejemplo.pe,900540344
+VEC-2026-0022,2026-08-17 18:00,sintético,Juan Benites,Florencia de Mora,Florencia de Mora (dirección inventada),-8.07307,-79.0203,benites22@ejemplo.pe,900393236
+VEC-2026-0023,2026-08-11 18:00,sintético,Pedro Vásquez,Trujillo,Trujillo (dirección inventada),-8.10971,-79.02711,vasquez23@ejemplo.pe,900803354
+VEC-2026-0024,2026-08-23 18:00,sintético,Pedro Paredes,Trujillo,Trujillo (dirección inventada),-8.10739,-79.03313,paredes24@ejemplo.pe,900527307
+VEC-2026-0025,2026-09-14 18:00,sintético,Carmen Castillo,La Esperanza,La Esperanza (dirección inventada),-8.07265,-79.03709,castillo25@ejemplo.pe,900691814
+VEC-2026-0026,2026-09-16 18:00,sintético,María Vásquez,La Esperanza,La Esperanza (dirección inventada),-8.06949,-79.05089,vasquez26@ejemplo.pe,900107965
+VEC-2026-0027,2026-08-21 18:00,sintético,Elena Polo,La Esperanza,La Esperanza (dirección inventada),-8.07293,-79.05283,polo27@ejemplo.pe,900818309
+VEC-2026-0028,2026-06-15 18:00,sintético,Segundo Paredes,Florencia de Mora,Florencia de Mora (dirección inventada),-8.07673,-79.02238,paredes28@ejemplo.pe,900854725
+VEC-2026-0029,2026-08-01 18:00,sintético,José Gutiérrez,El Porvenir,El Porvenir (dirección inventada),-8.07136,-79.00098,gutierrez29@ejemplo.pe,900285197
+VEC-2026-0030,2026-10-10 18:00,sintético,Luz Quispe,El Porvenir,El Porvenir (dirección inventada),-8.08151,-78.99895,quispe30@ejemplo.pe,900810288
+VEC-2026-0031,2026-08-06 18:00,sintético,Teresa Gutiérrez,La Esperanza,La Esperanza (dirección inventada),-8.07829,-79.04288,gutierrez31@ejemplo.pe,900311983
+VEC-2026-0032,2026-09-27 18:00,sintético,Elena Paredes,Alto Trujillo,Alto Trujillo (dirección inventada),-8.0554,-78.98779,paredes32@ejemplo.pe,900297429
+VEC-2026-0033,2026-10-09 18:00,sintético,José Cruz,Huanchaco,Huanchaco (dirección inventada),-8.07616,-79.12176,cruz33@ejemplo.pe,900927839
+VEC-2026-0034,2026-06-26 18:00,sintético,María Quispe,El Porvenir,El Porvenir (dirección inventada),-8.08068,-79.00483,quispe34@ejemplo.pe,900469807
+VEC-2026-0035,2026-08-02 18:00,sintético,Rosa Vásquez,Alto Trujillo,Alto Trujillo (dirección inventada),-8.06759,-78.9871,vasquez35@ejemplo.pe,900650427
+VEC-2026-0036,2026-09-05 18:00,sintético,Julia Gutiérrez,Florencia de Mora,Florencia de Mora (dirección inventada),-8.07297,-79.0187,gutierrez36@ejemplo.pe,900246981
+VEC-2026-0037,2026-06-07 18:00,sintético,Segundo Alayo,El Porvenir,El Porvenir (dirección inventada),-8.07753,-79.00887,alayo37@ejemplo.pe,900525665
+VEC-2026-0038,2026-08-08 18:00,sintético,Víctor Benites,El Porvenir,El Porvenir (dirección inventada),-8.08041,-79.00493,benites38@ejemplo.pe,900763284
+VEC-2026-0039,2026-07-27 18:00,sintético,Julia Quispe,Trujillo,Trujillo (dirección inventada),-8.11218,-79.02684,quispe39@ejemplo.pe,900767014
+VEC-2026-0040,2026-09-13 18:00,sintético,Elena Vásquez,Alto Trujillo,Alto Trujillo (dirección inventada),-8.0628,-78.99327,vasquez40@ejemplo.pe,900143238

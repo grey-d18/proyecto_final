@@ -1,6 +1,6 @@
-vecino,distrito,lat,lon,descripcion,peso_kg,horas_atras
-Vecina Carmen,El Porvenir,-8.077,-79.001,Cajas de cartón de una mudanza,12,1
-Vecino Jorge,El Porvenir,-8.0805,-78.996,Botellas de plástico de una fiesta,4,4
-Tienda La Económica,La Esperanza,-8.074,-79.047,Cartón y papel de la tienda,20,6
-Vecina Lucía,Florencia de Mora,-8.081,-79.02,Latas de aluminio y botellas,3,22
-Taller Mecánico Ruiz,Trujillo,-8.106,-79.03,Fierros viejos y piezas de metal,35,7
+vecino_codigo,vecino,distrito,lat,lon,descripcion,peso_kg,horas_atras,dias,hora_desde,hora_hasta,horario_dicho,compartir_telefono,direccion
+VEC-2026-0001,Vecina Carmen,El Porvenir,-8.077,-79.001,Cajas de cartón de una mudanza,12,1,"[""Lunes"", ""Miércoles"", ""Viernes""]",07:00,09:00,"Lunes, miércoles y viernes de 7 a 9 de la mañana",1,El Porvenir (dirección inventada)
+VEC-2026-0002,Vecino Jorge,El Porvenir,-8.0805,-78.996,Botellas de plástico de una fiesta,4,4,"[""Sábado""]",08:00,12:00,"Los sábados en la mañana, de 8 a 12",1,El Porvenir (dirección inventada)
+VEC-2026-0003,Tienda La Económica,La Esperanza,-8.074,-79.047,Cartón y papel de la tienda,20,6,"[""Sábado""]",08:00,12:00,"Los sábados en la mañana, de 8 a 12",0,La Esperanza (dirección inventada)
+VEC-2026-0004,Vecina Lucía,Florencia de Mora,-8.081,-79.02,Latas de aluminio y botellas,3,22,"[""Sábado"", ""Domingo""]",09:00,13:00,"El fin de semana, de 9 a 1",1,Florencia de Mora (dirección inventada)
+VEC-2026-0005,Taller Mecánico Ruiz,Trujillo,-8.106,-79.03,Fierros viejos y piezas de metal,35,7,"[""Sábado"", ""Domingo""]",09:00,13:00,"El fin de semana, de 9 a 1",0,Trujillo (dirección inventada)

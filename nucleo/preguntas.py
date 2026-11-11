@@ -75,6 +75,7 @@ PREGUNTAS = [
 
 # Otros mensajes que la app dice en voz alta (mismo formato: clave y lo que se dice).
 AVISOS = {
+    "horario_recojo": "¿Qué días y a qué hora puede pasar el reciclador a recoger? Por ejemplo: lunes, miércoles y viernes, de siete a nueve de la mañana.",
     "inicio": "¿Quién es usted? Toque «Soy reciclador», «Soy vecino» o «Soy acopiador».",
     "aviso_recojo": "Recuerde que tiene un máximo de tres días para hacer su recojo. "
                     "Si no, se asignará a otro reciclador de la zona.",
