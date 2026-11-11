@@ -257,20 +257,20 @@ function edad(fecha) {
 function resumen(f) {
   const digitos = (t) => (t || "").split("").join(", ");
   const lista = (l) => (l || []).join(", ").toLowerCase();
-  const partes = [`Tu ficha. Nombre: ${f.nombre_completo || "por completar"}.`,
+  const partes = [`Su ficha. Nombre: ${f.nombre_completo || "por completar"}.`,
     f.dni ? `DNI: ${digitos(f.dni)}.` : "DNI: por completar."];
   if (f.fecha_nacimiento) {
     const [a, m, d] = f.fecha_nacimiento.split("-").map(Number);
-    partes.push(`Naciste el ${d} de ${MESES[m - 1]} de ${a}.`);
+    partes.push(`Nació el ${d} de ${MESES[m - 1]} de ${a}.`);
   }
-  if (f.direccion) partes.push(`Vives en ${f.direccion}.`);
+  if (f.direccion) partes.push(`Vive en ${f.direccion}.`);
   if (f.telefono) partes.push(`Celular: ${digitos(f.telefono)}.`);
-  if (f.materiales?.length) partes.push(`Recoges ${lista(f.materiales)}.`);
+  if (f.materiales?.length) partes.push(`Recoge ${lista(f.materiales)}.`);
   if (f.zona_trabajo) partes.push(`En ${f.zona_trabajo}.`);
   if (f.dias_trabajo?.length) partes.push(`Los días ${lista(f.dias_trabajo)}${f.hora_desde ? `, de ${f.hora_desde} a ${f.hora_hasta}` : ""}.`);
   const con = [...(f.medio_transporte || []), ...(f.equipo_proteccion || [])];
-  if (con.length) partes.push(`Trabajas con ${lista(con)}.`);
-  partes.push("Si todo está bien, toca el micrófono y di: sí, acepto. Es tu declaración jurada de que tus datos son verdaderos.");
+  if (con.length) partes.push(`Trabaja con ${lista(con)}.`);
+  partes.push("Si todo está bien, toque el micrófono y diga: sí, acepto. Es su declaración jurada de que sus datos son verdaderos.");
   return partes.join(" ");
 }
 
