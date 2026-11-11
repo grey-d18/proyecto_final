@@ -19,6 +19,7 @@ from pathlib import Path
 
 import pandas as pd
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from PIL import Image
@@ -92,7 +93,10 @@ def catalogos() -> dict:
 async def transcribir_audio(audio: UploadFile = File(...)) -> dict:
     """Recibe la grabación de una respuesta y devuelve lo que entendió Whisper."""
     extension = Path(audio.filename or "").suffix or ".webm"
-    return {"texto": transcribir(await audio.read(), extension)}
+    # Whisper tarda unos segundos: lo corremos aparte (en otro hilo) para que, mientras tanto,
+    # la API siga atendiendo a los demás (abrir pantallas, ver precios). Si varias personas
+    # hablan a la vez, Whisper las atiende por turno.
+    return {"texto": await run_in_threadpool(transcribir, await audio.read(), extension)}
 
 
 class Respuestas(BaseModel):
@@ -271,7 +275,7 @@ async def pedir_recojo(
 ) -> dict:
     if hora_desde >= hora_hasta:
         raise HTTPException(422, "La hora «hasta» tiene que ser después de la hora «desde».")
-    imagen = achicar_foto(await foto.read()) if foto else None
+    imagen = await run_in_threadpool(achicar_foto, await foto.read()) if foto else None
     nuevo = bd.crear_recojo(vecino, distrito, direccion, lat, lon, descripcion, peso_kg, imagen,
                             preferido or None, hora_desde, hora_hasta)
     return {"id": nuevo}
