@@ -7,7 +7,7 @@
 //               dice «sí, acepto»: es su declaración jurada, y se guarda con la hora.
 //   Final       código de registro y constancia en PDF.
 import { enlace, enviar, enviarFormulario, leer } from "../api.js";
-import { barra, callar, cargando, esc, hablar, icono, leerEnVoz, mensajeError, sesion } from "../comun.js";
+import { barra, callar, cargando, esc, hablar, icono, leerFichaEnVoz, mensajeError, sesion } from "../comun.js";
 import { abrirMicrofono, cerrarMicrofono, grabar, microfonoAbierto } from "../grabadora.js";
 
 let catalogo = null;
@@ -252,13 +252,14 @@ function edad(fecha) {
   return hoy.getFullYear() - a - ((hoy.getMonth() + 1 < m || (hoy.getMonth() + 1 === m && hoy.getDate() < d)) ? 1 : 0);
 }
 
-// El resumen que se lee en voz alta. El DNI y el celular, dígito por dígito, para que la
-// persona confirme que se entendió bien.
+// Los datos de la ficha que lee la voz del celular (el inicio y el final los dice Camila).
+// El DNI y el celular, dígito por dígito, para que la persona confirme que se entendió bien.
 function resumen(f) {
   const digitos = (t) => (t || "").split("").join(", ");
   const lista = (l) => (l || []).join(", ").toLowerCase();
-  const partes = [`Su ficha. Nombre: ${f.nombre_completo || "por completar"}.`,
+  const partes = [`Nombre: ${f.nombre_completo || "por completar"}.`,
     f.dni ? `DNI: ${digitos(f.dni)}.` : "DNI: por completar."];
+  if (f.genero) partes.push(f.genero === "Femenino" ? "Mujer." : "Hombre.");
   if (f.fecha_nacimiento) {
     const [a, m, d] = f.fecha_nacimiento.split("-").map(Number);
     partes.push(`Nació el ${d} de ${MESES[m - 1]} de ${a}.`);
@@ -270,7 +271,6 @@ function resumen(f) {
   if (f.dias_trabajo?.length) partes.push(`Los días ${lista(f.dias_trabajo)}${f.hora_desde ? `, de ${f.hora_desde} a ${f.hora_hasta}` : ""}.`);
   const con = [...(f.medio_transporte || []), ...(f.equipo_proteccion || [])];
   if (con.length) partes.push(`Trabaja con ${lista(con)}.`);
-  partes.push("Si todo está bien, toque el micrófono y diga: sí, acepto. Es su declaración jurada de que sus datos son verdaderos.");
   return partes.join(" ");
 }
 
@@ -373,7 +373,7 @@ function dibujarFicha(raiz) {
       equipo_proteccion: elegidos("Protección"),
     };
   };
-  raiz.querySelector("#escuchar-ficha").addEventListener("click", () => leerEnVoz(resumen(leerFicha())));
+  raiz.querySelector("#escuchar-ficha").addEventListener("click", () => leerFichaEnVoz("resumen_inicio", resumen(leerFicha()), "resumen_final"));
 
   const mensaje = raiz.querySelector("#mensaje");
   const zona = raiz.querySelector("#zona-acepto");
@@ -438,7 +438,7 @@ function dibujarFicha(raiz) {
   }
 
   dibujarAcepto();
-  leerEnVoz(resumen(f)); // puede no sonar si el navegador lo bloquea: queda el botón «Escuchar mi ficha»
+  leerFichaEnVoz("resumen_inicio", resumen(f), "resumen_final"); // puede no sonar si el navegador lo bloquea: queda el botón «Escuchar mi ficha»
 }
 
 // --- Final: inscrito ----------------------------------------------------------------------------

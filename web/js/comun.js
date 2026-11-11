@@ -45,7 +45,9 @@ export function hablar(clave) {
   audioActual.play().catch(() => {});
   return audioActual;
 }
+let turno = 0; // sube cada vez que algo nuevo empieza a sonar: así una lectura vieja no sigue
 export function callar() {
+  turno += 1;
   if (audioActual) { audioActual.pause(); audioActual = null; }
   try { speechSynthesis.cancel(); } catch { /* el navegador no tiene voz */ }
 }
@@ -63,6 +65,32 @@ export function leerEnVoz(texto) {
     frase.rate = 0.9;
     speechSynthesis.speak(frase);
   } catch { /* sin voz: la ficha igual se puede leer en pantalla */ }
+}
+
+// El resumen de la ficha en tres partes: Camila (audio grabado) dice la frase fija de
+// inicio, la voz del celular lee los datos personales y Camila dice la frase fija del final.
+export function leerFichaEnVoz(claveInicio, datos, claveFinal) {
+  callar(); // corta lo que estuviera sonando
+  const mio = turno;
+  const sigue = (paso) => () => { if (turno === mio) paso(); };
+  const camila = (clave, despues) => {
+    audioActual = new Audio(`audios/${clave}.mp3`);
+    audioActual.addEventListener("ended", sigue(despues));
+    audioActual.addEventListener("error", sigue(despues)); // si falta el audio, sigue con lo demás
+    audioActual.play().catch(() => {});
+  };
+  const celular = (texto, despues) => {
+    try {
+      const frase = new SpeechSynthesisUtterance(texto);
+      const voces = speechSynthesis.getVoices();
+      frase.voice = voces.find((v) => v.lang === "es-PE") || voces.find((v) => v.lang.startsWith("es")) || null;
+      frase.lang = frase.voice?.lang || "es-PE";
+      frase.rate = 0.9;
+      frase.addEventListener("end", sigue(despues));
+      speechSynthesis.speak(frase);
+    } catch { despues(); }
+  };
+  camila(claveInicio, () => celular(datos, () => camila(claveFinal, () => {})));
 }
 
 // --- Memoria: qué reciclador está usando la app (queda guardado en este celular) -------------------
