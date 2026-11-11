@@ -358,6 +358,10 @@ Usé **Claude Code** en VS Code. `[REVISAR y completar]`
 - **Expediente completo para la mesa de partes** de la municipalidad: fichas, padrón de socios y la lista de
   requisitos de los art. 34 y 39.
 - **Canal por WhatsApp con notas de voz**, para no tener que instalar nada.
+- **Sin enviar datos a terceros:** reemplazar Gemini por un modelo abierto (**Qwen**, sesiones 08 y 09) que corra en el
+  servidor de la municipalidad con Ollama. Lo probamos con Qwen 2.5 de 3B en la laptop: responde en unos 4 segundos y
+  los datos no salen del servidor, pero todavía comete errores (dejó el DNI en palabras y metió un carácter chino en un
+  apellido), así que necesita un modelo más grande o ajuste fino antes de usarse.
 
 ---
 
