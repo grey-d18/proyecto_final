@@ -47,7 +47,7 @@ empecé mi tesis, y por eso este proyecto empieza por lo básico: tener registro
 **¿Quién eres?**:
 
 1. **Soy reciclador**
-   - **Registro por voz:** 5 preguntas abiertas, una por pantalla. Cada pregunta **se escucha** (voz natural con
+   - **Registro por voz:** 6 preguntas abiertas, una por pantalla. Cada pregunta **se escucha** (voz natural con
      acento peruano, porque la persona puede no saber leer) y se responde hablando. Whisper transcribe y, después de
      cada respuesta, Gemini llena la ficha con un esquema fijo: si la persona ya dijo un dato, su pregunta se salta, y
      si falta uno, se repregunta una sola vez. Al final la app lee la ficha en voz alta (el DNI dígito por dígito), la
@@ -71,7 +71,9 @@ empecé mi tesis, y por eso este proyecto empieza por lo básico: tener registro
 
 **Solo lo que pide la ley.** El registro pide únicamente lo que exige el art. 34 b) del Reglamento de la Ley 29419
 (D. S. 005-2010-MINAM, modificado por el D. S. 001-2022-MINAM); el resto (estado civil, estudios, ingresos, seguro)
-es opcional y no se pregunta. Así la entrevista bajó de **8 a 5 preguntas** abiertas, y se salta la que ya se respondió.
+es opcional y no se pregunta. Así la entrevista bajó de **8 a 6 preguntas** abiertas, y se salta la que ya se respondió.
+La sexta pregunta es si está en una **asociación**: es un requisito para formalizarse y la municipalidad necesita
+saber cuántos no lo están.
 
 **Insight.** El cuello de botella del registro no es la ley sino **el formulario**. En el trabajo de campo, la
 gente que recicla habla con fluidez de su trabajo (rutas, kilos, precios), pero muchas personas leen con dificultad y
@@ -125,7 +127,7 @@ Streamlit no se borró de la historia: está completa en la rama `version-stream
 ```mermaid
 flowchart LR
     Q[🔊 Pregunta hablada<br>es-PE-CamilaNeural, generada una vez<br>web/audios/] --> A
-    A[🎙️ Celular: app web<br>GitHub Pages<br>responde 5 preguntas] -->|audio WebM/MP4<br>vía la API FastAPI| B[Whisper<br>faster-whisper, CPU<br>nucleo/voz.py]
+    A[🎙️ Celular: app web<br>GitHub Pages<br>responde 6 preguntas] -->|audio WebM/MP4<br>vía la API FastAPI| B[Whisper<br>faster-whisper, CPU<br>nucleo/voz.py]
     B -->|texto| C[Gemini<br>salida estructurada<br>nucleo/extraccion.py]
     C -->|ficha + faltantes| N[¿Qué preguntar?<br>salta lo ya dicho,<br>repregunta una vez<br>nucleo/entrevista.py]
     N -->|siguiente pregunta| A
@@ -190,7 +192,7 @@ El script de clonación quedó en el historial de git (commit `f6f9b3a`) por si 
   Antes de cortar muestra una cuenta regresiva («¿Terminó? Termino en 3…») y, si la persona vuelve a hablar, sigue
   grabando. Al empezar mide el ruido del lugar para reconocer también la voz bajita. Y si igual se cortó, el botón
   **«Agregar más»** graba de nuevo y suma lo nuevo a lo que ya dijo. Cada respuesta puede durar hasta 30 segundos;
-  las que suelen ser largas tienen más: nombre, fecha de nacimiento y género 40 s, y dirección y celular, trabajo y equipo
+  las que suelen ser largas tienen más: nombre, fecha de nacimiento y género 40 s, y dirección y celular, trabajo y con qué recoge
   50 s (`nucleo/preguntas.py`).
   Además le pedimos al navegador que **no** aplique cancelación de eco ni supresión de ruido: están hechas para
   llamadas y, en nuestras pruebas, deformaban la voz lo suficiente para que Whisper confundiera números.
@@ -279,7 +281,7 @@ api/
 nucleo/                    la lógica, sin interfaz (la usa la API)
   config.py                rutas y claves (.env o secretos)
   catalogos.py             listas comunes: distritos, materiales, transporte y equipo
-  preguntas.py             las 5 preguntas, las repreguntas (texto, audio, ejemplo) y los avisos
+  preguntas.py             las 6 preguntas, las repreguntas (texto, audio, ejemplo) y los avisos
   voz.py                   Whisper
   extraccion.py            esquema de la ficha (art. 34 b), Gemini, plan B con reglas y DNI dicho en palabras
   entrevista.py            qué preguntar después: salta lo ya dicho y repregunta cada faltante una vez
@@ -350,7 +352,7 @@ Usé **Claude Code** en VS Code. `[REVISAR y completar]`
 > ⚠️ **Nada de esta lista está implementado todavía.** Es lo que sigue después del curso.
 
 - **Foto del DNI con OCR** (Document AI, sesión 10): llena nombre, DNI, fecha de nacimiento, sexo y dirección, y la
-  entrevista baja de 5 a 3 preguntas. La foto también sirve como la copia simple del DNI que piden las municipalidades.
+  entrevista baja de 6 a 4 preguntas. La foto también sirve como la copia simple del DNI que piden las municipalidades.
 - **Foto del carné de vacunación** (tétanos y hepatitis B) **y de la constancia de capacitación**, para completar los
   requisitos del art. 34 c) y d).
 - **Dirigente de la organización:** registra una vez los datos de la asociación (RUC con consulta a SUNAT, partida

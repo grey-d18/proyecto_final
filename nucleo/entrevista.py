@@ -3,15 +3,15 @@
 Después de cada respuesta, la IA llena la ficha con TODO lo dicho hasta ahí
 (nucleo/extraccion.py) y esta función decide la siguiente pregunta:
 
-    1. Las 5 preguntas del guion, en orden. Si una respuesta anterior ya llenó todos los
+    1. Las 6 preguntas del guion, en orden. Si una respuesta anterior ya llenó todos los
        campos de una pregunta (por ejemplo, al dar el DNI dijo también su nombre y su fecha
        de nacimiento), esa pregunta se SALTA.
     2. Cuando se acaba el guion, cada dato obligatorio que falte se repregunta UNA sola vez.
     3. Si después de repreguntar sigue vacío, queda «por completar» y la entrevista termina.
 
 Nunca hay bucle: cada pregunta (del guion o repregunta) se hace como máximo una vez, así
-que la entrevista tiene como máximo 5 + 10 preguntas (si no se responde nada), y lo normal
-es entre 5 y 7.
+que la entrevista tiene como máximo 6 + 10 preguntas (si no se responde nada), y lo normal
+es entre 6 y 8.
 """
 from nucleo.extraccion import FichaReciclador, campo_vacio, extraer_ficha
 from nucleo.preguntas import PREGUNTAS, REPREGUNTAS, SEGUNDOS_POR_DEFECTO

@@ -58,6 +58,8 @@ def crear_constancia(ficha: FichaReciclador, codigo: str) -> bytes:
         ("Distrito de vivienda", ficha.distrito_vivienda),
         ("Celular", ficha.telefono),
         ("Correo", ficha.correo),
+        ("Asociación", (ficha.nombre_asociacion or "Sí") if ficha.pertenece_asociacion
+                       else "No" if ficha.pertenece_asociacion is False else None),
         ("Cargo", ficha.cargo),
         ("Materiales", ficha.materiales),
         ("Zona de trabajo", ficha.zona_trabajo),

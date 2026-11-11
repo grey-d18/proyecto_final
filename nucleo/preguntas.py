@@ -14,7 +14,7 @@ pregunta (con voz grabada, porque puede no saber leer) y responde hablando.
     - El correo puede quedar vacío y el cargo es «socio» si no se dice otro.
     - Estado civil, estudios, ingresos y seguro son opcionales: NO se preguntan.
 
-Son 5 preguntas abiertas (antes eran 8). Como la gente responde con rodeos y a veces
+Son 6 preguntas abiertas (antes eran 8). Como la gente responde con rodeos y a veces
 dice varios datos juntos, después de cada respuesta la IA revisa qué campos ya están
 llenos (ver nucleo/entrevista.py):
     - si una respuesta ya llenó los campos de una pregunta siguiente, esa se salta;
@@ -70,13 +70,21 @@ PREGUNTAS = [
     {
         "clave": "equipo",
         "segundos": 50,
-        "texto": "¿Con qué trabaja? Por ejemplo: triciclo, uniforme, guantes.",
-        "ejemplo": "Con mi triciclo y guantes",
+        "texto": "¿Qué usa para recoger su material? Por ejemplo: un carrito, un triciclo o un saco.",
+        "ejemplo": "Con mi triciclo y unos sacos",
         "campos": ["equipo"],
+    },
+    {
+        # Estar en una asociación es un requisito para formalizarse: la municipalidad
+        # necesita saber cuántos no lo están. No es obligatorio: si no responde, no se repregunta.
+        "clave": "asociacion",
+        "texto": "¿Está en alguna asociación de recicladores? Si es así, ¿en cuál?",
+        "ejemplo": "Sí, en la asociación Manos Unidas. O: No, en ninguna",
+        "campos": ["asociacion"],
     },
 ]
 
-# Si al terminar las 5 preguntas un dato obligatorio sigue vacío, se pregunta UNA vez más,
+# Si al terminar las 6 preguntas un dato obligatorio sigue vacío, se pregunta UNA vez más,
 # de forma corta y directa. La clave del campo que falta -> su repregunta.
 REPREGUNTAS = {
     "dni": {"clave": "re_dni", "texto": "No entendí bien su DNI. ¿Me lo repite, número por número?",
@@ -100,11 +108,11 @@ REPREGUNTAS = {
                      "ejemplo": "De lunes a sábado, de 6 a 11 de la mañana", "campos": ["dias_trabajo", "horario"]},
     "horario": {"clave": "re_horario", "texto": "¿Qué días y en qué horario trabaja?",
                 "ejemplo": "De lunes a sábado, de 6 a 11 de la mañana", "campos": ["dias_trabajo", "horario"]},
-    "equipo": {"clave": "re_equipo", "texto": "¿Con qué trabaja? Por ejemplo: triciclo, guantes o uniforme.",
-               "ejemplo": "Con un carrito y guantes", "campos": ["equipo"]},
+    "equipo": {"clave": "re_equipo", "texto": "¿Qué usa para recoger su material? Un carrito, un triciclo, un saco…",
+               "ejemplo": "Con un carrito", "campos": ["equipo"]},
 }
 
-# Todas las preguntas posibles, por clave (las 5 del guion y las repreguntas).
+# Todas las preguntas posibles, por clave (las 6 del guion y las repreguntas).
 TODAS = {p["clave"]: p for p in PREGUNTAS} | {r["clave"]: r for r in REPREGUNTAS.values()}
 
 # Otros mensajes que la app dice en voz alta (mismo formato: clave y lo que se dice).
@@ -118,6 +126,6 @@ AVISOS = {
     "resumen_inicio": "Escuche su ficha y revise que sus datos estén bien.",
     "resumen_final": "Si todo está bien, toque el micrófono y diga: sí, acepto. "
                      "Es su declaración jurada de que sus datos son verdaderos.",
-    "bienvenida_registro": "Le voy a hacer cinco preguntas para inscribirle en el registro de recicladores. "
+    "bienvenida_registro": "Le voy a hacer seis preguntas para inscribirle en el registro de recicladores. "
                            "Su voz se graba solo para llenar su ficha. Toque el micrófono y responda hablando.",
 }

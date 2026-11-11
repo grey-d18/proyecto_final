@@ -52,6 +52,7 @@ def test_faltante_se_repregunta_una_vez_y_queda_por_completar():
         "vivienda_celular": "Calle Los Pinos 245, El Porvenir. Mi celular es 987654321",
         "trabajo": "Cartón y botellas en el centro de Trujillo, de lunes a sábado de 6 a 11 de la mañana",
         "equipo": "no me acuerdo",  # no dice con qué trabaja
+        "asociacion": "no, en ninguna",
     }
     hechas = list(respuestas)
     paso = avanzar(respuestas, hechas)
@@ -69,7 +70,7 @@ def test_la_entrevista_nunca_entra_en_bucle():
         hechas.append(siguiente["clave"])
         respuestas[siguiente["clave"]] = ""
         siguiente = avanzar(respuestas, hechas)["siguiente"]
-        assert len(hechas) <= 15
+        assert len(hechas) <= 16
     assert len(hechas) == len(set(hechas))                    # ninguna pregunta se repite
 
 
@@ -77,6 +78,7 @@ RESTO = {
     "nombre_nacimiento": "Rosa Quispe Ramos, nací el 3 de mayo de 1978, soy mujer",
     "trabajo": "cartón en el centro de Trujillo de lunes a sábado de 6 a 11",
     "equipo": "triciclo y guantes",
+    "asociacion": "no, en ninguna",
 }
 
 
@@ -102,3 +104,10 @@ def test_el_genero_se_dice_en_la_pregunta_2():
     paso = avanzar(respuestas, hechas=list(respuestas))
     assert paso["ficha"].genero == "Femenino"
     assert paso["siguiente"]["clave"] == "vivienda_celular"
+
+
+def test_la_pregunta_6_anota_la_asociacion():
+    from nucleo.extraccion import asociacion_desde_texto
+    assert asociacion_desde_texto("Sí, en la asociación Manos Unidas") == (True, "Manos Unidas")
+    assert asociacion_desde_texto("No, en ninguna") == (False, None)
+    assert asociacion_desde_texto("") == (None, None)

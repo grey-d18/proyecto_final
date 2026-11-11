@@ -1,6 +1,6 @@
 // Registro por voz: el flujo principal del producto.
 //   Paso 0      bienvenida, consentimiento y aviso de grabación (al apretar «Empezar» se abre el micrófono).
-//   Preguntas   5 preguntas abiertas, una por pantalla. Después de cada respuesta, la API llena la
+//   Preguntas   6 preguntas abiertas, una por pantalla. Después de cada respuesta, la API llena la
 //               ficha con todo lo dicho y decide la siguiente (POST /entrevista): si ya se dijo un
 //               dato, su pregunta se salta; si falta, se repregunta una sola vez.
 //   Ficha       la persona revisa su ficha, la escucha (con los dígitos del DNI uno por uno) y
@@ -20,7 +20,8 @@ const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "
 // Para avisar qué pregunta se saltó porque la persona ya lo había dicho.
 const LO_QUE_PIDE = {
   dni: "su DNI", nombre_nacimiento: "su nombre y su fecha de nacimiento", vivienda_celular: "dónde vive y su celular",
-  trabajo: "sus materiales, zona y horario", equipo: "con qué trabaja",
+  trabajo: "sus materiales, zona y horario", equipo: "con qué recoge su material",
+  asociacion: "si está en una asociación",
 };
 let grabacion = null;
 const MIENTRAS_HABLA = "Le escuchamos… Toque el cuadrado cuando termine";
@@ -271,6 +272,8 @@ function resumen(f) {
   if (f.dias_trabajo?.length) partes.push(`Los días ${lista(f.dias_trabajo)}${f.hora_desde ? `, de ${f.hora_desde} a ${f.hora_hasta}` : ""}.`);
   const con = [...(f.medio_transporte || []), ...(f.equipo_proteccion || [])];
   if (con.length) partes.push(`Trabaja con ${lista(con)}.`);
+  if (f.pertenece_asociacion === true) partes.push(f.nombre_asociacion ? `Está en la asociación ${f.nombre_asociacion}.` : "Está en una asociación.");
+  if (f.pertenece_asociacion === false) partes.push("No está en una asociación.");
   return partes.join(" ");
 }
 
@@ -316,6 +319,11 @@ function dibujarFicha(raiz) {
       <div class="par">
         <label class="${clase("telefono")}">${etiqueta("Celular", "telefono")}<input name="telefono" value="${esc(f.telefono)}" inputmode="numeric" maxlength="9"></label>
         <label class="campo"><span>Correo (opcional)</span><input name="correo" type="email" value="${esc(f.correo)}"></label>
+      </div>
+      <div class="par">
+        <label class="campo"><span>¿Está en una asociación?</span>
+          <select name="pertenece_asociacion">${[["", "—"], ["si", "Sí"], ["no", "No"]].map(([v, t]) => `<option value="${v}" ${v === (f.pertenece_asociacion === true ? "si" : f.pertenece_asociacion === false ? "no" : "") ? "selected" : ""}>${t}</option>`).join("")}</select></label>
+        <label class="campo"><span>Nombre de la asociación</span><input name="nombre_asociacion" value="${esc(f.nombre_asociacion)}"></label>
       </div>
       <label class="campo"><span>Cargo en su organización</span><input name="cargo" value="${esc(f.cargo || "socio")}"></label>
       ${fichas("Materiales", "materiales", [...catalogo.materiales, "Otro"], f.materiales)}
@@ -364,6 +372,8 @@ function dibujarFicha(raiz) {
       telefono: (datos.get("telefono") || "").replace(/\D/g, "") || null,
       correo: texto("correo"),
       cargo: texto("cargo") || "socio",
+      pertenece_asociacion: { si: true, no: false }[datos.get("pertenece_asociacion")] ?? null,
+      nombre_asociacion: datos.get("pertenece_asociacion") === "si" ? texto("nombre_asociacion") : null,
       materiales: elegidos("Materiales"),
       zona_trabajo: texto("zona_trabajo"),
       dias_trabajo: elegidos("Días"),

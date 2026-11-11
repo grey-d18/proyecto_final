@@ -68,7 +68,8 @@ class DatosDichos(BaseModel):
     hora_hasta: str | None = Field(None, description="Hora en que termina, formato 24 h HH:MM")
     medio_transporte: list[Transporte] = Field(default_factory=list, description="Vehículo o con qué mueve los materiales")
     equipo_proteccion: list[Equipo] = Field(default_factory=list, description="Equipo de protección que dice usar")
-    pertenece_asociacion: bool | None = Field(None, description="True solo si dice pertenecer a una asociación u organización")
+    pertenece_asociacion: bool | None = Field(
+        None, description="True si dice que está en una asociación u organización de recicladores; False si dice que no está en ninguna; None si no lo dijo")
     nombre_asociacion: str | None = Field(None, description="Nombre de la asociación, si lo dice")
     cargo: str | None = Field(None, description="Cargo en la asociación, solo si lo dice (presidente, tesorera…)")
     faltantes: list[str] = Field(default_factory=list, description=f"Campos obligatorios que nadie dijo, de esta lista: {OBLIGATORIOS}")
@@ -296,6 +297,19 @@ def nombre_desde_texto(texto: str, es_respuesta_al_nombre: bool) -> str | None:
     return nombre.title() if len(nombre.split()) >= 2 else None
 
 
+def asociacion_desde_texto(texto: str) -> tuple[bool | None, str | None]:
+    """«Sí, en la asociación Manos Unidas» -> (True, "Manos Unidas"); «No, en ninguna» -> (False, None)."""
+    t = simplificar(texto)
+    if not t.strip(" ."):
+        return None, None
+    if re.match(r"\W*no\b", t) or re.search(r"\b(ninguna|ninguno|no estoy|no pertenezco|trabajo sol[oa]|independiente)\b", t):
+        return False, None
+    if re.match(r"\W*si\b", t) or re.search(r"\b(asociacion|organizacion|estoy en|pertenezco)\b", t):
+        nombre = re.search(r"(?i)(?:asociaci[oó]n|organizaci[oó]n)\s+(?:de\s+recicladores\s+)?([^,.;]+)", texto)
+        return True, (nombre[1].strip().title() if nombre else None)
+    return None, None
+
+
 def buscar(diccionario: dict[str, str], texto: str) -> list[str]:
     """Valores del diccionario cuyas palabras clave aparecen en el texto (sin repetir)."""
     t = simplificar(texto)
@@ -358,6 +372,7 @@ def extraer_con_reglas(respuestas: dict[str, str]) -> DatosDichos:
     texto_epp = simplificar(con_que)
     equipo = [e for p, e in PALABRAS_EQUIPO.items() if p in texto_epp and f"{p} no" not in texto_epp
               and f"no uso {p}" not in texto_epp]
+    pertenece, nombre_asociacion = asociacion_desde_texto(de("asociacion"))
 
     return DatosDichos(
         nombre_completo=nombre,
@@ -375,6 +390,8 @@ def extraer_con_reglas(respuestas: dict[str, str]) -> DatosDichos:
         hora_hasta=horario.hora_hasta,
         medio_transporte=transporte,
         equipo_proteccion=equipo,
+        pertenece_asociacion=pertenece,
+        nombre_asociacion=nombre_asociacion,
         observaciones="Ficha llenada con reglas simples (sin LLM): revise cada campo.",
     )
 
@@ -385,6 +402,8 @@ def campo_vacio(ficha: DatosDichos, campo: str) -> bool:
         return not (ficha.hora_desde and ficha.hora_hasta)
     if campo == "equipo":
         return not (ficha.medio_transporte or ficha.equipo_proteccion)
+    if campo == "asociacion":
+        return ficha.pertenece_asociacion is None
     valor = getattr(ficha, campo)
     return valor is None or valor == "" or valor == []
 

@@ -86,7 +86,7 @@ def catalogos() -> dict:
     return {
         "distritos": DISTRITOS_TRUJILLO, "materiales": MATERIALES, "transportes": TRANSPORTES,
         "equipos": EQUIPOS, "centros": CENTROS,
-        # Las 5 preguntas del guion. Las repreguntas las decide /entrevista según lo que falte.
+        # Las 6 preguntas del guion. Las repreguntas las decide /entrevista según lo que falte.
         "preguntas": [{"clave": p["clave"], "texto": p["texto"], "ejemplo": p["ejemplo"],
                        "segundos": p.get("segundos", SEGUNDOS_POR_DEFECTO)} for p in PREGUNTAS],
     }

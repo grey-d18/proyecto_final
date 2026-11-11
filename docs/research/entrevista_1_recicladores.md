@@ -17,7 +17,7 @@
 - **Qué opinaron del demo:** no se les mostró: las conversaciones fueron antes de construir la app.
 - **Qué cambié en el producto por esta conversación:**
   - **Registro hablado:** la app lee cada pregunta en voz alta y la persona responde hablando, sin leer ni escribir.
-  - **5 preguntas** en vez de una ficha larga, y una constancia en PDF que se puede mostrar.
+  - **6 preguntas** en vez de una ficha larga, y una constancia en PDF que se puede mostrar.
   - **Mi ruta:** el **mayor precio del día** por material y en qué acopio, para que pueda comparar.
   - **Aprender:** capacitación corta sobre cuidados, materiales y precios.
   - La pregunta «¿Está en una asociación?» y el panel de la municipalidad muestran cuántos no lo están.
