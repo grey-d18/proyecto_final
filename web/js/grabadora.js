@@ -5,10 +5,17 @@
 //   - al apretar el micrófono la grabación empieza al instante: no se pierde la primera sílaba.
 // Mientras graba, mide el volumen para mover la onda y para DETENERSE SOLA cuando la persona
 // deja de hablar (también se detiene si se vuelve a apretar).
+//
+// Para no cortar a quien hace pausas o habla bajito:
+//   - espera 3,5 segundos de silencio, y avisa con una cuenta regresiva antes de cortar;
+//   - mide el ruido del lugar al empezar: cuenta como voz lo que esté claramente por encima.
 
-const SILENCIO_PARA_PARAR = 2500; // milisegundos de silencio, después de haber hablado
-const MAXIMO = 30000;             // una respuesta no dura más de 30 segundos
-const UMBRAL = 0.03;              // volumen desde el que contamos que hay voz (0 a 1)
+const SILENCIO_PARA_PARAR = 3500; // milisegundos de silencio, después de haber hablado
+const AVISAR_DESDE = 500;         // a partir de este silencio se muestra la cuenta regresiva
+const MAXIMO_POR_DEFECTO = 30;    // segundos; cada pregunta puede pedir más (ver nucleo/preguntas.py)
+const CALIBRAR = 400;             // milisegundos del inicio en que se mide el ruido del lugar
+const UMBRAL_MINIMO = 0.012;      // volumen desde el que contamos que hay voz (0 a 1)…
+const UMBRAL_MAXIMO = 0.04;       // …ajustado al ruido del lugar, entre estos dos valores
 
 let flujo = null;
 let contexto = null;
@@ -51,9 +58,12 @@ function volumen() {
   return Math.sqrt(suma / muestras.length);
 }
 
-// Empieza a grabar. alCambiarVolumen(v) se llama muchas veces por segundo (para la onda).
+// Empieza a grabar.
+//   alCambiarVolumen(v): se llama muchas veces por segundo (para la onda).
+//   alContar(n): n = segundos que faltan para cortar por silencio (3, 2, 1), o null si la persona habla.
+//   segundos: lo máximo que puede durar la respuesta.
 // Devuelve { detener(), terminado }: «terminado» es una promesa con el audio (Blob) y su extensión.
-export function grabar(alCambiarVolumen = () => {}) {
+export function grabar({ alCambiarVolumen = () => {}, alContar = () => {}, segundos = MAXIMO_POR_DEFECTO } = {}) {
   if (contexto?.state === "suspended") contexto.resume();
   const tipo = formato();
   const grabadora = new MediaRecorder(flujo, tipo ? { mimeType: tipo } : undefined);
@@ -64,6 +74,9 @@ export function grabar(alCambiarVolumen = () => {}) {
   let ultimoSonido = performance.now();
   const inicio = performance.now();
   let reloj = 0;
+  let ruido = Infinity;        // el volumen más bajo del inicio: el ruido de fondo del lugar
+  let umbral = UMBRAL_MINIMO;
+  let cuentaAnterior = null;
 
   const terminado = new Promise((resolver) => {
     grabadora.onstop = () => {
@@ -79,8 +92,19 @@ export function grabar(alCambiarVolumen = () => {}) {
     const v = volumen();
     alCambiarVolumen(v);
     const ahora = performance.now();
-    if (v > UMBRAL) { hablo = true; ultimoSonido = ahora; }
-    if ((hablo && ahora - ultimoSonido > SILENCIO_PARA_PARAR) || ahora - inicio > MAXIMO) return detener();
+    if (ahora - inicio < CALIBRAR) {
+      // Usamos el momento más silencioso (no el promedio): si la persona empieza a hablar
+      // enseguida, su voz no sube el umbral.
+      ruido = Math.min(ruido, v);
+      umbral = Math.min(UMBRAL_MAXIMO, Math.max(UMBRAL_MINIMO, ruido * 3));
+    }
+    if (v > umbral) { hablo = true; ultimoSonido = ahora; }
+
+    const silencio = ahora - ultimoSonido;
+    const cuenta = hablo && silencio > AVISAR_DESDE ? Math.ceil((SILENCIO_PARA_PARAR - silencio) / 1000) : null;
+    if (cuenta !== cuentaAnterior) { cuentaAnterior = cuenta; alContar(cuenta); }
+
+    if ((hablo && silencio > SILENCIO_PARA_PARAR) || ahora - inicio > segundos * 1000) return detener();
     reloj = requestAnimationFrame(vigilar);
   };
 

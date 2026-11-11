@@ -10,6 +10,7 @@ export const soles = (n) => (n == null ? "—" : `S/ ${Number(n).toFixed(2)}`);
 
 // --- Íconos (líneas simples, toman el color del texto) ----------------------------------------
 const trazos = {
+  reloj: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   micro: '<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0"/><path d="M12 18v3"/>',
   parlante: '<path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/>',
   atras: '<path d="m15 6-6 6 6 6"/>',

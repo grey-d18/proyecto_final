@@ -31,7 +31,7 @@ from nucleo.catalogos import DISTRITOS_TRUJILLO, EQUIPOS, MATERIALES, TRANSPORTE
 from nucleo.config import FUENTES
 from nucleo.constancia import crear_constancia
 from nucleo.extraccion import FichaReciclador, extraer_ficha
-from nucleo.preguntas import PREGUNTAS
+from nucleo.preguntas import PREGUNTAS, SEGUNDOS_POR_DEFECTO
 from nucleo.ubicacion import CENTROS, buscar_direccion
 from nucleo.voz import cargar_modelo, transcribir
 
@@ -82,7 +82,8 @@ def catalogos() -> dict:
     return {
         "distritos": DISTRITOS_TRUJILLO, "materiales": MATERIALES, "transportes": TRANSPORTES,
         "equipos": EQUIPOS, "centros": CENTROS,
-        "preguntas": [{k: p[k] for k in ("clave", "texto", "ejemplo")} for p in PREGUNTAS],
+        "preguntas": [{"clave": p["clave"], "texto": p["texto"], "ejemplo": p["ejemplo"],
+                       "segundos": p.get("segundos", SEGUNDOS_POR_DEFECTO)} for p in PREGUNTAS],
     }
 
 
@@ -265,9 +266,14 @@ async def pedir_recojo(
     vecino: str = Form(...), descripcion: str = Form(...), peso_kg: float = Form(...),
     distrito: str = Form(...), direccion: str = Form(""), lat: float = Form(...), lon: float = Form(...),
     preferido: str = Form(""), foto: UploadFile | None = File(None),
+    hora_desde: str = Form(..., pattern=r"^([01]\d|2[0-3]):[0-5]\d$"),
+    hora_hasta: str = Form(..., pattern=r"^([01]\d|2[0-3]):[0-5]\d$"),
 ) -> dict:
+    if hora_desde >= hora_hasta:
+        raise HTTPException(422, "La hora «hasta» tiene que ser después de la hora «desde».")
     imagen = achicar_foto(await foto.read()) if foto else None
-    nuevo = bd.crear_recojo(vecino, distrito, direccion, lat, lon, descripcion, peso_kg, imagen, preferido or None)
+    nuevo = bd.crear_recojo(vecino, distrito, direccion, lat, lon, descripcion, peso_kg, imagen,
+                            preferido or None, hora_desde, hora_hasta)
     return {"id": nuevo}
 
 

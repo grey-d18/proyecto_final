@@ -11,6 +11,7 @@ let catalogo = null;
 // Lo que se va respondiendo. Vive mientras la página esté abierta (si vuelve atrás, no se pierde).
 const estado = { paso: 0, respuestas: {}, ficha: null, metodo: "", codigo: null };
 let grabacion = null;
+const MIENTRAS_HABLA = "Le escuchamos… Toque el cuadrado cuando termine";
 
 export async function mostrar(raiz) {
   if (estado.codigo) Object.assign(estado, { paso: 0, respuestas: {}, ficha: null, metodo: "", codigo: null });
@@ -91,6 +92,7 @@ function dibujarPregunta(raiz) {
 
   const zona = raiz.querySelector("#zona");
   let escribiendo = false;
+  let agregando = false; // «Agregar más»: lo nuevo se suma a lo que ya dijo
 
   const dibujarZona = (modo, mensaje = "") => {
     const respuesta = estado.respuestas[clave] || "";
@@ -110,7 +112,7 @@ function dibujarPregunta(raiz) {
           <svg width="52" height="52" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
         </button>
         <div class="onda" aria-hidden="true">${"<span></span>".repeat(9)}</div>
-        <span class="etiqueta" style="font-size:20px;font-weight:700">Le escuchamos… Cuando termine, se detiene solo</span>`;
+        <span class="etiqueta" id="cuenta" role="status" style="font-size:20px;font-weight:700">${MIENTRAS_HABLA}</span>`;
     } else if (modo === "escuchando") {
       zona.innerHTML = `<div class="girando" role="status" aria-label="Entendiendo su respuesta"></div><p class="subtitulo">Entendiendo su respuesta…</p>`;
     } else if (respuesta) {
@@ -119,6 +121,7 @@ function dibujarPregunta(raiz) {
           <span class="nota" style="font-weight:700">Entendimos:</span>
           <span class="texto">${esc(respuesta)}</span>
           <div class="chips">
+            <button class="boton chico" type="button" id="agregar">${icono("micro", 20)} Agregar más</button>
             <button class="boton chico" type="button" id="otra-vez">${icono("micro", 20)} Decirlo otra vez</button>
             <button class="boton chico" type="button" id="escribir">${icono("lapiz", 20)} Corregir escribiendo</button>
           </div>
@@ -132,6 +135,7 @@ function dibujarPregunta(raiz) {
     }
     zona.querySelector("#micro")?.addEventListener("click", tocarMicro);
     zona.querySelector("#otra-vez")?.addEventListener("click", () => { delete estado.respuestas[clave]; tocarMicro(); });
+    zona.querySelector("#agregar")?.addEventListener("click", () => { agregando = true; tocarMicro(); });
     zona.querySelector("#escribir")?.addEventListener("click", () => { escribiendo = true; dibujarZona(); });
   };
 
@@ -143,11 +147,19 @@ function dibujarPregunta(raiz) {
         return dibujarZona("esperando", "No pudimos usar el micrófono. Puede escribir su respuesta.");
       }
     }
+    const anterior = agregando ? (estado.respuestas[clave] || "") : "";
+    agregando = false;
     dibujarZona("grabando");
     const barras = [...zona.querySelectorAll(".onda span")];
-    grabacion = grabar((v) => barras.forEach((b, i) => {
-      b.style.height = `${Math.min(36, 8 + v * 400 * (0.5 + ((i * 7) % 5) / 5))}px`;
-    }));
+    const cuenta = zona.querySelector("#cuenta");
+    grabacion = grabar({
+      segundos: pregunta.segundos,
+      alCambiarVolumen: (v) => barras.forEach((b, i) => {
+        b.style.height = `${Math.min(36, 8 + v * 400 * (0.5 + ((i * 7) % 5) / 5))}px`;
+      }),
+      // Antes de cortar por silencio, avisa: «¿Terminó? Termino en 3…». Si vuelve a hablar, sigue.
+      alContar: (n) => { cuenta.textContent = n ? `¿Terminó? Termino en ${n}…` : MIENTRAS_HABLA; },
+    });
     const { audio, extension } = await grabacion.terminado;
     grabacion = null;
     if (!document.body.contains(zona)) return; // la persona salió de la pantalla
@@ -157,8 +169,10 @@ function dibujarPregunta(raiz) {
       formulario.append("audio", audio, `respuesta${extension}`);
       const { texto } = await enviarFormulario("/transcribir", formulario);
       if (texto.trim()) {
-        estado.respuestas[clave] = texto.trim();
+        estado.respuestas[clave] = [anterior, texto.trim()].filter(Boolean).join(" ");
         dibujarZona();
+      } else if (anterior) {
+        dibujarZona(); // no se escuchó nada nuevo: queda lo que ya había dicho
       } else {
         dibujarZona("esperando", "No escuchamos nada. Toque el micrófono y hable cerca del celular.");
       }

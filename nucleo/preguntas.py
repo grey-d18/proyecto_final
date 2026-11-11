@@ -21,6 +21,10 @@ Los audios están en web/audios/<clave>.mp3 y se generan con
 scripts/generar_voces.py (voz neuronal es-PE-CamilaNeural, acento peruano).
 """
 
+# Cuánto puede durar cada respuesta hablada. Las preguntas que admiten respuestas largas
+# llevan "segundos": 60.
+SEGUNDOS_POR_DEFECTO = 30
+
 PREGUNTAS = [
     {
         "clave": "nombre",

@@ -1,7 +1,7 @@
 # Conversación 2: acopiadores de El Porvenir
 
-- **Fecha y medio:** trabajo de campo de mi tesis de licenciatura (El Porvenir, Trujillo, 2026), conversaciones en
-  persona. `[COMPLETAR: mes]`
+- **Fecha y medio:** trabajo de campo de mi tesis de licenciatura (El Porvenir, Trujillo),
+  entre marzo y abril de 2026. Conversaciones en persona.
 - **Perfil (sin nombres reales):** dueños o encargados de locales de acopio que compran el material a los recicladores.
 - **Cómo resuelven hoy el problema:**
   - Con ellos aparece lo mismo que con los recicladores: **mucho documento y poco claro**.

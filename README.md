@@ -61,7 +61,8 @@ que cruza SIGERSOL, la OEFA, el Banco Mundial y UN Comtrade con mi trabajo de ca
      los locales de acopio y el reciclaje que hay para recoger.
    - **Recoger reciclaje** (con burbuja de aviso): los pedidos de los vecinos. Al marcar «Lo recogeré» se escucha que
      tiene 3 días; si no recoge, el pedido vuelve a estar disponible para otro reciclador de la zona.
-2. **Soy vecino:** pide un recojo con descripción, peso y foto; elige un reciclador o «cualquiera de la zona».
+2. **Soy vecino:** pide un recojo con descripción, peso, foto y **el horario en que pueden pasar** (desde–hasta); elige
+   un reciclador o «cualquiera de la zona».
 3. **Soy acopiador:** ubica su local (con la ubicación del celular o escribiendo la dirección) y publica sus precios.
 4. **Soy municipalidad** (en «más»): panel con inscritos por distrito, materiales, con qué se movilizan, quién no
    tiene guantes y la comparación con lo que el distrito reporta a SIGERSOL.
@@ -173,7 +174,11 @@ El script de clonación quedó en el historial de git (commit `f6f9b3a`) por si 
   del micrófono en cada pregunta en Safari y el iPhone, y se ponía roja antes de abrir el micrófono, así que se perdía
   la primera sílaba («mi nombre es» → «hombre es»); `st.audio_input` pedía permiso una vez pero no se detenía sola.
   En la app web la grabadora **abre el micrófono una sola vez** al apretar «Empezar» y lo deja abierto durante el
-  registro: el permiso se pide una vez, la grabación empieza al instante y **se detiene sola** tras 2,5 s de silencio.
+  registro: el permiso se pide una vez, la grabación empieza al instante y **se detiene sola** tras 3,5 s de silencio.
+  Antes de cortar muestra una cuenta regresiva («¿Terminó? Termino en 3…») y, si la persona vuelve a hablar, sigue
+  grabando. Al empezar mide el ruido del lugar para reconocer también la voz bajita. Y si igual se cortó, el botón
+  **«Agregar más»** graba de nuevo y suma lo nuevo a lo que ya dijo. Cada pregunta tiene un máximo de 30 segundos,
+  que puede ser más en las preguntas que admiten respuestas largas (`nucleo/preguntas.py`).
   Además le pedimos al navegador que **no** aplique cancelación de eco ni supresión de ruido: están hechas para
   llamadas y, en nuestras pruebas, deformaban la voz lo suficiente para que Whisper confundiera números.
 - **Si igual se pierde el inicio.** Los ejemplos empiezan con una frase («Mi DNI es…») para que, si se corta el

@@ -40,7 +40,7 @@ export async function mostrar(raiz) {
     acopios.forEach((a) => L.marker([a.lat, a.lon], { icon: pin("acopio", "S/") })
       .bindPopup(`<strong>${esc(a.nombre)}</strong><br>${esc(a.direccion)}`).addTo(mapa));
     recojos.forEach((r) => L.marker([r.lat, r.lon], { icon: pin("recojo") })
-      .bindPopup(`${esc(r.descripcion)} · ${Math.round(r.peso_kg)} kg`).addTo(mapa));
+      .bindPopup(`${esc(r.descripcion)} · ${Math.round(r.peso_kg)} kg${r.hora_desde ? `<br>De ${esc(r.hora_desde)} a ${esc(r.hora_hasta)}` : ""}`).addTo(mapa));
   } catch (error) {
     raiz.innerHTML = `<div class="pantalla con-menu">${barra("#/reciclador")}${mensajeError(error)}</div>${menuReciclador("mi-ruta")}`;
   }

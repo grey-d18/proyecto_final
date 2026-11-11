@@ -35,6 +35,7 @@ export async function mostrar(raiz, aviso = false) {
             <span class="chip">${Math.round(r.peso_kg)} kg</span>
           </div>
           <span class="subtitulo">${esc(r.vecino)} · ${esc(r.direccion || r.distrito)}</span>
+          ${r.hora_desde && r.hora_hasta ? `<span class="chip" style="align-self:flex-start">${icono("reloj", 18)} Pasar de ${esc(r.hora_desde)} a ${esc(r.hora_hasta)}</span>` : ""}
           <button class="boton principal" type="button" data-tomar="${r.id}">${icono("check", 22)} Lo recogeré</button>
         </article>`).join("") : `<p class="vacio">Por ahora no hay reciclaje para recoger en su zona.</p>`}
 
@@ -43,7 +44,7 @@ export async function mostrar(raiz, aviso = false) {
           <div class="fila">
             <div style="display:flex;flex-direction:column">
               <span class="principal">${esc(r.descripcion)} · ${Math.round(r.peso_kg)} kg</span>
-              <span class="secundario">${esc(r.direccion || r.distrito)} · hasta el ${limite(r.fecha_asignacion)}</span>
+              <span class="secundario">${esc(r.direccion || r.distrito)}${r.hora_desde ? ` · de ${esc(r.hora_desde)} a ${esc(r.hora_hasta)}` : ""} · hasta el ${limite(r.fecha_asignacion)}</span>
             </div>
             <button class="boton chico suave" type="button" data-hecho="${r.id}">Ya lo recogí</button>
           </div>`).join("")}</div>` : ""}

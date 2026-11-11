@@ -1,7 +1,7 @@
 # Conversación 3: una vecina que apoya a varios recicladores
 
-- **Fecha y medio:** trabajo de campo de mi tesis de licenciatura (El Porvenir, Trujillo, 2026), conversación en
-  persona. `[COMPLETAR: mes]`
+- **Fecha y medio:** trabajo de campo de mi tesis de licenciatura (El Porvenir, Trujillo),
+  entre marzo y abril de 2026. Conversación en persona.
 - **Perfil (sin nombre real):** una señora que separa su reciclaje y se lo entrega a recicladores.
 - **Cómo resuelve hoy el problema:**
   - **Apoya a varios recicladores**, no a uno solo.

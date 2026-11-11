@@ -26,7 +26,7 @@ from nucleo.config import BASE_DATOS, SINTETICOS
 from nucleo.extraccion import FichaReciclador
 
 COLUMNAS_LISTA = ["materiales", "medio_transporte", "equipo_proteccion", "campos_dudosos"]
-VERSION_ESQUEMA = 3   # súbelo si cambian las tablas: la base vieja se borra y se vuelve a crear
+VERSION_ESQUEMA = 4   # súbelo si cambian las tablas: la base vieja se borra y se vuelve a crear
 DIAS_PARA_RECOGER = 3  # si el reciclador no recoge en 3 días, el pedido vuelve a estar disponible
 
 TABLAS = {
@@ -55,6 +55,7 @@ TABLAS = {
         fecha_hora TEXT, vecino TEXT, distrito TEXT, direccion TEXT, lat REAL, lon REAL,
         descripcion TEXT, peso_kg REAL,
         foto BLOB,                 -- la imagen tal cual (bytes)
+        hora_desde TEXT, hora_hasta TEXT,  -- horario en que se puede pasar a recoger («09:00» a «12:00»)
         reciclador_preferido TEXT, -- código del reciclador elegido, o vacío = cualquiera de la zona
         estado TEXT,               -- 'disponible', 'asignado' o 'recogido'
         reciclador_asignado TEXT, fecha_asignacion TEXT""",
@@ -98,6 +99,10 @@ def cargar_sinteticos(conexion: sqlite3.Connection) -> None:
     recojos["fecha_hora"] = recojos.pop("horas_atras").apply(
         lambda horas: f"{datetime.now() - timedelta(hours=int(horas)):%Y-%m-%d %H:%M}")
     recojos["estado"] = "disponible"
+    # Horarios de recojo de ejemplo (mañana, tarde o noche), repartidos entre los pedidos inventados.
+    horarios = [("08:00", "11:00"), ("14:00", "17:00"), ("18:00", "20:00")]
+    recojos["hora_desde"] = [horarios[i % 3][0] for i in range(len(recojos))]
+    recojos["hora_hasta"] = [horarios[i % 3][1] for i in range(len(recojos))]
     recojos.to_sql("recojos", conexion, if_exists="append", index=False)
     conexion.commit()
 
@@ -240,12 +245,15 @@ def liberar_vencidos(conexion: sqlite3.Connection) -> None:
 
 
 def crear_recojo(vecino: str, distrito: str, direccion: str, lat: float, lon: float,
-                 descripcion: str, peso_kg: float, foto: bytes | None, preferido: str | None) -> int:
+                 descripcion: str, peso_kg: float, foto: bytes | None, preferido: str | None,
+                 hora_desde: str, hora_hasta: str) -> int:
     with conectar() as conexion:
         cursor = conexion.execute(
             "INSERT INTO recojos (fecha_hora, vecino, distrito, direccion, lat, lon, descripcion, peso_kg, "
-            "foto, reciclador_preferido, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'disponible')",
-            (ahora(), vecino, distrito, direccion, lat, lon, descripcion, peso_kg, foto, preferido))
+            "foto, hora_desde, hora_hasta, reciclador_preferido, estado) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'disponible')",
+            (ahora(), vecino, distrito, direccion, lat, lon, descripcion, peso_kg, foto,
+             hora_desde, hora_hasta, preferido))
     return cursor.lastrowid
 
 
@@ -281,5 +289,6 @@ def marcar_recogido(recojo_id: int) -> None:
 
 def recojos_del_vecino(vecino: str) -> pd.DataFrame:
     with conectar() as conexion:
-        return pd.read_sql("SELECT fecha_hora, descripcion, peso_kg, estado FROM recojos WHERE vecino = ? "
+        return pd.read_sql("SELECT fecha_hora, descripcion, peso_kg, hora_desde, hora_hasta, estado FROM recojos "
+                           "WHERE vecino = ? "
                            "ORDER BY fecha_hora DESC", conexion, params=(vecino,))

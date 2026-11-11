@@ -1,7 +1,8 @@
 # Conversación 1: recicladores de El Porvenir
 
 - **Fecha y medio:** trabajo de campo de mi tesis de licenciatura (etnografía de los circuitos informales de reciclaje
-  en El Porvenir, Trujillo, 2026), conversaciones en persona. `[COMPLETAR: mes]`
+  en El Porvenir, Trujillo),
+  entre marzo y abril de 2026. Conversaciones en persona.
 - **Perfil (sin nombres reales):** varios recicladores y recicladoras que trabajan en las calles de El Porvenir.
 - **Cómo resuelven hoy el problema:**
   - Algunos **no saben leer**. Para cualquier trámite dependen de que alguien les lea y les explique.

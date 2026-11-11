@@ -4,6 +4,7 @@ import { barra, cargando, esc, icono, mensajeError } from "../comun.js";
 import { elegirUbicacion } from "../ubicacion.js";
 
 const CLAVE = "reciclavoz.vecino";
+const horario = (p) => (p.hora_desde && p.hora_hasta ? ` · recoger de ${esc(p.hora_desde)} a ${esc(p.hora_hasta)}` : "");
 const recordar = (nombre) => { try { localStorage.setItem(CLAVE, nombre); } catch { /* modo privado */ } };
 const recordado = () => { try { return localStorage.getItem(CLAVE) || ""; } catch { return ""; } };
 
@@ -25,6 +26,12 @@ export async function mostrar(raiz) {
       </div>
       <label class="campo"><span>Foto (opcional)</span><input name="foto" type="file" accept="image/*" capture="environment"></label>
       <fieldset class="campo" style="border:none;padding:0;margin:0"><span>¿Dónde está el reciclaje?</span><div id="ubicacion" style="display:flex;flex-direction:column;gap:10px"></div></fieldset>
+      <fieldset class="campo" style="border:none;padding:0;margin:0"><span>¿En qué horario pueden pasar a recoger?</span>
+        <div class="par">
+          <label class="campo"><span class="nota">Desde</span><input name="hora_desde" type="time" value="09:00" step="900"></label>
+          <label class="campo"><span class="nota">Hasta</span><input name="hora_hasta" type="time" value="12:00" step="900"></label>
+        </div>
+      </fieldset>
       <label class="campo"><span>¿Quién lo recoge?</span><select name="preferido" id="recicladores"></select></label>
       <div id="mensaje"></div>
       <button class="boton principal" type="submit">${icono("camion", 22)} Pedir recojo</button>
@@ -50,7 +57,7 @@ export async function mostrar(raiz) {
     const estados = { disponible: "Esperando reciclador", asignado: "Un reciclador viene", recogido: "Recogido" };
     raiz.querySelector("#mis-pedidos").innerHTML = pedidos.length ? `<h2>Mis pedidos</h2><div class="lista">${pedidos.map((p) => `
       <div class="fila"><div style="display:flex;flex-direction:column"><span class="principal">${esc(p.descripcion)}</span>
-        <span class="secundario">${esc(p.fecha_hora)} · ${Math.round(p.peso_kg)} kg</span></div>
+        <span class="secundario">${esc(p.fecha_hora)} · ${Math.round(p.peso_kg)} kg${horario(p)}</span></div>
         <span class="chip">${esc(estados[p.estado] || p.estado)}</span></div>`).join("")}</div>` : "";
   };
   misPedidos(recordado());
@@ -62,6 +69,10 @@ export async function mostrar(raiz) {
     const lugar = ubicacion();
     if (!datos.get("vecino") || !datos.get("descripcion")) {
       mensaje.innerHTML = `<div class="error" role="alert">Escriba su nombre y qué tiene para reciclar.</div>`;
+      return;
+    }
+    if (!datos.get("hora_desde") || !datos.get("hora_hasta") || datos.get("hora_desde") >= datos.get("hora_hasta")) {
+      mensaje.innerHTML = `<div class="error" role="alert">Revise el horario: la hora «hasta» tiene que ser después de «desde».</div>`;
       return;
     }
     if (!lugar) {
