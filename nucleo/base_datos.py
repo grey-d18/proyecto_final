@@ -26,9 +26,16 @@ import pandas as pd
 from nucleo.config import BASE_DATOS, SINTETICOS
 from nucleo.extraccion import FichaReciclador
 
-COLUMNAS_LISTA = ["materiales", "medio_transporte", "equipo_proteccion", "campos_dudosos"]
+COLUMNAS_LISTA = ["materiales", "medio_transporte", "equipo_proteccion", "campos_dudosos",
+                  "dias_trabajo", "faltantes", "por_completar"]
 VERSION_ESQUEMA = 5   # súbelo si cambian las tablas: la base vieja se borra y se vuelve a crear
-DIAS_PARA_RECOGER = 3  # si el reciclador no recoge en 3 días, el pedido vuelve a estar disponible
+DIAS_PARA_RECOGER = 3
+COLUMNAS_ART_34 = {
+    "fecha_nacimiento": "TEXT", "genero": "TEXT", "direccion": "TEXT", "telefono": "TEXT", "correo": "TEXT",
+    "cargo": "TEXT", "zona_trabajo": "TEXT", "dias_trabajo": "TEXT", "hora_desde": "TEXT", "hora_hasta": "TEXT",
+    "estado_civil": "TEXT", "grado_instruccion": "TEXT", "ingreso_mensual": "REAL", "seguro_salud": "TEXT",
+    "faltantes": "TEXT", "por_completar": "TEXT", "declaracion_jurada_en": "TEXT", "declaracion_dicha": "TEXT",
+}  # si el reciclador no recoge en 3 días, el pedido vuelve a estar disponible
 
 TABLAS = {
     "recicladores": """
@@ -43,7 +50,13 @@ TABLAS = {
         pertenece_asociacion INTEGER, nombre_asociacion TEXT,
         equipo_proteccion TEXT,    -- lista guardada como texto JSON
         campos_dudosos TEXT, observaciones TEXT,
-        capacitado INTEGER DEFAULT 0""",
+        capacitado INTEGER DEFAULT 0,
+        fecha_nacimiento TEXT, genero TEXT, direccion TEXT, telefono TEXT, correo TEXT, cargo TEXT,
+        zona_trabajo TEXT, dias_trabajo TEXT, hora_desde TEXT, hora_hasta TEXT,
+        estado_civil TEXT, grado_instruccion TEXT, ingreso_mensual REAL, seguro_salud TEXT,
+        faltantes TEXT, por_completar TEXT,  -- listas como texto JSON
+        declaracion_jurada_en TEXT,          -- fecha y hora en que dijo «sí, acepto»
+        declaracion_dicha TEXT""",
     "acopios": """
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT, distrito TEXT, direccion TEXT, lat REAL, lon REAL, horario TEXT,
@@ -87,6 +100,12 @@ def conectar() -> sqlite3.Connection:
     for tabla, columnas in TABLAS.items():
         # El salto de línea antes de ")" evita que un comentario «--» final se coma el paréntesis.
         conexion.execute(f"CREATE TABLE IF NOT EXISTS {tabla} ({columnas}\n)")
+    # Columnas del registro según el art. 34 b) (nov. 2026): si la base ya existía, se agregan
+    # sin borrar lo guardado.
+    existentes = {fila[1] for fila in conexion.execute("PRAGMA table_info(recicladores)")}
+    for columna, tipo in COLUMNAS_ART_34.items():
+        if columna not in existentes:
+            conexion.execute(f"ALTER TABLE recicladores ADD COLUMN {columna} {tipo}")
 
     if conexion.execute("SELECT COUNT(*) FROM recicladores").fetchone()[0] == 0:
         cargar_sinteticos(conexion)
@@ -152,7 +171,7 @@ def leer_todos() -> pd.DataFrame:
     with conectar() as conexion:
         tabla = pd.read_sql("SELECT * FROM recicladores ORDER BY fecha_registro DESC", conexion)
     for columna in COLUMNAS_LISTA:
-        tabla[columna] = tabla[columna].apply(lambda texto: json.loads(texto) if texto else [])
+        tabla[columna] = tabla[columna].apply(lambda texto: json.loads(texto) if isinstance(texto, str) and texto else [])
     return tabla
 
 

@@ -47,18 +47,27 @@ def crear_constancia(ficha: FichaReciclador, codigo: str) -> bytes:
     pdf.ln(4)
 
     # Tabla con los datos de la ficha
+    horario = (f"{ficha.hora_desde} a {ficha.hora_hasta}" if ficha.hora_desde and ficha.hora_hasta else None)
     filas = [
         ("Nombre completo", ficha.nombre_completo),
         ("DNI", ficha.dni),
+        ("Fecha de nacimiento", ficha.fecha_nacimiento),
         ("Edad", ficha.edad),
+        ("Género", ficha.genero),
+        ("Dirección", ficha.direccion),
         ("Distrito de vivienda", ficha.distrito_vivienda),
-        ("Sector", ficha.sector_vivienda),
+        ("Celular", ficha.telefono),
+        ("Correo", ficha.correo),
+        ("Cargo", ficha.cargo),
         ("Materiales", ficha.materiales),
-        ("Recoge y mueve con", ficha.medio_transporte),
-        ("Pertenece a una asociación", ficha.pertenece_asociacion),
-        ("Asociación", ficha.nombre_asociacion),
+        ("Zona de trabajo", ficha.zona_trabajo),
+        ("Días de trabajo", ficha.dias_trabajo),
+        ("Horario", horario),
+        ("Vehículo", ficha.medio_transporte),
         ("Equipo de protección", ficha.equipo_proteccion),
     ]
+    if ficha.por_completar:
+        filas.append(("Por completar", ficha.por_completar))
     for etiqueta, valor in filas:
         pdf.set_font("Helvetica", "B", 10)
         pdf.cell(60, 7, etiqueta, border="B")
@@ -69,6 +78,8 @@ def crear_constancia(ficha: FichaReciclador, codigo: str) -> bytes:
     pdf.set_font("Helvetica", "I", 9)
     pdf.multi_cell(
         0, 5,
+        (f"Declaración jurada: la persona dijo «{ficha.declaracion_dicha}» el "
+         f"{ficha.declaracion_jurada_en}. " if ficha.declaracion_jurada_en else "") +
         "La persona registrada dio su consentimiento verbal, grabado en audio, para el "
         "tratamiento de sus datos personales con fines de inscripción en el Registro "
         "Municipal de Recicladores (Ley 29419 y D. S. 005-2010-MINAM; Ley 29733 de "

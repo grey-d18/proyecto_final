@@ -14,6 +14,7 @@ y abre http://localhost:8000/docs para ver y probar todas las rutas.
 import io
 import json
 import os
+import re
 import threading
 from pathlib import Path
 
@@ -31,7 +32,9 @@ from nucleo.capacitacion import MODULOS, QUIZ
 from nucleo.catalogos import DISTRITOS_TRUJILLO, EQUIPOS, MATERIALES, TRANSPORTES
 from nucleo.config import FUENTES
 from nucleo.constancia import crear_constancia
-from nucleo.extraccion import DIAS_SEMANA, FichaReciclador, extraer_ficha, extraer_horario
+from nucleo.entrevista import avanzar
+from nucleo.extraccion import (DIAS_SEMANA, OBLIGATORIOS, FichaReciclador, campo_vacio, edad_desde_fecha,
+                               extraer_ficha, extraer_horario)
 from nucleo.preguntas import PREGUNTAS, SEGUNDOS_POR_DEFECTO
 from nucleo.ubicacion import CENTROS, buscar_direccion
 from nucleo.voz import cargar_modelo, transcribir
@@ -83,6 +86,7 @@ def catalogos() -> dict:
     return {
         "distritos": DISTRITOS_TRUJILLO, "materiales": MATERIALES, "transportes": TRANSPORTES,
         "equipos": EQUIPOS, "centros": CENTROS,
+        # Las 5 preguntas del guion. Las repreguntas las decide /entrevista según lo que falte.
         "preguntas": [{"clave": p["clave"], "texto": p["texto"], "ejemplo": p["ejemplo"],
                        "segundos": p.get("segundos", SEGUNDOS_POR_DEFECTO)} for p in PREGUNTAS],
     }
@@ -110,17 +114,49 @@ def llenar_ficha(datos: Respuestas) -> dict:
     return {"ficha": ficha.model_dump(), "metodo": metodo}
 
 
+class Entrevista(BaseModel):
+    respuestas: dict[str, str]
+    hechas: list[str] = []   # claves de las preguntas que ya se hicieron, en orden
+
+
+@app.post("/entrevista")
+def entrevista(datos: Entrevista) -> dict:
+    """Llena la ficha con lo dicho hasta ahora y dice qué preguntar después (o None si terminó).
+
+    Si una respuesta ya llenó los datos de una pregunta siguiente, esa se salta; cada dato que
+    falte se repregunta una sola vez (ver nucleo/entrevista.py).
+    """
+    paso = avanzar(datos.respuestas, datos.hechas)
+    return paso | {"ficha": paso["ficha"].model_dump()}
+
+
 class FichaConfirmada(BaseModel):
     ficha: FichaReciclador
     metodo: str
+    declaracion: str = ""   # lo que dijo (o tocó) al final: «sí, acepto»
+
+
+def acepto(texto: str) -> bool:
+    """«Sí, acepto», «acepto», «sí acepto»… (Whisper a veces escribe «Sí. Acepto.»)."""
+    return "acepto" in re.sub(r"[^a-záéíóúñ ]", " ", texto.lower())
 
 
 @app.post("/recicladores")
 def inscribir(datos: FichaConfirmada) -> dict:
-    dni = datos.ficha.dni or ""
+    ficha = datos.ficha
+    dni = ficha.dni or ""
     if len(dni) != 8 or not dni.isdigit():
         raise HTTPException(422, "El DNI debe tener 8 números.")
-    return {"codigo": bd.guardar_ficha(datos.ficha, datos.metodo)}
+    if not acepto(datos.declaracion):
+        raise HTTPException(422, "Para inscribirse, diga «sí, acepto».")
+    # La declaración jurada: se guarda lo que dijo y la hora (la del servidor, no la del celular).
+    ficha.declaracion_dicha = datos.declaracion.strip()
+    ficha.declaracion_jurada_en = bd.ahora()
+    ficha.edad = edad_desde_fecha(ficha.fecha_nacimiento) if ficha.fecha_nacimiento else ficha.edad
+    ficha.cargo = ficha.cargo or "socio"
+    ficha.faltantes = [c for c in OBLIGATORIOS if campo_vacio(ficha, c)]
+    ficha.por_completar = list(ficha.faltantes)   # lo que la persona revisó y sigue vacío
+    return {"codigo": bd.guardar_ficha(ficha, datos.metodo)}
 
 
 @app.get("/recicladores/ultimo")
