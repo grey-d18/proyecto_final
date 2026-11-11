@@ -61,12 +61,30 @@ for (const evento of ["pointerdown", "touchend", "click", "keydown"]) {
   document.addEventListener(evento, activarSonido, { capture: true });
 }
 
+// Los audios se descargan completos ANTES de sonar: si se reproducen mientras llegan por
+// internet, la primera vez se pueden entrecortar.
+const descargados = new Map(); // clave -> audio ya descargado (en la memoria del celular)
+export function precargar(claves) {
+  for (const clave of claves) {
+    if (descargados.has(clave)) continue;
+    descargados.set(clave, fetch(`audios/${clave}.mp3`)
+      .then((r) => (r.ok ? r.blob() : null)).then((b) => (b ? URL.createObjectURL(b) : null))
+      .catch(() => null));
+  }
+}
+
 let audioActual = null;
+let pedido = 0; // si se pide otro audio mientras se descarga el anterior, el anterior ya no suena
 function sonar(clave) {
-  reproductor.src = `audios/${clave}.mp3`;
+  const mio = ++pedido;
   audioActual = reproductor;
-  // Si aun así el navegador lo bloquea, queda el botón «Escuchar»: no es un error.
-  reproductor.play().catch(() => {});
+  if (!descargados.has(clave)) precargar([clave]);
+  descargados.get(clave).then((url) => {
+    if (mio !== pedido) return;
+    reproductor.src = url || `audios/${clave}.mp3`;
+    // Si aun así el navegador lo bloquea, queda el botón «Escuchar»: no es un error.
+    reproductor.play().catch(() => {});
+  });
   return reproductor;
 }
 export function hablar(clave) {
@@ -77,6 +95,7 @@ let turno = 0; // sube cada vez que algo nuevo empieza a sonar: así una lectura
 export function callar() {
   turno += 1;
   if (audioActual) { audioActual.pause(); audioActual = null; }
+  pedido += 1; // un audio que se estaba descargando ya no debe sonar
   try { speechSynthesis.cancel(); } catch { /* el navegador no tiene voz */ }
 }
 

@@ -7,7 +7,7 @@
 //               dice «sí, acepto»: es su declaración jurada, y se guarda con la hora.
 //   Final       código de registro y constancia en PDF.
 import { enlace, enviar, enviarFormulario, leer } from "../api.js";
-import { barra, callar, cargando, esc, hablar, icono, leerFichaEnVoz, mensajeError, sesion } from "../comun.js";
+import { barra, callar, cargando, esc, hablar, icono, leerFichaEnVoz, mensajeError, precargar, sesion } from "../comun.js";
 import { abrirMicrofono, cerrarMicrofono, grabar, microfonoAbierto } from "../grabadora.js";
 
 let catalogo = null;
@@ -30,6 +30,9 @@ export async function mostrar(raiz) {
   if (estado.codigo) Object.assign(estado, nuevo());
   raiz.innerHTML = `<div class="pantalla">${cargando()}</div>`;
   catalogo ??= await leer("/catalogos");
+  // Descarga ya todas las voces del registro, para que ninguna se entrecorte al sonar.
+  precargar(["bienvenida_registro", ...catalogo.preguntas.map((p) => p.clave), "resumen_inicio", "resumen_final",
+    "re_dni", "re_nombre", "re_nacimiento", "re_genero", "re_direccion", "re_celular", "re_materiales", "re_zona", "re_horario", "re_equipo"]);
   dibujar(raiz);
   return () => { grabacion?.detener(); cerrarMicrofono(); };
 }
