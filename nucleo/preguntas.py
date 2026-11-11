@@ -127,5 +127,5 @@ AVISOS = {
     "resumen_final": "Si todo está bien, toque el micrófono y diga: sí, acepto. "
                      "Es su declaración jurada de que sus datos son verdaderos.",
     "bienvenida_registro": "Le voy a hacer seis preguntas para inscribirle en el registro de recicladores. "
-                           "Su voz se graba solo para llenar su ficha. Toque el micrófono y responda hablando.",
+                           "Su voz se graba solo para llenar su ficha. Si está de acuerdo, toque el micrófono y diga: sí, acepto.",
 }

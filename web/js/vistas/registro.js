@@ -1,5 +1,5 @@
 // Registro por voz: el flujo principal del producto.
-//   Paso 0      bienvenida, consentimiento y aviso de grabación (al apretar «Empezar» se abre el micrófono).
+//   Paso 0      bienvenida, aviso de grabación y consentimiento: dice o toca «sí, acepto» (ahí se abre el micrófono).
 //   Preguntas   6 preguntas abiertas, una por pantalla. Después de cada respuesta, la API llena la
 //               ficha con todo lo dicho y decide la siguiente (POST /entrevista): si ya se dijo un
 //               dato, su pregunta se salta; si falta, se repregunta una sola vez.
@@ -44,6 +44,8 @@ function dibujar(raiz) {
 const irA = (raiz, paso) => { callar(); grabacion?.detener(); estado.paso = paso; window.scrollTo(0, 0); dibujar(raiz); };
 
 // --- Paso 0 ------------------------------------------------------------------------------
+// Para aceptar, la persona dice «sí, acepto» (como en la declaración jurada del final),
+// o toca «Prefiero tocar: Sí, acepto».
 function dibujarBienvenida(raiz) {
   raiz.innerHTML = `
   <div class="pantalla">
@@ -56,27 +58,62 @@ function dibujarBienvenida(raiz) {
       <p class="subtitulo"><strong>Aviso:</strong> su voz se graba solo para convertirla en texto y llenar su ficha;
         el audio no se guarda. Sus datos están protegidos por la Ley 29733.</p>
     </div>
-    <label class="casilla"><input type="checkbox" id="acepto"> Acepto registrarme y que se usen mis datos para el registro.</label>
-    <div id="aviso-micro"></div>
-    <div class="empuja"></div>
-    <button class="boton principal ancho" type="button" id="empezar" disabled>Empezar</button>
+    <p style="margin:0;font-weight:700;text-align:center">Acepto registrarme y que se usen mis datos para el registro.</p>
+    <div class="zona-micro" id="zona-acepto" style="min-height:0"></div>
   </div>`;
-  const empezar = raiz.querySelector("#empezar");
-  raiz.querySelector("#acepto").addEventListener("change", (e) => { empezar.disabled = !e.target.checked; });
-  hablar("bienvenida_registro"); // la bienvenida se escucha sola (la persona acaba de tocar «Inscribirme»)
+  const zona = raiz.querySelector("#zona-acepto");
   raiz.querySelector("#escuchar").addEventListener("click", () => hablar("bienvenida_registro"));
-  empezar.addEventListener("click", async () => {
-    try {
-      await abrirMicrofono(); // el navegador pide permiso aquí, una sola vez
-    } catch {
-      // Sin micrófono igual se puede seguir: las respuestas se escriben.
-      raiz.querySelector("#aviso-micro").innerHTML =
-        `<div class="aviso">${icono("alerta", 22)}<span>No pudimos usar el micrófono. Puede escribir las respuestas, o dar permiso al micrófono en el navegador.</span></div>`;
-      await new Promise((r) => setTimeout(r, 1800));
+
+  const empezar = async () => {
+    callar();
+    if (!microfonoAbierto()) {
+      try {
+        await abrirMicrofono(); // el navegador pide permiso aquí, una sola vez
+      } catch {
+        // Sin micrófono igual se puede seguir: las respuestas se escriben.
+        zona.innerHTML = `<div class="aviso">${icono("alerta", 22)}<span>No pudimos usar el micrófono. Puede escribir las respuestas, o dar permiso al micrófono en el navegador.</span></div>`;
+        await new Promise((r) => setTimeout(r, 1800));
+      }
     }
     if (!estado.historial.length) estado.historial = [catalogo.preguntas[0]];
     irA(raiz, 1);
-  });
+  };
+
+  const dibujarAcepto = (aviso = "") => {
+    zona.innerHTML = `
+      ${aviso ? `<div class="aviso">${icono("alerta", 22)}<span>${aviso}</span></div>` : ""}
+      <button class="micro" type="button" id="decir" aria-label="Tocar y decir: sí, acepto" style="color:#FFFFFF">${icono("micro", 56, 1.8)}</button>
+      <span style="font-size:20px;font-weight:700">Toque y diga «sí, acepto»</span>
+      <button class="enlace" type="button" id="empezar">Prefiero tocar: Sí, acepto</button>`;
+    zona.querySelector("#empezar").addEventListener("click", empezar);
+    zona.querySelector("#decir").addEventListener("click", async () => {
+      callar();
+      if (!microfonoAbierto()) {
+        try { await abrirMicrofono(); } catch { return dibujarAcepto("No pudimos usar el micrófono. Toque «Sí, acepto»."); }
+      }
+      zona.innerHTML = `
+        <button class="micro grabando" type="button" id="parar" aria-label="Terminar" style="color:#FFFFFF">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+        </button><span style="font-size:20px;font-weight:700">Diga: «sí, acepto»</span>`;
+      grabacion = grabar({ segundos: 10 });
+      zona.querySelector("#parar").addEventListener("click", () => grabacion?.detener());
+      const { audio, extension } = await grabacion.terminado;
+      grabacion = null;
+      if (!document.body.contains(zona)) return;
+      zona.innerHTML = `<div class="girando" role="status" aria-label="Escuchando"></div>`;
+      try {
+        const formulario = new FormData();
+        formulario.append("audio", audio, `acepto${extension}`);
+        const { texto } = await enviarFormulario("/transcribir", formulario);
+        if (/acepto/i.test(texto)) return empezar();
+        dibujarAcepto(texto.trim() ? `Escuchamos «${esc(texto.trim())}». Para empezar, diga «sí, acepto».` : "No escuchamos nada. Hable cerca del celular.");
+      } catch (error) {
+        dibujarAcepto(esc(error.message));
+      }
+    });
+  };
+  dibujarAcepto();
+  hablar("bienvenida_registro"); // la bienvenida se escucha sola (la persona acaba de tocar un botón)
 }
 
 // --- Preguntas -------------------------------------------------------------------------------
