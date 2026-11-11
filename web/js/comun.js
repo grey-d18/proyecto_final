@@ -57,6 +57,8 @@ function activarSonido() {
     speechSynthesis.speak(nada);
   } catch { /* el navegador no tiene voz */ }
 }
+// Si la persona sale de la app (por ejemplo, abre el PDF), la voz se calla.
+document.addEventListener("visibilitychange", () => { if (document.hidden) callar(); });
 for (const evento of ["pointerdown", "touchend", "click", "keydown"]) {
   document.addEventListener(evento, activarSonido, { capture: true });
 }

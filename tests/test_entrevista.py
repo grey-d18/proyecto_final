@@ -111,3 +111,9 @@ def test_la_pregunta_6_anota_la_asociacion():
     assert asociacion_desde_texto("Sí, en la asociación Manos Unidas") == (True, "Manos Unidas")
     assert asociacion_desde_texto("No, en ninguna") == (False, None)
     assert asociacion_desde_texto("") == (None, None)
+
+
+def test_si_el_modelo_no_anota_la_asociacion_se_toma_de_la_respuesta():
+    from nucleo.extraccion import DatosDichos, completar
+    ficha = completar(DatosDichos(), {"asociacion": "No, no pertenezco a ninguna asociación."})
+    assert ficha.pertenece_asociacion is False

@@ -494,6 +494,10 @@ function dibujarFicha(raiz) {
 
 // --- Final: inscrito ----------------------------------------------------------------------------
 function dibujarFinal(raiz) {
+  // Ya se inscribió: que nada siga leyendo la ficha. En algunos Android la voz del celular
+  // vuelve a sonar después de usar el micrófono, por eso se calla otra vez un momento después.
+  callar();
+  setTimeout(() => { try { speechSynthesis.cancel(); } catch { /* sin voz */ } }, 800);
   raiz.innerHTML = `
   <div class="pantalla" style="text-align:center">
     <div class="empuja"></div>

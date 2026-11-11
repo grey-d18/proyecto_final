@@ -5,7 +5,7 @@
 Proyecto final de la Diplomatura en Ciencia de Datos para las Ciencias Sociales y la Gestión Pública (Q-Lab PUCP).
 
 - **Demo:** https://grey-d18.github.io/proyecto_final/ · o en local, ver [Cómo correrlo](#cómo-correrlo)
-- **Video de respaldo:** `[COMPLETAR]`
+- **Video de respaldo:** [registro completo por voz, 2 min](https://drive.google.com/file/d/1_Ojq5-ZoXBoPX54iwC4lUpURKxRtcbGQ/view?usp=sharing) (por si la API no está encendida)
 
 ---
 
@@ -92,7 +92,7 @@ desconfían de firmar papeles. Si el registro es una conversación, la barrera d
 
 ## 6. Demo
 
-**App web:** https://grey-d18.github.io/proyecto_final/ (para registrar necesita la API encendida en la laptop de la
+**App web:** https://grey-d18.github.io/proyecto_final/ · **[video de la demo](https://drive.google.com/file/d/1_Ojq5-ZoXBoPX54iwC4lUpURKxRtcbGQ/view?usp=sharing)** (para registrar necesita la API encendida en la laptop de la
 autora; ver [Cómo correrlo](#cómo-correrlo)) · la versión anterior en Streamlit quedó guardada como respaldo en la rama
 [`version-streamlit`](../../tree/version-streamlit).
 

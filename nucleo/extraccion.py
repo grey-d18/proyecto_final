@@ -450,6 +450,11 @@ def completar(datos: DatosDichos, respuestas: dict[str, str]) -> FichaReciclador
     if ficha.direccion and not ficha.distrito_vivienda:
         dudosos.add("distrito_vivienda")
     ficha.cargo = ficha.cargo or "socio"
+    # Asociación: si el modelo la dejó vacía pero la persona respondió la pregunta 6
+    # («No, no pertenezco a ninguna»), se toma de su respuesta con reglas simples.
+    if ficha.pertenece_asociacion is None:
+        ficha.pertenece_asociacion, nombre = asociacion_desde_texto(respuestas.get("asociacion", ""))
+        ficha.nombre_asociacion = ficha.nombre_asociacion or nombre
     ficha.faltantes = [c for c in OBLIGATORIOS if campo_vacio(ficha, c)]
     ficha.campos_dudosos = sorted(dudosos)
     return ficha
