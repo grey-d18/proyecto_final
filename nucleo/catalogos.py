@@ -10,10 +10,10 @@ DISTRITOS_TRUJILLO = [
     "Víctor Larco Herrera", "Huanchaco", "Moche", "Laredo", "Salaverry", "Poroto", "Simbal",
 ]
 
-MATERIALES = ["Cartón", "Papel", "Botella PET", "Plástico duro", "Fierro / chatarra", "Cobre", "Aluminio", "Vidrio"]
+MATERIALES = ["Cartón", "Papel", "Botella PET", "Plástico duro", "Fierro / chatarra", "Cobre", "Aluminio", "Vidrio", "Tetrapak"]
 
 # Con qué recoge y mueve los materiales (reemplaza a «kilos por semana»: casi nadie lleva
 # la cuenta de sus kilos, pero todos saben si usan saco, carrito o triciclo).
-TRANSPORTES = ["Saco", "Carrito", "Carretilla", "Triciclo", "Mototaxi", "A pie"]
+TRANSPORTES = ["Saco", "Carrito", "Carretilla", "Triciclo", "Mototaxi", "Motofurgón", "A pie"]
 
 EQUIPOS = ["Guantes", "Mascarilla", "Chaleco", "Botas", "Uniforme"]

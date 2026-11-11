@@ -1,77 +1,108 @@
 """Las preguntas del registro por voz.
 
 En lugar de llenar y firmar un formulario en papel, el reciclador ESCUCHA cada
-pregunta (con voz grabada, porque puede no saber leer) y responde grabándose.
-Una pregunta por pantalla, y son pocas (8): solo lo que pide la ley o lo que
-usa la municipalidad en su panel.
+pregunta (con voz grabada, porque puede no saber leer) y responde hablando.
 
-¿De dónde salen las preguntas?
-    La Ley 29419 (Ley que regula la actividad de los recicladores) y su reglamento
-    (D. S. 005-2010-MINAM) piden que las municipalidades lleven un registro de
-    recicladores y de sus asociaciones, y que trabajen con equipo de protección.
-    Las preguntas recogen esos datos en lenguaje cotidiano.
+¿Qué se pide y por qué?
+    Solo lo que exige el art. 34 b) del Reglamento de la Ley 29419 (D. S. 005-2010-MINAM,
+    modificado por el D. S. 001-2022-MINAM) para el registro de recicladores: nombres, DNI,
+    fecha de nacimiento, edad, género, dirección, teléfono, correo y cargo en la
+    organización. Además, lo que la municipalidad usa para organizar la recolección:
+    materiales, zona, días y horario, y con qué trabaja (vehículo y equipo de protección).
+
+    - La edad no se pregunta: se calcula con la fecha de nacimiento.
+    - El correo puede quedar vacío y el cargo es «socio» si no se dice otro.
+    - Estado civil, estudios, ingresos y seguro son opcionales: NO se preguntan.
+
+Son 5 preguntas abiertas (antes eran 8). Como la gente responde con rodeos y a veces
+dice varios datos juntos, después de cada respuesta la IA revisa qué campos ya están
+llenos (ver nucleo/entrevista.py):
+    - si una respuesta ya llenó los campos de una pregunta siguiente, esa se salta;
+    - si al final falta un dato, se repregunta UNA sola vez (REPREGUNTAS);
+    - si sigue vacío, queda «por completar». Nunca se pregunta en bucle.
 
 Cada pregunta es un diccionario con:
-    clave    -> nombre interno (se usa para guardar la respuesta y para el audio)
+    clave    -> nombre interno (para guardar la respuesta y para el audio)
     texto    -> lo que se muestra en pantalla
-    voz      -> lo que dice el audio, escrito como se pronuncia (si es distinto del texto)
-    ejemplo  -> una respuesta de ejemplo, en letra pequeña debajo de la pregunta
+    voz      -> lo que dice el audio, si es distinto del texto
+    ejemplo  -> una respuesta de ejemplo, en letra pequeña
+    campos   -> qué campos de la ficha llena (si ya están llenos, la pregunta se salta)
+    segundos -> cuánto puede durar la respuesta hablada (si no, SEGUNDOS_POR_DEFECTO)
 
-Los audios están en web/audios/<clave>.mp3 y se generan con
-scripts/generar_voces.py (voz neuronal es-PE-CamilaNeural, acento peruano).
+Los audios están en web/audios/<clave>.mp3 y se generan con scripts/generar_voces.py
+(voz neuronal es-PE-CamilaNeural, acento peruano).
 """
 
-# Cuánto puede durar cada respuesta hablada, en segundos. Las preguntas que admiten respuestas
-# largas (dirección, materiales, transporte, asociación) llevan su propio "segundos".
 SEGUNDOS_POR_DEFECTO = 30
 
 PREGUNTAS = [
     {
-        "clave": "nombre",
-        "texto": "¿Cuál es su nombre completo?",
-        "ejemplo": "Me llamo Rosa Elena Quispe Ramos",
-    },
-    {
         "clave": "dni",
-        "texto": "¿Cuál es su número de DNI?",
-        "voz": "¿Cuál es su número de DNI? Dígalo despacio, número por número.",
-        "ejemplo": "Mi DNI es cero cero cuatro cinco, siete ocho, uno dos",
+        "texto": "¿Cuál es tu número de DNI?",
+        "voz": "¿Cuál es tu número de DNI? Dilo despacio, número por número.",
+        "ejemplo": "Cuatro cinco siete ocho, uno dos tres cuatro",
+        "campos": ["dni"],
     },
     {
-        "clave": "edad",
-        "texto": "¿Cuántos años tiene?",
-        "ejemplo": "Tengo 47 años",
-    },
-    {
-        "clave": "vivienda",
+        "clave": "nombre_nacimiento",
         "segundos": 40,
-        "texto": "¿Dónde vive? Dígame su distrito y su barrio.",
-        "ejemplo": "En El Porvenir, en Río Seco",
+        "texto": "Dime tu nombre completo y tu fecha de nacimiento.",
+        "ejemplo": "Rosa Elena Quispe Ramos, nací el 3 de mayo de 1978",
+        "campos": ["nombre_completo", "fecha_nacimiento"],
     },
     {
-        "clave": "materiales",
+        "clave": "vivienda_celular",
         "segundos": 50,
-        "texto": "¿Qué materiales recoge?",
-        "ejemplo": "Cartón, botellas y fierro; a veces latas",
+        "texto": "¿Dónde vives y cuál es tu celular?",
+        "ejemplo": "En la calle Los Pinos 245, El Porvenir. Mi celular es 987 654 321",
+        "campos": ["direccion", "telefono"],
     },
     {
-        "clave": "transporte",
+        "clave": "trabajo",
         "segundos": 50,
-        "texto": "¿Con qué recoge y mueve los materiales? Por ejemplo: un saco, un carrito o un triciclo.",
-        "ejemplo": "Con un triciclo",
+        "texto": "¿Qué materiales recoges, en qué zona y en qué días y horario?",
+        "ejemplo": "Cartón y botellas en el centro de Trujillo, de lunes a sábado de 6 a 11 de la mañana",
+        "campos": ["materiales", "zona_trabajo", "dias_trabajo", "horario"],
     },
     {
-        "clave": "asociacion",
+        "clave": "equipo",
         "segundos": 50,
-        "texto": "¿Pertenece a alguna asociación de recicladores? Por favor, indique cuál.",
-        "ejemplo": "No, a ninguna",
-    },
-    {
-        "clave": "proteccion",
-        "texto": "¿Usa mascarilla o guantes para reciclar?",
-        "ejemplo": "Guantes sí, mascarilla no",
+        "texto": "¿Con qué trabajas? Por ejemplo: triciclo, uniforme, guantes.",
+        "ejemplo": "Con mi triciclo y guantes",
+        "campos": ["equipo"],
     },
 ]
+
+# Si al terminar las 5 preguntas un dato obligatorio sigue vacío, se pregunta UNA vez más,
+# de forma corta y directa. La clave del campo que falta -> su repregunta.
+REPREGUNTAS = {
+    "dni": {"clave": "re_dni", "texto": "No entendí bien tu DNI. ¿Me lo repites, número por número?",
+            "ejemplo": "Cuatro cinco siete ocho, uno dos tres cuatro", "campos": ["dni"]},
+    "nombre_completo": {"clave": "re_nombre", "texto": "¿Cuál es tu nombre completo?",
+                        "ejemplo": "Rosa Elena Quispe Ramos", "campos": ["nombre_completo"]},
+    "fecha_nacimiento": {"clave": "re_nacimiento", "texto": "¿Cuál es tu fecha de nacimiento? Día, mes y año.",
+                         "ejemplo": "3 de mayo de 1978", "campos": ["fecha_nacimiento"]},
+    "genero": {"clave": "re_genero", "texto": "Para tu ficha, ¿eres mujer u hombre?",
+               "ejemplo": "Mujer", "campos": ["genero"]},
+    "direccion": {"clave": "re_direccion", "texto": "¿Cuál es tu dirección? Calle, número y distrito.",
+                  "ejemplo": "Calle Los Pinos 245, El Porvenir", "campos": ["direccion"], "segundos": 40},
+    "telefono": {"clave": "re_celular", "texto": "¿Cuál es tu número de celular?",
+                 "ejemplo": "987 654 321", "campos": ["telefono"]},
+    "materiales": {"clave": "re_materiales", "texto": "¿Qué materiales recoges?",
+                   "ejemplo": "Cartón, botellas y chatarra", "campos": ["materiales"]},
+    "zona_trabajo": {"clave": "re_zona", "texto": "¿En qué zona o barrio recoges?",
+                     "ejemplo": "En el centro de Trujillo", "campos": ["zona_trabajo"]},
+    # Días y horario comparten una sola repregunta.
+    "dias_trabajo": {"clave": "re_horario", "texto": "¿Qué días y en qué horario trabajas?",
+                     "ejemplo": "De lunes a sábado, de 6 a 11 de la mañana", "campos": ["dias_trabajo", "horario"]},
+    "horario": {"clave": "re_horario", "texto": "¿Qué días y en qué horario trabajas?",
+                "ejemplo": "De lunes a sábado, de 6 a 11 de la mañana", "campos": ["dias_trabajo", "horario"]},
+    "equipo": {"clave": "re_equipo", "texto": "¿Con qué trabajas? Por ejemplo: triciclo, guantes o uniforme.",
+               "ejemplo": "Con un carrito y guantes", "campos": ["equipo"]},
+}
+
+# Todas las preguntas posibles, por clave (las 5 del guion y las repreguntas).
+TODAS = {p["clave"]: p for p in PREGUNTAS} | {r["clave"]: r for r in REPREGUNTAS.values()}
 
 # Otros mensajes que la app dice en voz alta (mismo formato: clave y lo que se dice).
 AVISOS = {
@@ -79,6 +110,6 @@ AVISOS = {
     "inicio": "¿Quién es usted? Toque «Soy reciclador», «Soy vecino» o «Soy acopiador».",
     "aviso_recojo": "Recuerde que tiene un máximo de tres días para hacer su recojo. "
                     "Si no, se asignará a otro reciclador de la zona.",
-    "bienvenida_registro": "Le voy a hacer ocho preguntas para inscribirle en el registro "
-                           "de recicladores. Apriete el micrófono y responda hablando.",
+    "bienvenida_registro": "Te voy a hacer cinco preguntas para inscribirte en el registro de recicladores. "
+                           "Tu voz se graba solo para llenar tu ficha. Toca el micrófono y responde hablando.",
 }
