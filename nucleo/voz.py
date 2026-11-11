@@ -14,12 +14,12 @@ from faster_whisper import WhisperModel
 
 from nucleo.config import WHISPER_MODELO
 
-# Palabras que Whisper debe esperar. Se le pasan como "contexto inicial" para que
-# escriba bien los nombres de materiales y lugares de Trujillo.
+# Palabras que Whisper debe esperar. Se le pasan como "contexto inicial" (initial_prompt)
+# para que escriba bien los materiales y el equipo de trabajo, y los distritos de Trujillo.
 VOCABULARIO = (
-    "Reciclaje en Trujillo, El Porvenir, Florencia de Mora, La Esperanza, Alto Trujillo, "
-    "Víctor Larco, Huanchaco. Materiales: cartón, papel, botellas PET, plástico duro, "
-    "fierro, chatarra, cobre, aluminio, vidrio. DNI, acopiador, asociación, guantes, mascarilla."
+    "reciclador, cartón, papel, plástico PET, chatarra, metales, vidrio, tetrapak, triciclo, "
+    "motofurgón, uniforme, guantes, DNI. "
+    "Trujillo, El Porvenir, Florencia de Mora, La Esperanza, Alto Trujillo, Víctor Larco, Huanchaco."
 )
 
 # Apellidos frecuentes en el Perú. Whisper aprendió sobre todo con textos en inglés y en
