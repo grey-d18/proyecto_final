@@ -76,8 +76,7 @@ es opcional y no se pregunta. Así la entrevista bajó de **8 a 5 preguntas** ab
 
 **Insight.** El cuello de botella de la formalización no es la ley sino **el formulario**. En el trabajo de campo, la
 gente que recicla habla con fluidez de su trabajo (rutas, kilos, precios), pero muchas personas leen con dificultad y
-desconfían de firmar papeles. Si el registro es una conversación, la barrera de entrada baja: la persona responde con sus
-palabras, sin leer ni firmar papeles, y la app guarda solo lo que pide la ley.
+desconfían de firmar papeles. Si el registro es una conversación, la barrera de entrada baja: la persona responde con sus palabras, sin leer ni firmar papeles.
 
 ## 5. Why now
 
@@ -87,8 +86,8 @@ palabras, sin leer ni firmar papeles, y la app guarda solo lo que pide la ley.
   datos, a veces respondía con texto de más o se olvidaba de un dato. Hoy se le da el molde de la ficha (nombre, DNI,
   fecha…) y la IA está obligada a llenarlo tal cual. Además, Gemini tiene un plan gratuito.
 - **Micrófono en el navegador y celulares en todas partes:** no hay que instalar nada.
-- **Presión por metas:** las municipalidades reportan valorización a SIGERSOL y tienen programas de segregación que
-  exigen incluir recicladores formalizados.
+- **La basura es un problema cada vez más urgente:** cada año se genera más y la ciudad no alcanza a manejarla. Los
+  recicladores ya hacen parte de ese trabajo; si la municipalidad no sabe quiénes son, no puede contar con ellos.
 
 ## 6. Demo
 
