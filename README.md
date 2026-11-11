@@ -80,8 +80,8 @@ es opcional y no se pregunta. Así la entrevista bajó de **8 a 5 preguntas** ab
 
 **Insight.** El cuello de botella de la formalización no es la ley sino **el formulario**. En el trabajo de campo, la
 gente que recicla habla con fluidez de su trabajo (rutas, kilos, precios), pero muchas personas leen con dificultad y
-desconfían de firmar papeles. Si el registro es una conversación, la barrera de entrada baja, y la conversación además
-trae datos que el formulario nunca pidió.
+desconfían de firmar papeles. Si el registro es una conversación, la barrera de entrada baja: la persona responde con sus
+palabras, sin leer ni firmar papeles, y la app guarda solo lo que pide la ley.
 
 ## 5. Why now
 
