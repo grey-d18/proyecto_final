@@ -119,8 +119,9 @@ def extraer_con_gemini(respuestas: dict[str, str]) -> tuple[DatosDichos, dict]:
     """Pide a Gemini la ficha. Devuelve los datos y el uso de tokens."""
     cliente = genai.Client(
         api_key=leer_ajuste("GEMINI_API_KEY"),
-        # Si Gemini no responde en 30 segundos, nos rendimos y usamos las reglas (el demo no se cuelga).
-        http_options={"timeout": 30_000, "retry_options": {"attempts": 2}},
+        # Se llama después de cada respuesta: si Gemini no contesta en 10 segundos (el mínimo que acepta; o está saturado),
+        # no reintentamos y usamos las reglas, para que la persona no espere en «Revisando».
+        http_options={"timeout": 10_000, "retry_options": {"attempts": 1}},
     )
     respuesta = cliente.models.generate_content(
         model=GEMINI_MODELO,
