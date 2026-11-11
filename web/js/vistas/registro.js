@@ -63,6 +63,7 @@ function dibujarBienvenida(raiz) {
   </div>`;
   const empezar = raiz.querySelector("#empezar");
   raiz.querySelector("#acepto").addEventListener("change", (e) => { empezar.disabled = !e.target.checked; });
+  hablar("bienvenida_registro"); // la bienvenida se escucha sola (la persona acaba de tocar «Inscribirme»)
   raiz.querySelector("#escuchar").addEventListener("click", () => hablar("bienvenida_registro"));
   empezar.addEventListener("click", async () => {
     try {
