@@ -24,6 +24,7 @@ const LO_QUE_PIDE = {
   asociacion: "si está en una asociación",
 };
 let grabacion = null;
+let transcribiendo = null; // la respuesta que se está convirtiendo en texto (si la hay)
 const MIENTRAS_HABLA = "Le escuchamos… Toque el cuadrado cuando termine";
 
 export async function mostrar(raiz) {
@@ -202,6 +203,13 @@ function dibujarPregunta(raiz) {
 
   async function tocarMicro() {
     if (grabacion) return grabacion.detener(); // segundo toque: terminar
+    // Mientras graba o entiende la respuesta, «Siguiente» espera a que termine (ver siguiente()).
+    const trabajo = grabarYEntender();
+    transcribiendo = trabajo;
+    try { await trabajo; } finally { if (transcribiendo === trabajo) transcribiendo = null; }
+  }
+
+  async function grabarYEntender() {
     callar();
     if (!microfonoAbierto()) {
       try { await abrirMicrofono(); } catch {
@@ -253,9 +261,12 @@ function dibujarPregunta(raiz) {
 // Envía todo lo dicho hasta esta pregunta y la API responde qué preguntar después.
 async function siguiente(raiz, boton) {
   callar();
-  grabacion?.detener();
   boton.disabled = true;
   boton.textContent = "Revisando…";
+  // Si tocó «Siguiente» mientras hablaba o mientras la app entendía su respuesta, primero se
+  // termina de grabar y de entender: si no, esa respuesta se perdería.
+  grabacion?.detener();
+  if (transcribiendo) await transcribiendo;
   // Si volvió atrás y cambió una respuesta, lo que venía después se vuelve a decidir.
   const historial = estado.historial.slice(0, estado.paso);
   const hechas = historial.map((p) => p.clave);
